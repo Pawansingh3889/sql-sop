@@ -322,3 +322,37 @@ class UnionWithoutAll(Rule):
                 suggestion="Use UNION ALL if duplicate rows are impossible or undesired to remove",
             )
         return None
+
+
+class WindowMissingOrderPartition(Rule):
+    """W013: OVER() without ORDER BY / PARTITION BY can yield unpredictable results."""
+
+    id = "W013"
+    name = "window-missing-order-partition"
+    severity = "warning"
+    description = "OVER() without ORDER BY or PARTITION BY may lead to unpredictable results and unclear intent."
+    multiline = True
+
+    _over_pattern = Rule._compile(r"\bOVER\s*\(")
+    _valid_pattern = Rule._compile(r"OVER\s*\(\s*[^)]*(ORDER\s+BY|PARTITION\s+BY)[^)]*\)")
+
+    def has_valid_over_clause(self, statement: str) -> bool:
+        # If no OVER(...) clause → nothing to warn
+        if not self._over_pattern.search(statement):
+            return True
+
+        # Valid only if ORDER BY or PARTITION BY exists inside OVER(...)
+        return bool(self._valid_pattern.search(statement))
+    
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if not self.has_valid_over_clause(statement):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message=f"Missing ORDER BY / PARTITION BY in OVER clause",
+                suggestion="Add ORDER BY for deterministic results and PARTITION BY to define window groups clearly",
+            )
+        return None
