@@ -226,6 +226,7 @@ sql-sop list-rules                       # show every registered rule
 | W008 | `mixed-case-keywords` | `select ... FROM` -- inconsistent casing |
 | W009 | `missing-semicolon` | Statement not terminated with `;` |
 | W010 | `commented-out-code` | `-- SELECT * FROM old_table` -- use version control |
+| W013 | `window-missing-order-partition` | `OVER ()` -- unpredictable results and unclear intent |
 | W016 | `not-in-with-subquery` | `WHERE id NOT IN (SELECT ...)` -- silently returns 0 rows on NULL |
 | W017 | `leading-wildcard-like` | `WHERE name LIKE '%smith'` -- non-SARGable, full scan |
 | W018 | `or-across-columns` | `WHERE a = 1 OR b = 2` -- defeats single-column indexes |

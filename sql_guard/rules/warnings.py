@@ -512,7 +512,7 @@ class WindowMissingOrderPartition(Rule):
                 severity=self.severity,
                 file=file,
                 line=start_line,
-                message=f"Missing ORDER BY / PARTITION BY in OVER clause",
+                message="Missing ORDER BY / PARTITION BY in OVER clause",
                 suggestion="Add ORDER BY for deterministic results and PARTITION BY to define window groups clearly",
             )
         return None

@@ -166,6 +166,11 @@ class TestWarningRules:
         statement = "SELECT 1st_quarter, COUNT(*) FROM sales GROUP BY 1st_quarter;"
         assert rule.check_statement(statement, 1, "test.sql") is None
 
+    def test_w013_window_missing_order_partition(self) -> None:
+        findings = check([str(FIXTURES / "warnings.sql")])
+        w013 = [f for f in findings.findings if f.rule_id == "W013"]
+        assert len(w013) >= 1
+
     def test_w016_not_in_with_subquery(self) -> None:
         findings = check([str(FIXTURES / "warnings.sql")])
         w016 = [f for f in findings.findings if f.rule_id == "W016"]
