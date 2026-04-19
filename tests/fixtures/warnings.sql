@@ -22,9 +22,11 @@ SELECT region, status, COUNT(*)
 FROM orders
 GROUP BY 1, 2;
 
--- W013: OVER without ORDER BY / PARTITION BY - failing case
+
+-- W014: OVER without ORDER BY / PARTITION BY
 SELECT
   user_id,
   ROW_NUMBER() OVER () AS rn
 FROM events;
+
 

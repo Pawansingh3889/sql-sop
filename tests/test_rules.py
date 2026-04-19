@@ -168,9 +168,16 @@ class TestWarningRules:
 
     def test_w013_window_missing_order_partition(self) -> None:
         findings = check([str(FIXTURES / "warnings.sql")])
-        w013 = [f for f in findings.findings if f.rule_id == "W013"]
-        assert len(w013) >= 1
+        w014 = [f for f in findings.findings if f.rule_id == "W014"]
+        assert len(w014) >= 1
 
+    def test_w014_passes_on_valid_over_clause(self) -> None:
+        from sql_guard.rules.warnings import WindowMissingOrderPartition
+
+        rule = WindowMissingOrderPartition()
+        statement = "SELECT ROW_NUMBER() OVER (ORDER BY id) FROM users;"
+    
+        assert rule.check_statement(statement, 1, "test.sql") is None
 
 # ---------------------------------------------------------------------------
 # Clean file

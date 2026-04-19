@@ -54,7 +54,6 @@ class TestScanner:
         hits = python_scanner.extract_from_file(PY_FIXTURE)
         # `sql = "DELETE FROM staging"` must surface as a literal hit.
         assert any(h.kind == "literal" and "DELETE FROM staging" in h.sql for h in hits)
-
     def test_invalid_python_returns_empty(self) -> None:
         assert python_scanner.extract("def broken(:") == []
 
