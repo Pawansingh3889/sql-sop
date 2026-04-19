@@ -485,9 +485,9 @@ class CountDistinctUnbounded(Rule):
 
 
 class WindowMissingOrderPartition(Rule):
-    """W013: OVER() without ORDER BY / PARTITION BY can yield unpredictable results."""
+    """W014: OVER() without ORDER BY / PARTITION BY can yield unpredictable results."""
 
-    id = "W013"
+    id = "W014"
     name = "window-missing-order-partition"
     severity = "warning"
     description = "OVER() without ORDER BY or PARTITION BY may lead to unpredictable results and unclear intent."

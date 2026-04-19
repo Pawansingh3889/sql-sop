@@ -116,7 +116,7 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 - `test_duration_tracked` no longer fails on fast hardware where
   `time.perf_counter` resolution is coarser than the scan duration.
   Assertion relaxed from `> 0` to `>= 0` with an explicit float type check.
-- Added W013: warn on OVER() without ORDER BY / PARTITION BY to flag non-deterministic window 
+- Added W014: warn on OVER() without ORDER BY / PARTITION BY to flag non-deterministic window 
   functions.
 
 ## [0.4.1] - 2026-04-19
