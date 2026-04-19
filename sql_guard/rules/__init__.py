@@ -31,6 +31,7 @@ from sql_guard.rules.warnings import (
     SubqueryCouldBeJoin,
     TruncateTable,
     UnionWithoutAll,
+    WindowMissingOrderPartition
 )
 from sql_guard.rules.structural import (
     DeeplyNestedSubquery,
@@ -67,6 +68,7 @@ ALL_RULES: list[Rule] = [
     MissingSemicolon(),
     CommentedOutCode(),
     UnionWithoutAll(),
+    WindowMissingOrderPartition(),
     GroupByOrdinal(),
     NotInWithSubquery(),
     LeadingWildcardLike(),
