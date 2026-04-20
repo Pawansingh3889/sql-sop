@@ -9,8 +9,7 @@ Rule removals and rule ID renames are **breaking changes** that require
 a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
-
-_Nothing queued. See [0.5.0] for the most recent release._
+- Added W013: warn on OVER() without PARTITION BY to prevent unintended full-window operations
 
 ## [0.5.0] - 2026-04-20
 

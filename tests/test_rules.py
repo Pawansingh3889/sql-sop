@@ -18,18 +18,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestRuleRegistry:
     def test_all_rules_loaded(self) -> None:
-        assert len(ALL_RULES) == 25
+        assert len(ALL_RULES) == 26
 
     def test_8_errors(self) -> None:
         # 6 E-series + 2 T-series (T002 xp-cmdshell, T004 deprecated-outer-join).
         errors = [r for r in ALL_RULES if r.severity == "error"]
         assert len(errors) == 8
 
-    def test_17_warnings(self) -> None:
-        # 12 W-series + 3 S-series + 2 T-series (T001 with-nolock,
+    def test_18_warnings(self) -> None:
+        # 13 W-series + 3 S-series + 2 T-series (T001 with-nolock,
         # T003 cursor-declaration) all share the "warning" severity.
         warnings = [r for r in ALL_RULES if r.severity == "warning"]
-        assert len(warnings) == 17
+        assert len(warnings) == 18
 
     def test_unique_ids(self) -> None:
         ids = [r.id for r in ALL_RULES]
@@ -166,16 +166,16 @@ class TestWarningRules:
         statement = "SELECT 1st_quarter, COUNT(*) FROM sales GROUP BY 1st_quarter;"
         assert rule.check_statement(statement, 1, "test.sql") is None
 
-    def test_w013_window_missing_order_partition(self) -> None:
+    def test_w013_window_missing_partition(self) -> None:
         findings = check([str(FIXTURES / "warnings.sql")])
-        w014 = [f for f in findings.findings if f.rule_id == "W014"]
-        assert len(w014) >= 1
+        w013 = [f for f in findings.findings if f.rule_id == "W013"]
+        assert len(w013) >= 1
 
-    def test_w014_passes_on_valid_over_clause(self) -> None:
-        from sql_guard.rules.warnings import WindowMissingOrderPartition
+    def test_w013_passes_on_valid_over_clause(self) -> None:
+        from sql_guard.rules.warnings import WindowMissingPartition
 
-        rule = WindowMissingOrderPartition()
-        statement = "SELECT ROW_NUMBER() OVER (ORDER BY id) FROM users;"
+        rule = WindowMissingPartition()
+        statement = "SELECT ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY id) AS rn FROM users;"
     
         assert rule.check_statement(statement, 1, "test.sql") is None
 

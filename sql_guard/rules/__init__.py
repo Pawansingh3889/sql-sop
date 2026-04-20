@@ -24,7 +24,7 @@ from sql_guard.rules.warnings import (
     SubqueryCouldBeJoin,
     CommentedOutCode,
     UnionWithoutAll,
-    WindowMissingOrderPartition
+    WindowMissingPartition
 )
 from sql_guard.rules.structural import (
     DeeplyNestedSubquery,
@@ -58,7 +58,7 @@ ALL_RULES: list[Rule] = [
     MissingSemicolon(),
     CommentedOutCode(),
     UnionWithoutAll(),
-    WindowMissingOrderPartition(),
+    WindowMissingPartition(),
     GroupByOrdinal(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
