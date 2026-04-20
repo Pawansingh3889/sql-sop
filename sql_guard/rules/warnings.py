@@ -484,26 +484,25 @@ class CountDistinctUnbounded(Rule):
         return None
 
 
-class WindowMissingOrderPartition(Rule):
-    """W014: OVER() without ORDER BY / PARTITION BY can yield unpredictable results."""
+class WindowMissingPartition(Rule):
+    """W013: OVER() without PARTITION BY can yield unpredictable results."""
 
-    id = "W014"
-    name = "window-missing-order-partition"
+    id = "W013"
+    name = "window-missing-partition"
     severity = "warning"
-    description = "OVER() without ORDER BY or PARTITION BY may lead to unpredictable results and unclear intent."
+    description = "OVER() without PARTITION BY may lead to unpredictable results and unclear intent."
     multiline = True
 
     _over_pattern = Rule._compile(r"\bOVER\s*\(")
-    _valid_pattern = Rule._compile(r"OVER\s*\(\s*[^)]*(ORDER\s+BY|PARTITION\s+BY)[^)]*\)")
+    _partition_pattern = Rule._compile(r"PARTITION\s+BY")
 
     def has_valid_over_clause(self, statement: str) -> bool:
-        # If no OVER(...) clause → nothing to warn
+        # If no OVER(...) → nothing to check
         if not self._over_pattern.search(statement):
             return True
 
-        # Valid only if ORDER BY or PARTITION BY exists inside OVER(...)
-        return bool(self._valid_pattern.search(statement))
-    
+        # Valid only if PARTITION BY exists
+        return bool(self._partition_pattern.search(statement))
 
     def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
         if not self.has_valid_over_clause(statement):
@@ -512,7 +511,7 @@ class WindowMissingOrderPartition(Rule):
                 severity=self.severity,
                 file=file,
                 line=start_line,
-                message="Missing ORDER BY / PARTITION BY in OVER clause",
-                suggestion="Add ORDER BY for deterministic results and PARTITION BY to define window groups clearly",
+                message="Missing PARTITION BY in OVER clause",
+                suggestion="Add PARTITION BY to define window groups clearly",
             )
         return None

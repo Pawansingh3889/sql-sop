@@ -23,7 +23,7 @@ FROM orders
 GROUP BY 1, 2;
 
 
--- W014: OVER without ORDER BY / PARTITION BY
+-- W013: OVER without PARTITION BY
 SELECT
   user_id,
   ROW_NUMBER() OVER () AS rn

@@ -166,16 +166,16 @@ class TestWarningRules:
         statement = "SELECT 1st_quarter, COUNT(*) FROM sales GROUP BY 1st_quarter;"
         assert rule.check_statement(statement, 1, "test.sql") is None
 
-    def test_w013_window_missing_order_partition(self) -> None:
+    def test_w013_window_missing_partition(self) -> None:
         findings = check([str(FIXTURES / "warnings.sql")])
-        w014 = [f for f in findings.findings if f.rule_id == "W014"]
-        assert len(w014) >= 1
+        w013 = [f for f in findings.findings if f.rule_id == "W013"]
+        assert len(w013) >= 1
 
-    def test_w014_passes_on_valid_over_clause(self) -> None:
-        from sql_guard.rules.warnings import WindowMissingOrderPartition
+    def test_w013_passes_on_valid_over_clause(self) -> None:
+        from sql_guard.rules.warnings import WindowMissingPartition
 
-        rule = WindowMissingOrderPartition()
-        statement = "SELECT ROW_NUMBER() OVER (ORDER BY id) FROM users;"
+        rule = WindowMissingPartition()
+        statement = "SELECT ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY id) AS rn FROM users;"
     
         assert rule.check_statement(statement, 1, "test.sql") is None
     def test_w016_not_in_with_subquery(self) -> None:

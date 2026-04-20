@@ -227,6 +227,7 @@ sql-sop list-rules                       # show every registered rule
 | W009 | `missing-semicolon` | Statement not terminated with `;` |
 | W010 | `commented-out-code` | `-- SELECT * FROM old_table` -- use version control |
 <<<<<<< HEAD
+<<<<<<< HEAD
 | W013 | `window-missing-order-partition` | `OVER ()` -- unpredictable results and unclear intent |
 | W016 | `not-in-with-subquery` | `WHERE id NOT IN (SELECT ...)` -- silently returns 0 rows on NULL |
 | W017 | `leading-wildcard-like` | `WHERE name LIKE '%smith'` -- non-SARGable, full scan |
@@ -235,6 +236,9 @@ sql-sop list-rules                       # show every registered rule
 =======
 | W014 | `window-missing-order-partition` | `OVER ()` -- unpredictable results and unclear intent |
 >>>>>>> de461b6 (feat(rules): warn on OVER ())
+=======
+| W013 | `window-missing-partition` | `OVER ()` -- unpredictable results and unclear intent |
+>>>>>>> ea832ac (feat(rules): warn on OVER ())
 
 ### T-SQL (v0.5.0+)
 

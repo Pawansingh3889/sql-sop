@@ -9,6 +9,7 @@ Rule removals and rule ID renames are **breaking changes** that require
 a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
+<<<<<<< HEAD
 
 ## [0.6.1] - 2026-04-26
 
@@ -82,6 +83,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Changed
 - Codecov coverage tracking enabled on `main` (baseline 86.05%).
+=======
+- Added W013: warn on OVER() without PARTITION BY to prevent unintended full-window operations
+>>>>>>> ea832ac (feat(rules): warn on OVER ())
 
 ## [0.5.0] - 2026-04-20
 
