@@ -10,6 +10,8 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+_Nothing queued. See [0.5.0] for the most recent release._
+
 ## [0.5.0] - 2026-04-20
 
 ### Added
