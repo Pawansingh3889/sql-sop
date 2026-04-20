@@ -10,6 +10,8 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-20
+
 ### Added
 - **T001 `with-nolock`** - warns on `WITH (NOLOCK)` table hints. Causes
   dirty reads. Commonly used as a performance band-aid instead of
@@ -35,7 +37,7 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   a bounded query. Previously only `FETCH FIRST` was recognised.
 - Single-source the package version via importlib.metadata in sql_guard/__init__.py. pyproject.toml is now the only place a release number is hard-coded.
 - sqlparse is now a core dependency. Previously only in the [structural] extra, which meant S001-S003 silently no-op'd for users without it.
-- README counts refreshed: 24 rules (6E/14W/4P), 81 tests, version 0.4.1, pre-commit rev v0.4.1.
+- README counts refreshed: 29 rules (6E/12W/3S/4T/4P), version 0.5.0, pre-commit rev v0.5.0.
 
 ### Fixed
 - `test_duration_tracked` no longer fails on fast hardware where

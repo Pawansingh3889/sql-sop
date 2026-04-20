@@ -42,7 +42,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 24 rules (20 SQL + 4 Python). Zero config. Instant results. 195+ monthly downloads on PyPI.
+Fast, rule-based SQL linter. 29 rules (25 SQL + 4 Python), including 4 T-SQL-specific rules for SQL Server shops. Zero config. Instant results. 195+ monthly downloads on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, and 20 more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
@@ -131,7 +131,7 @@ You want both.
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/Pawansingh3889/sql-guard
-    rev: v0.4.1
+    rev: v0.5.0
     hooks:
       - id: sql-guard
         args: [--severity, error]  # only block on errors locally
@@ -223,6 +223,20 @@ sql-sop list-rules                       # show every registered rule
 | W008 | `mixed-case-keywords` | `select ... FROM` -- inconsistent casing |
 | W009 | `missing-semicolon` | Statement not terminated with `;` |
 | W010 | `commented-out-code` | `-- SELECT * FROM old_table` -- use version control |
+
+### T-SQL (v0.5.0+)
+
+Rules targeting SQL Server anti-patterns common in legacy stored procs
+and SSRS datasets. Fire on text patterns that do not appear in BigQuery
+or Postgres code, so they run unconditionally with near-zero false
+positives on non-T-SQL input.
+
+| ID | Name | What it catches |
+|---|---|---|
+| T001 | `with-nolock` | `SELECT * FROM t WITH (NOLOCK)` -- dirty reads |
+| T002 | `xp-cmdshell` | `EXEC xp_cmdshell ...` -- shell-exec surface |
+| T003 | `cursor-declaration` | `DECLARE c CURSOR FOR ...` -- row-by-row processing |
+| T004 | `deprecated-outer-join` | `WHERE a.x *= b.y` -- removed in SQL Server 2012+ |
 
 ### Python scanning (v0.4.0+, opt-in)
 
