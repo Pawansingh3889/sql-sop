@@ -39,7 +39,7 @@ class MissingLimit(Rule):
     multiline = True
 
     _select = Rule._compile(r"\bSELECT\b")
-    _limit = Rule._compile(r"\b(LIMIT|TOP|FETCH\s+FIRST)\b")
+    _limit = Rule._compile(r"\b(LIMIT|TOP|FETCH\s+(FIRST|NEXT))\b")
     _aggregate = Rule._compile(r"\b(COUNT|SUM|AVG|MIN|MAX|GROUP\s+BY)\b")
     _into = Rule._compile(r"\bINTO\b")
 
@@ -146,7 +146,7 @@ class OrderByWithoutLimit(Rule):
     multiline = True
 
     _orderby = Rule._compile(r"\bORDER\s+BY\b")
-    _limit = Rule._compile(r"\b(LIMIT|TOP|FETCH\s+FIRST)\b")
+    _limit = Rule._compile(r"\b(LIMIT|TOP|FETCH\s+(FIRST|NEXT))\b")
 
     def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
         if self._orderby.search(statement) and not self._limit.search(statement):

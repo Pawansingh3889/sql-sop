@@ -18,17 +18,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestRuleRegistry:
     def test_all_rules_loaded(self) -> None:
-        assert len(ALL_RULES) == 21
+        assert len(ALL_RULES) == 25
 
-    def test_6_errors(self) -> None:
+    def test_8_errors(self) -> None:
+        # 6 E-series + 2 T-series (T002 xp-cmdshell, T004 deprecated-outer-join).
         errors = [r for r in ALL_RULES if r.severity == "error"]
-        assert len(errors) == 6
+        assert len(errors) == 8
 
-    def test_15_warnings(self) -> None:
-        # 12 "warning" (W-series) + 3 structural (S-series) all share the
-        # "warning" severity in the registry.
+    def test_17_warnings(self) -> None:
+        # 12 W-series + 3 S-series + 2 T-series (T001 with-nolock,
+        # T003 cursor-declaration) all share the "warning" severity.
         warnings = [r for r in ALL_RULES if r.severity == "warning"]
-        assert len(warnings) == 15
+        assert len(warnings) == 17
 
     def test_unique_ids(self) -> None:
         ids = [r.id for r in ALL_RULES]

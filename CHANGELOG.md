@@ -11,6 +11,18 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 ## [Unreleased]
 
 ### Added
+- **T001 `with-nolock`** - warns on `WITH (NOLOCK)` table hints. Causes
+  dirty reads. Commonly used as a performance band-aid instead of
+  fixing the underlying blocking (indexes, transaction scope, or
+  SNAPSHOT isolation).
+- **T002 `xp-cmdshell`** - errors on `EXEC xp_cmdshell`. Shell-execution
+  surface that should never appear in application SQL.
+- **T003 `cursor-declaration`** - warns on `DECLARE ... CURSOR`.
+  Row-by-row processing where set-based SQL usually does better.
+- **T004 `deprecated-outer-join`** - errors on `*=` and `=*` old-style
+  outer-join syntax. Deprecated in SQL Server 2005, unsupported in
+  SQL Server 2012 and later. Uses a negative lookbehind to avoid
+  matching modern compound-assignment expressions such as `SET @x *= 2`.
 - **W012 `group-by-ordinal`** - warns when `GROUP BY` uses positional
   ordinals (`GROUP BY 1, 2`) instead of explicit column names. Ordinal
   references are fragile to `SELECT` list reorders: inserting or
@@ -18,6 +30,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   Explicit names are self-documenting and refactor-safe.
 
 ### Changed
+- W002 `missing-limit` and W006 `orderby-without-limit` now recognise
+  T-SQL's `OFFSET n ROWS FETCH NEXT m ROWS ONLY` pagination pattern as
+  a bounded query. Previously only `FETCH FIRST` was recognised.
 - Single-source the package version via importlib.metadata in sql_guard/__init__.py. pyproject.toml is now the only place a release number is hard-coded.
 - sqlparse is now a core dependency. Previously only in the [structural] extra, which meant S001-S003 silently no-op'd for users without it.
 - README counts refreshed: 24 rules (6E/14W/4P), 81 tests, version 0.4.1, pre-commit rev v0.4.1.
