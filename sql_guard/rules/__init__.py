@@ -30,6 +30,12 @@ from sql_guard.rules.structural import (
     ImplicitCrossJoin,
     UnusedCTE,
 )
+from sql_guard.rules.tsql import (
+    CursorDeclaration,
+    DeprecatedOuterJoin,
+    WithNolock,
+    XpCmdshell,
+)
 
 ALL_RULES: list[Rule] = [
     # Errors (E001-E006)
@@ -56,6 +62,11 @@ ALL_RULES: list[Rule] = [
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),
     UnusedCTE(),
+    # T-SQL specific (T001-T004)
+    WithNolock(),
+    XpCmdshell(),
+    CursorDeclaration(),
+    DeprecatedOuterJoin(),
 ]
 
 
