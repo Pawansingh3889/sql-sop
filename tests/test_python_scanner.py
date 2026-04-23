@@ -102,17 +102,8 @@ class TestPythonRules:
     def test_p001_skips_text_to_avoid_double_firing_with_p005(self) -> None:
         # When the f-string target is sqlalchemy.text(), only P005 should
         # fire -- P001 skips that case to avoid duplicate findings on the
-        # same line.
-        f = self._findings()
-        text_line_findings = [
-            x for x in f
-            if "WHERE id = {user_id}" in (x.message or "")
-            or ("text" in (x.message or "") and "f-string" in (x.message or ""))
-        ]
-        # We should have at most one rule firing per sqlalchemy.text(f"...")
-        # line; if both P001 and P005 both hit for the same line, that is a
-        # duplicate.
-        for finding in f:
+        # same line. Assert P001 never names text() in its messages.
+        for finding in self._findings():
             if finding.rule_id == "P001":
                 assert "text()" not in finding.message, (
                     "P001 should not fire on text() calls -- P005 handles those"
