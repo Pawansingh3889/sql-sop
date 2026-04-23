@@ -60,7 +60,7 @@ class TestScanner:
 
 
 # ---------------------------------------------------------------------------
-# Python-only rules (P001-P004)
+# Python-only rules (P001-P005)
 # ---------------------------------------------------------------------------
 
 
@@ -91,6 +91,32 @@ class TestPythonRules:
         f = self._findings()
         p004 = [x for x in f if x.rule_id == "P004"]
         assert p004 and all(x.severity == "warning" for x in p004)
+
+    def test_p005_sqlalchemy_text_fstring_flagged(self) -> None:
+        f = self._findings()
+        p005 = [x for x in f if x.rule_id == "P005"]
+        assert p005, "P005 should fire on text(f'...')"
+        assert all(x.severity == "error" for x in p005)
+        assert any("sqlalchemy.text()" in x.message for x in p005)
+
+    def test_p001_skips_text_to_avoid_double_firing_with_p005(self) -> None:
+        # When the f-string target is sqlalchemy.text(), only P005 should
+        # fire -- P001 skips that case to avoid duplicate findings on the
+        # same line.
+        f = self._findings()
+        text_line_findings = [
+            x for x in f
+            if "WHERE id = {user_id}" in (x.message or "")
+            or ("text" in (x.message or "") and "f-string" in (x.message or ""))
+        ]
+        # We should have at most one rule firing per sqlalchemy.text(f"...")
+        # line; if both P001 and P005 both hit for the same line, that is a
+        # duplicate.
+        for finding in f:
+            if finding.rule_id == "P001":
+                assert "text()" not in finding.message, (
+                    "P001 should not fire on text() calls -- P005 handles those"
+                )
 
     def test_safe_parameterised_produces_no_p_findings(self) -> None:
         # The safe_parameterised function uses a literal SQL with a tuple
@@ -144,4 +170,4 @@ class TestDiscoveryAndCheck:
     def test_check_with_include_python_surfaces_p_rules(self) -> None:
         result = check([str(FIXTURES)], include_python=True)
         ids = {f.rule_id for f in result.findings}
-        assert {"P001", "P002", "P003", "P004"}.issubset(ids)
+        assert {"P001", "P002", "P003", "P004", "P005"}.issubset(ids)

@@ -54,3 +54,10 @@ def safe_sqlalchemy(connection, user_id: int):
 def variable_assigned_raw():
     sql = "DELETE FROM staging"  # reachable via SQL_VARIABLE_NAMES
     return sql
+
+
+def unsafe_sqlalchemy_text_fstring(connection, user_id):
+    # P005 - f-string wrapped in sqlalchemy.text()
+    from sqlalchemy import text
+
+    return connection.execute(text(f"SELECT * FROM users WHERE id = {user_id}"))
