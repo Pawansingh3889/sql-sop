@@ -18,18 +18,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestRuleRegistry:
     def test_all_rules_loaded(self) -> None:
-        assert len(ALL_RULES) == 25
+        assert len(ALL_RULES) == 26
 
     def test_8_errors(self) -> None:
         # 6 E-series + 2 T-series (T002 xp-cmdshell, T004 deprecated-outer-join).
         errors = [r for r in ALL_RULES if r.severity == "error"]
         assert len(errors) == 8
 
-    def test_17_warnings(self) -> None:
-        # 12 W-series + 3 S-series + 2 T-series (T001 with-nolock,
+    def test_18_warnings(self) -> None:
+        # 13 W-series + 3 S-series + 2 T-series (T001 with-nolock,
         # T003 cursor-declaration) all share the "warning" severity.
         warnings = [r for r in ALL_RULES if r.severity == "warning"]
-        assert len(warnings) == 17
+        assert len(warnings) == 18
 
     def test_unique_ids(self) -> None:
         ids = [r.id for r in ALL_RULES]
@@ -165,6 +165,20 @@ class TestWarningRules:
         rule = GroupByOrdinal()
         statement = "SELECT 1st_quarter, COUNT(*) FROM sales GROUP BY 1st_quarter;"
         assert rule.check_statement(statement, 1, "test.sql") is None
+
+    def test_w016_not_in_with_subquery(self) -> None:
+        findings = check([str(FIXTURES / "warnings.sql")])
+        w016 = [f for f in findings.findings if f.rule_id == "W016"]
+        assert len(w016) >= 1
+        assert "NOT IN" in w016[0].message
+
+    def test_w016_not_in_value_list_ok(self, tmp_path) -> None:
+        # NOT IN (1, 2, 3) value list must NOT trigger -- only subqueries.
+        sql = tmp_path / "value_list.sql"
+        sql.write_text("SELECT id FROM users WHERE status_id NOT IN (1, 2, 3);\n")
+        result = check([str(sql)])
+        w016 = [f for f in result.findings if f.rule_id == "W016"]
+        assert not w016
 
 
 # ---------------------------------------------------------------------------
