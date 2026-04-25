@@ -10,7 +10,11 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
-_Nothing queued. See [0.5.0] for the most recent release._
+### Added
+- **W016 `not-in-with-subquery`** - warns on `WHERE col NOT IN (SELECT ...)`.
+  When the subquery returns any `NULL`, the predicate evaluates to `UNKNOWN`
+  for every outer row and the query silently returns zero results. Suggests
+  `NOT EXISTS` or `LEFT JOIN ... WHERE ... IS NULL` instead.
 
 ## [0.5.0] - 2026-04-20
 
