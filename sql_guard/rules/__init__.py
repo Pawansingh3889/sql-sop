@@ -12,6 +12,7 @@ from sql_guard.rules.errors import (
     UpdateWithoutWhere,
 )
 from sql_guard.rules.warnings import (
+    CommentedOutCode,
     FunctionOnIndexedColumn,
     GroupByOrdinal,
     HardcodedValues,
@@ -19,10 +20,10 @@ from sql_guard.rules.warnings import (
     MissingSemicolon,
     MissingTableAlias,
     MixedCaseKeywords,
+    NotInWithSubquery,
     OrderByWithoutLimit,
     SelectStar,
     SubqueryCouldBeJoin,
-    CommentedOutCode,
     UnionWithoutAll,
 )
 from sql_guard.rules.structural import (
@@ -45,7 +46,7 @@ ALL_RULES: list[Rule] = [
     StringConcatInWhere(),
     InsertWithoutColumns(),
     UpdateWithoutWhere(),
-    # Warnings (W001-W012)
+    # Warnings (W001-W012, W016)
     SelectStar(),
     MissingLimit(),
     FunctionOnIndexedColumn(),
@@ -58,6 +59,7 @@ ALL_RULES: list[Rule] = [
     CommentedOutCode(),
     UnionWithoutAll(),
     GroupByOrdinal(),
+    NotInWithSubquery(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),

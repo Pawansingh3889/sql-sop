@@ -322,3 +322,27 @@ class UnionWithoutAll(Rule):
                 suggestion="Use UNION ALL if duplicate rows are impossible or undesired to remove",
             )
         return None
+
+
+class NotInWithSubquery(Rule):
+    """W016: NOT IN with subquery silently returns zero rows on NULL."""
+
+    id = "W016"
+    name = "not-in-with-subquery"
+    severity = "warning"
+    description = "NOT IN with subquery returns zero rows if subquery contains NULL"
+    multiline = True
+
+    _pattern = Rule._compile(r"\bNOT\s+IN\s*\(\s*SELECT\b")
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if self._pattern.search(statement):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message="NOT IN with subquery -- returns zero rows if subquery has NULL",
+                suggestion="Use NOT EXISTS or LEFT JOIN ... WHERE ... IS NULL instead",
+            )
+        return None

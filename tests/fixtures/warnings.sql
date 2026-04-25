@@ -21,3 +21,8 @@ SELECT id FROM orders_2025;
 SELECT region, status, COUNT(*)
 FROM orders
 GROUP BY 1, 2;
+
+-- W016: NOT IN with subquery
+SELECT *
+FROM customers
+WHERE id NOT IN (SELECT customer_id FROM orders);
