@@ -11,6 +11,12 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 ## [Unreleased]
 
 ### Added
+- **P005 `sqlalchemy-text-fstring`** - errors on `sqlalchemy.text(f"...{var}")`.
+  Same SQL-injection hazard P001 catches for `cursor.execute()`, but on the
+  `sqlalchemy.text()` surface. P001 now skips `text()` call sites so P005
+  handles them with a sqlalchemy-specific message and suggestion
+  (mirrors the existing P004 `call_name != "text"` guard).
+  ([#10](https://github.com/Pawansingh3889/sql-guard/issues/10))
 - **W016 `not-in-with-subquery`** - warns on `WHERE col NOT IN (SELECT ...)`.
   When the subquery returns any `NULL`, the predicate evaluates to `UNKNOWN`
   for every outer row and the query silently returns zero results. Suggests

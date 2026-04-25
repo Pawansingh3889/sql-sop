@@ -1,4 +1,4 @@
-"""Python-only SQL hazards (P001-P004).
+"""Python-only SQL hazards (P001-P005).
 
 These rules fire on SQL strings reached from Python source via the libCST
 scanner. They complement the regex-based E/W/S rules: those look at SQL
@@ -42,7 +42,9 @@ class FStringInExecute(PythonRule):
         )
 
     def check(self, hit: ExtractedSql, file: str) -> Finding | None:
-        if hit.kind == "fstring" and hit.call_name:
+        # sqlalchemy.text(f"...") is handled by the more specific P005 rule
+        # (SqlalchemyTextFstring). Skip here to avoid double-firing.
+        if hit.kind == "fstring" and hit.call_name and hit.call_name != "text":
             return Finding(
                 rule_id=self.id,
                 severity=self.severity,
@@ -127,9 +129,36 @@ class BareVariableInExecute(PythonRule):
         return None
 
 
+class SqlalchemyTextFstring(PythonRule):
+    """P005: f-string wrapped in ``sqlalchemy.text(...)`` re-introduces SQL injection."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            id="P005",
+            name="sqlalchemy-text-fstring",
+            severity="error",
+            description="f-string passed to sqlalchemy.text() -- SQL injection risk",
+        )
+
+    def check(self, hit: ExtractedSql, file: str) -> Finding | None:
+        if hit.kind == "fstring" and hit.call_name == "text":
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=hit.line,
+                message="f-string passed to sqlalchemy.text() -- SQL injection risk",
+                suggestion=(
+                    "Use bound parameters: text(\"... WHERE id = :id\"), {\"id\": user_id}"
+                ),
+            )
+        return None
+
+
 PYTHON_RULES: list[PythonRule] = [
     FStringInExecute(),
     ConcatInExecute(),
     FormatInExecute(),
     BareVariableInExecute(),
+    SqlalchemyTextFstring(),
 ]
