@@ -10,6 +10,12 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+
+- **W013 `window-without-partition`** - warns on window functions
+  using OVER () without PARTITION BY, flagging non-deterministic
+  ordering and full-result-set scans.
+
 ## [0.6.1] - 2026-04-26
 
 ### Added
@@ -116,6 +122,8 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 - `test_duration_tracked` no longer fails on fast hardware where
   `time.perf_counter` resolution is coarser than the scan duration.
   Assertion relaxed from `> 0` to `>= 0` with an explicit float type check.
+- Added W014: warn on OVER() without ORDER BY / PARTITION BY to flag non-deterministic window 
+  functions.
 
 ## [0.4.1] - 2026-04-19
 

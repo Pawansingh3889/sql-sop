@@ -482,3 +482,36 @@ class CountDistinctUnbounded(Rule):
                 suggestion="Add a WHERE/LIMIT to restrict scope, or pre-aggregate with GROUP BY",
             )
         return None
+
+
+class WindowMissingPartition(Rule):
+    """W013: OVER() without PARTITION BY can yield unpredictable results."""
+
+    id = "W013"
+    name = "window-missing-partition"
+    severity = "warning"
+    description = "OVER() without PARTITION BY may lead to unpredictable results and unclear intent."
+    multiline = True
+
+    _over_pattern = Rule._compile(r"\bOVER\s*\(")
+    _partition_pattern = Rule._compile(r"PARTITION\s+BY")
+
+    def has_valid_over_clause(self, statement: str) -> bool:
+        # If no OVER(...) → nothing to check
+        if not self._over_pattern.search(statement):
+            return True
+
+        # Valid only if PARTITION BY exists
+        return bool(self._partition_pattern.search(statement))
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if not self.has_valid_over_clause(statement):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message="Missing PARTITION BY in OVER clause",
+                suggestion="Add PARTITION BY to define window groups clearly",
+            )
+        return None
