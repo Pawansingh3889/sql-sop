@@ -28,7 +28,7 @@ repos:
   # Runs sql-sop on the project's own fixtures + any staged .sql files
   # so a regression in a rule is caught before it ships.
   - repo: https://github.com/Pawansingh3889/sql-guard
-    rev: v0.5.0
+    rev: v0.6.1
     hooks:
       - id: sql-sop
         args: [--severity, error]
