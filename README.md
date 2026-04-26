@@ -43,7 +43,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 29 rules (25 SQL + 4 Python), including 4 T-SQL-specific rules for SQL Server shops. Zero config. Instant results. 195+ monthly downloads on PyPI.
+Fast, rule-based SQL linter. 31 rules (26 SQL + 5 Python), including 4 T-SQL-specific rules for SQL Server shops. Zero config. Instant results. 195+ monthly downloads on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, and 20 more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
@@ -254,6 +254,7 @@ sense at the Python level:
 | P002 | `concat-in-execute` | `cursor.execute("..." + user_input)` -- SQL injection |
 | P003 | `format-in-execute` | `.format()` or `%` interpolation into an execute call |
 | P004 | `bare-variable-in-execute` | `cursor.execute(query)` where `query` is an unchecked variable |
+| P005 | `sqlalchemy-text-fstring` | `sqlalchemy.text(f"... {var}")` -- SQL injection on the SQLAlchemy text() surface |
 
 ---
 
@@ -307,7 +308,7 @@ In a fish production environment, sql-sop runs as a pre-commit hook on all SQL t
 
 | | sql-sop | sqlfluff | sql-lint |
 |---|---|---|---|
-| Rules | 24 (focused) | 800+ (comprehensive) | ~20 |
+| Rules | 31 (focused) | 800+ (comprehensive) | ~20 |
 | Speed | <0.1s for 200 files | 45s for 200 files | ~2s |
 | Config needed | Zero | Extensive | Minimal |
 | Language | Python | Python | JavaScript |
