@@ -24,11 +24,12 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 24 (6 errors, 14 warnings, 4 Python-source) |
-| Tests | 81 |
+| Rules | 31 (8 errors, 18 warnings, 5 Python-source) |
+| Tests | 106 |
+| Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
 | PyPI downloads | 195+/month |
-| Version | 0.4.1 |
+| Version | 0.5.0 |
 
 ### Fluent API (v0.2.0)
 
