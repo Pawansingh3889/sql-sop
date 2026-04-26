@@ -122,7 +122,7 @@ await micropip.install('sql-sop')
     resultsEl.textContent = 'Click "Lint" to run sql-sop against the SQL on the left.';
   } catch (err) {
     statusEl.textContent = 'Failed to load';
-    resultsEl.innerHTML = '<div class="error-box">Couldn\\'t start the Python runtime: ' + String(err).replace(/</g, '&lt;') + '</div>';
+    resultsEl.innerHTML = '<div class="error-box">Could not start the Python runtime: ' + String(err).replace(/</g, '&lt;') + '</div>';
   }
 }
 
