@@ -33,7 +33,7 @@ dependencies = [
 sql-sop = "sql_guard.cli:app"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.4", "libcst>=1.1.0"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.4", "libcst>=1.1.0"]
 # Kept as a no-op extra for backwards-compat with `pip install "sql-sop[structural]"`
 # in existing requirements files; sqlparse is now a core dependency.
 structural = []
