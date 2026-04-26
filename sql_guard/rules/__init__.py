@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from sql_guard.rules.base import Rule
 from sql_guard.rules.errors import (
+    AlterAddNotNullNoDefault,
     DeleteWithoutWhere,
+    DropColumn,
     DropWithoutIfExists,
     GrantRevoke,
     InsertWithoutColumns,
@@ -16,14 +18,17 @@ from sql_guard.rules.warnings import (
     FunctionOnIndexedColumn,
     GroupByOrdinal,
     HardcodedValues,
+    LeadingWildcardLike,
     MissingLimit,
     MissingSemicolon,
     MissingTableAlias,
     MixedCaseKeywords,
     NotInWithSubquery,
+    OrAcrossColumns,
     OrderByWithoutLimit,
     SelectStar,
     SubqueryCouldBeJoin,
+    TruncateTable,
     UnionWithoutAll,
 )
 from sql_guard.rules.structural import (
@@ -32,6 +37,7 @@ from sql_guard.rules.structural import (
     UnusedCTE,
 )
 from sql_guard.rules.tsql import (
+    CreateIndexWithoutOnline,
     CursorDeclaration,
     DeprecatedOuterJoin,
     WithNolock,
@@ -39,14 +45,16 @@ from sql_guard.rules.tsql import (
 )
 
 ALL_RULES: list[Rule] = [
-    # Errors (E001-E006)
+    # Errors (E001-E008)
     DeleteWithoutWhere(),
     DropWithoutIfExists(),
     GrantRevoke(),
     StringConcatInWhere(),
     InsertWithoutColumns(),
     UpdateWithoutWhere(),
-    # Warnings (W001-W012, W016)
+    AlterAddNotNullNoDefault(),
+    DropColumn(),
+    # Warnings (W001-W020 with gaps)
     SelectStar(),
     MissingLimit(),
     FunctionOnIndexedColumn(),
@@ -60,15 +68,19 @@ ALL_RULES: list[Rule] = [
     UnionWithoutAll(),
     GroupByOrdinal(),
     NotInWithSubquery(),
+    LeadingWildcardLike(),
+    OrAcrossColumns(),
+    TruncateTable(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),
     UnusedCTE(),
-    # T-SQL specific (T001-T004)
+    # T-SQL specific (T001-T005)
     WithNolock(),
     XpCmdshell(),
     CursorDeclaration(),
     DeprecatedOuterJoin(),
+    CreateIndexWithoutOnline(),
 ]
 
 

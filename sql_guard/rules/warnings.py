@@ -1,4 +1,4 @@
-"""Warning rules (W001-W010) -- advisory, don't block commits by default."""
+"""Warning rules (W001-W020) -- advisory, don't block commits by default."""
 
 from __future__ import annotations
 
@@ -344,5 +344,102 @@ class NotInWithSubquery(Rule):
                 line=start_line,
                 message="NOT IN with subquery -- returns zero rows if subquery has NULL",
                 suggestion="Use NOT EXISTS or LEFT JOIN ... WHERE ... IS NULL instead",
+            )
+        return None
+
+
+class LeadingWildcardLike(Rule):
+    """W017: ``LIKE '%foo'`` with a leading wildcard is non-SARGable.
+
+    The optimizer cannot use a B-tree index when the pattern starts with
+    ``%`` (or ``_``), so the engine falls back to a full scan. Trailing
+    wildcards (``LIKE 'foo%'``) are fine. For real substring search,
+    full-text indexing or trigram indexes are the right tool.
+    """
+
+    id = "W017"
+    name = "leading-wildcard-like"
+    severity = "warning"
+    description = "LIKE '%foo' defeats indexes -- forces a full scan"
+    multiline = False
+
+    # Match LIKE followed by a quoted string starting with % or _ wildcard.
+    _pattern = Rule._compile(r"\bLIKE\s+(?:N)?'[%_]")
+
+    def check_line(self, line: str, line_number: int, file: str) -> Finding | None:
+        if self._pattern.search(line):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=line_number,
+                message="LIKE pattern starts with a wildcard -- non-SARGable",
+                suggestion="Restructure the query, or use full-text / trigram indexing",
+            )
+        return None
+
+
+class OrAcrossColumns(Rule):
+    """W018: ``WHERE a = 1 OR b = 2`` across different columns.
+
+    Forces the optimizer to either scan or do an expensive index union.
+    The two-query UNION ALL rewrite is usually faster and lets each side
+    pick its own index. Same column with multiple OR'd values
+    (``a = 1 OR a = 2``) is fine -- that becomes an IN list.
+    """
+
+    id = "W018"
+    name = "or-across-columns"
+    severity = "warning"
+    description = "OR across different columns often defeats single-column indexes"
+    multiline = True
+
+    # Two equality predicates joined by OR where the column names differ.
+    # Conservative: we only flag when both sides are simple `col = literal`.
+    _pattern = Rule._compile(
+        r"\bWHERE\b[^;]*?\b(\w+)\s*=\s*\S+\s+OR\s+(\w+)\s*=\s*\S+",
+    )
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        m = self._pattern.search(statement)
+        if m and m.group(1).lower() != m.group(2).lower():
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message=f"OR across columns ({m.group(1)} / {m.group(2)}) often defeats indexes",
+                suggestion="Consider rewriting as UNION ALL of two indexed queries",
+            )
+        return None
+
+
+class TruncateTable(Rule):
+    """W020: ``TRUNCATE TABLE`` bypasses triggers and the row-by-row log.
+
+    Faster than DELETE for clearing a table, but: no DELETE triggers
+    fire, identity columns reset (T-SQL), foreign-key references can
+    block it, and partial-rollback granularity is lost. If you actually
+    want a fast clear and accept those tradeoffs that's fine -- this is
+    a warning, not an error.
+    """
+
+    id = "W020"
+    name = "truncate-table"
+    severity = "warning"
+    description = "TRUNCATE skips triggers, resets identity, blocks on FKs"
+    multiline = False
+
+    _pattern = Rule._compile(r"\bTRUNCATE\s+TABLE\b")
+
+    def check_line(self, line: str, line_number: int, file: str) -> Finding | None:
+        if self._pattern.search(line):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=line_number,
+                message="TRUNCATE TABLE bypasses triggers and resets identity",
+                suggestion="Use DELETE if triggers or partial rollback matter",
             )
         return None

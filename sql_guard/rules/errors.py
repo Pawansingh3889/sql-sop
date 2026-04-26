@@ -1,4 +1,4 @@
-"""Error rules (E001-E005) -- these block commits."""
+"""Error rules (E001-E008) -- these block commits."""
 
 from __future__ import annotations
 
@@ -154,5 +154,72 @@ class UpdateWithoutWhere(Rule):
                 line=start_line,
                 message="UPDATE without WHERE clause -- this will overwrite every row",
                 suggestion="Add a WHERE clause to limit affected rows",
+            )
+        return None
+
+
+class AlterAddNotNullNoDefault(Rule):
+    """E007: ``ALTER TABLE ... ADD col TYPE NOT NULL`` without a DEFAULT.
+
+    Adding a NOT NULL column with no default forces the engine to scan and
+    rewrite every row, holding a schema-modify lock for the duration. On
+    a busy multi-million-row table this is a multi-minute outage. Either
+    supply a DEFAULT (cheap metadata-only change in modern engines) or
+    split into add-nullable / backfill / set-not-null phases.
+    """
+
+    id = "E007"
+    name = "alter-add-not-null-no-default"
+    severity = "error"
+    description = "ALTER TABLE ADD NOT NULL without DEFAULT locks the table"
+    multiline = True
+
+    _pattern = Rule._compile(
+        r"\bALTER\s+TABLE\s+\S+\s+ADD\s+(?:COLUMN\s+)?\S+\s+\S+[\s\S]*?\bNOT\s+NULL\b"
+    )
+    _has_default = Rule._compile(r"\bDEFAULT\b")
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if self._pattern.search(statement) and not self._has_default.search(statement):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message="ALTER TABLE ADD NOT NULL without DEFAULT will lock the table",
+                suggestion=(
+                    "Add a DEFAULT, or split into: ADD nullable + backfill + ALTER COLUMN NOT NULL"
+                ),
+            )
+        return None
+
+
+class DropColumn(Rule):
+    """E008: ``ALTER TABLE ... DROP COLUMN``.
+
+    Irreversible without a backup. Replication subscribers that still
+    reference the column break immediately. Application rollback to the
+    previous deploy fails because the column is gone. Even if you do
+    want the column gone, the safe path is: stop reading from app,
+    deploy, observe for a release cycle, then drop.
+    """
+
+    id = "E008"
+    name = "drop-column"
+    severity = "error"
+    description = "DROP COLUMN is irreversible and breaks replication subscribers"
+    multiline = True
+
+    _pattern = Rule._compile(r"\bALTER\s+TABLE\s+\S+\s+DROP\s+COLUMN\b")
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if self._pattern.search(statement):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message="DROP COLUMN is irreversible -- subscribers and rollback break",
+                suggestion="Stop reading the column for one release, then drop in a follow-up",
             )
         return None

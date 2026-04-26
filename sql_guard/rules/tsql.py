@@ -134,3 +134,38 @@ class DeprecatedOuterJoin(Rule):
                 suggestion="Use LEFT OUTER JOIN or RIGHT OUTER JOIN",
             )
         return None
+
+
+class CreateIndexWithoutOnline(Rule):
+    """T005: ``CREATE INDEX`` without ``WITH (ONLINE = ON)``.
+
+    Default index builds take a Sch-M lock for the duration. On a busy
+    multi-million-row table that can be a multi-minute outage of all
+    readers and writers. Enterprise Edition supports online index
+    builds; pass ``WITH (ONLINE = ON)`` to keep the table available.
+    Standard / Express Edition cannot do online builds, so suppress this
+    rule on those servers via ``--disable T005``.
+    """
+
+    id = "T005"
+    name = "create-index-without-online"
+    severity = "warning"
+    description = "CREATE INDEX without ONLINE=ON locks the table for the build"
+    multiline = True
+
+    _pattern = Rule._compile(r"\bCREATE\s+(?:UNIQUE\s+)?(?:CLUSTERED\s+|NONCLUSTERED\s+)?INDEX\b")
+    _has_online_on = Rule._compile(r"\bONLINE\s*=\s*ON\b")
+
+    def check_statement(
+        self, statement: str, start_line: int, file: str
+    ) -> Finding | None:
+        if self._pattern.search(statement) and not self._has_online_on.search(statement):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message="CREATE INDEX without WITH (ONLINE = ON) holds a Sch-M lock",
+                suggestion="Add WITH (ONLINE = ON) on Enterprise; disable T005 on Standard/Express",
+            )
+        return None
