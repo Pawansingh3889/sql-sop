@@ -18,18 +18,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestRuleRegistry:
     def test_all_rules_loaded(self) -> None:
-        assert len(ALL_RULES) == 33
+        assert len(ALL_RULES) == 34
 
     def test_10_errors(self) -> None:
         # 8 E-series + 2 T-series (T002 xp-cmdshell, T004 deprecated-outer-join).
         errors = [r for r in ALL_RULES if r.severity == "error"]
         assert len(errors) == 10
 
-    def test_23_warnings(self) -> None:
-        # 17 W-series + 3 S-series + 3 T-series (T001 with-nolock,
+    def test_24_warnings(self) -> None:
+        # 18 W-series + 3 S-series + 3 T-series (T001 with-nolock,
         # T003 cursor-declaration, T005 create-index-without-online).
         warnings = [r for r in ALL_RULES if r.severity == "warning"]
-        assert len(warnings) == 23
+        assert len(warnings) == 24
 
     def test_unique_ids(self) -> None:
         ids = [r.id for r in ALL_RULES]
@@ -178,6 +178,7 @@ class TestWarningRules:
         statement = "SELECT ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY id) AS rn FROM users;"
     
         assert rule.check_statement(statement, 1, "test.sql") is None
+
     def test_w016_not_in_with_subquery(self) -> None:
         findings = check([str(FIXTURES / "warnings.sql")])
         w016 = [f for f in findings.findings if f.rule_id == "W016"]
