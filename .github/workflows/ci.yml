@@ -32,12 +32,13 @@ jobs:
           pip install ty
           ty check sql_guard/ || true
 
-      - name: Run tests
+      - name: Test
         run: pytest tests/ -v --cov=sql_guard --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           fail_ci_if_error: false
