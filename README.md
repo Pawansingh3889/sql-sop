@@ -24,12 +24,12 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 37 (10 errors, 22 warnings, 5 Python-source) |
-| Tests | 143 |
+| Rules | 38 (10 errors, 23 warnings, 5 Python-source) |
+| Tests | 149 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
 | PyPI downloads | 500+/month |
-| Version | 0.6.0 |
+| Version | 0.6.1 |
 
 ### Fluent API (v0.2.0)
 
@@ -43,7 +43,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 37 rules (32 SQL + 5 Python), including 5 T-SQL-specific rules for SQL Server shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 195+ monthly downloads on PyPI.
+Fast, rule-based SQL linter. 38 rules (33 SQL + 5 Python), including 5 T-SQL-specific rules for SQL Server shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, and 20 more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
