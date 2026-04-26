@@ -22,6 +22,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   for every outer row and the query silently returns zero results. Suggests
   `NOT EXISTS` or `LEFT JOIN ... WHERE ... IS NULL` instead.
 
+### Changed
+- Codecov coverage tracking enabled on `main` (baseline 86.05%).
+
 ## [0.5.0] - 2026-04-20
 
 ### Added
