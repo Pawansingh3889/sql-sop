@@ -11,6 +11,7 @@ from sql_guard.rules import get_rules
 from sql_guard.rules.base import Finding, Rule
 from sql_guard.rules.python_rules import PYTHON_RULES
 from sql_guard import python_scanner
+from sql_guard.inline_disable import DisableMap, parse as parse_disables
 
 
 @dataclass
@@ -151,12 +152,13 @@ def check_file(
 
     single_pass_rules = [r for r in rules if not r.multiline]
     multi_line_rules = [r for r in rules if r.multiline]
+    disables = parse_disables(content)
 
     # Pass 1: line-by-line rules
     for line_num, line in enumerate(content.splitlines(), 1):
         for rule in single_pass_rules:
             finding = rule.check_line(line, line_num, file_str)
-            if finding:
+            if finding and not disables.is_disabled(finding.line, finding.rule_id):
                 findings.append(finding)
                 if fail_fast and finding.severity == "error":
                     return findings
@@ -167,7 +169,7 @@ def check_file(
         for start_line, statement in statements:
             for rule in multi_line_rules:
                 finding = rule.check_statement(statement, start_line, file_str)
-                if finding:
+                if finding and not disables.is_disabled(finding.line, finding.rule_id):
                     findings.append(finding)
                     if fail_fast and finding.severity == "error":
                         return findings
@@ -203,6 +205,12 @@ def check_python_file(
         )
         return findings
 
+    try:
+        content = path.read_text(encoding="utf-8")
+        disables = parse_disables(content)
+    except (OSError, UnicodeDecodeError):
+        disables = DisableMap()
+
     hits = python_scanner.extract_from_file(path)
     disabled = disabled_rules or set()
 
@@ -212,7 +220,7 @@ def check_python_file(
             if rule.id in disabled:
                 continue
             finding = rule.check(hit, file_str)
-            if finding:
+            if finding and not disables.is_disabled(finding.line, finding.rule_id):
                 findings.append(finding)
                 if fail_fast and finding.severity == "error":
                     return findings
@@ -226,7 +234,7 @@ def check_python_file(
             else:
                 # Single-line rules evaluate the whole string as one line.
                 finding = rule.check_line(hit.sql, hit.line, file_str)
-            if finding:
+            if finding and not disables.is_disabled(finding.line, finding.rule_id):
                 findings.append(finding)
                 if fail_fast and finding.severity == "error":
                     return findings
