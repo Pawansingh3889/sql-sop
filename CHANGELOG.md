@@ -10,7 +10,49 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-26
+
 ### Added
+- **E007 `alter-add-not-null-no-default`** - errors on
+  `ALTER TABLE ... ADD col TYPE NOT NULL` without a `DEFAULT`. Forces a
+  full table rewrite under a schema-modify lock; suggests adding a default
+  or splitting into add-nullable / backfill / set-not-null phases.
+- **E008 `drop-column`** - errors on `ALTER TABLE ... DROP COLUMN`.
+  Irreversible without backup, breaks replication subscribers, and any
+  rollback to the previous deploy fails.
+- **W017 `leading-wildcard-like`** - warns on `LIKE '%foo'` with a leading
+  wildcard. Non-SARGable; the optimiser cannot use a B-tree index and
+  falls back to a full scan. Recognises `N''` (NVARCHAR) literals and
+  the `_` single-character wildcard.
+- **W018 `or-across-columns`** - warns on `WHERE a = 1 OR b = 2` across
+  different columns. Defeats single-column indexes; suggests rewriting
+  as `UNION ALL` of two indexed queries.
+- **W020 `truncate-table`** - warns on `TRUNCATE TABLE`. Bypasses DELETE
+  triggers, resets identity, and gets blocked by FK references.
+- **T005 `create-index-without-online`** (T-SQL) - warns when
+  `CREATE INDEX` lacks `WITH (ONLINE = ON)`. Default builds hold a
+  Sch-M lock for the duration; on busy tables that's a multi-minute
+  outage. Suggests disabling on Standard / Express where ONLINE is
+  unavailable.
+- **Inline disable directives**: `-- sql-guard: disable=W001,W003` (or
+  `-- sql-guard: disable-next-line=W001`) silences the listed rules on
+  the same or following line. Also recognises `# sql-guard: disable=...`
+  in Python source. A bare `-- sql-guard: disable` silences all rules
+  on that line.
+- **Project config file**: `.sql-guard.yml` (or `.yaml`) at the repo root
+  supports `disable:`, `ignore:`, `include_python:`, and `severity:`
+  fields. The loader walks up from the cwd. CLI flags merge with and
+  override the config.
+- **`--changed-only`** flag on `check`. Calls `git diff --name-only`
+  (working tree by default; pass `--changed-base origin/main` to compare
+  against a ref) and intersects the result with discovered files.
+  Speeds up pre-commit on large codebases. Falls back to a full scan
+  with a warning when not in a git repo.
+- **SARIF output**: `--format sarif` (`-f sarif`) emits a SARIF 2.1.0
+  document suitable for the `github/codeql-action/upload-sarif` action,
+  so findings render inline on PRs in GitHub Code Scanning. Optional
+  `--output results.sarif` writes to a file instead of stdout.
+
 - **P005 `sqlalchemy-text-fstring`** - errors on `sqlalchemy.text(f"...{var}")`.
   Same SQL-injection hazard P001 catches for `cursor.execute()`, but on the
   `sqlalchemy.text()` surface. P001 now skips `text()` call sites so P005
@@ -21,6 +63,12 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   When the subquery returns any `NULL`, the predicate evaluates to `UNKNOWN`
   for every outer row and the query silently returns zero results. Suggests
   `NOT EXISTS` or `LEFT JOIN ... WHERE ... IS NULL` instead.
+
+### Changed
+- `pyyaml` is now a runtime dependency (used by `.sql-guard.yml` loader).
+- `--disable` rule IDs are normalised to upper case so `--disable w001`
+  and `--disable W001` behave the same.
+- Codecov coverage tracking enabled on `main` (baseline 86.05%).
 
 ### Changed
 - Codecov coverage tracking enabled on `main` (baseline 86.05%).
