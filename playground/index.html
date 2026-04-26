@@ -104,13 +104,16 @@ let pyodide = null;
 async function boot() {
   try {
     pyodide = await loadPyodide();
+    statusEl.textContent = 'Loading runtime deps...';
+    // Pre-load Pyodide-bundled packages first; faster + avoids micropip resolver flake on PyYAML.
+    await pyodide.loadPackage(['micropip', 'pyyaml']);
     statusEl.textContent = 'Installing sql-sop from PyPI...';
-    await pyodide.loadPackage('micropip');
     await pyodide.runPythonAsync(`
 import micropip
-await micropip.install('sql-sop')
-# sqlparse gives us structural rules
+# sqlparse gives us structural rules; install before sql-sop so the resolver
+# doesn't have to re-download it as a transitive dep.
 await micropip.install('sqlparse')
+await micropip.install('sql-sop')
     `);
     statusEl.textContent = 'Ready';
     runButton.disabled = false;
