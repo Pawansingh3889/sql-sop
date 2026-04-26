@@ -10,6 +10,12 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+
+- **W013 `window-without-partition`** - warns on window functions
+  using OVER () without PARTITION BY, flagging non-deterministic
+  ordering and full-result-set scans.
+
 ## [0.6.1] - 2026-04-26
 
 ### Added
@@ -82,7 +88,6 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Changed
 - Codecov coverage tracking enabled on `main` (baseline 86.05%).
-- Added W013: warn on OVER() without PARTITION BY to prevent unintended full-window operations
 
 ## [0.5.0] - 2026-04-20
 
