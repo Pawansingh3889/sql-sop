@@ -28,7 +28,7 @@ One bad SQL query can delete production data, expose customer records, or bring 
 | Tests | 143 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
-| PyPI downloads | 195+/month |
+| PyPI downloads | 500+/month |
 | Version | 0.6.0 |
 
 ### Fluent API (v0.2.0)
