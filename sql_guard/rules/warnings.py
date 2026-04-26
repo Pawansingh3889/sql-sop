@@ -443,3 +443,42 @@ class TruncateTable(Rule):
                 suggestion="Use DELETE if triggers or partial rollback matter",
             )
         return None
+
+
+class CountDistinctUnbounded(Rule):
+    """W019: ``COUNT(DISTINCT col)`` on an unfiltered table.
+
+    ``COUNT(DISTINCT col)`` forces a full sort + distinct pass over the
+    rows it sees. On a large unfiltered table that's a frequent perf
+    surprise on prod. The rule fires when the same statement has neither
+    a ``WHERE`` clause nor a ``GROUP BY`` (which already partitions the
+    work) nor a ``LIMIT`` restricting the scope.
+    """
+
+    id = "W019"
+    name = "count-distinct-unbounded"
+    severity = "warning"
+    description = "COUNT(DISTINCT) without WHERE/GROUP BY/LIMIT scans the whole table"
+    multiline = True
+
+    _count_distinct = Rule._compile(r"\bCOUNT\s*\(\s*DISTINCT\b")
+    _where = Rule._compile(r"\bWHERE\b")
+    _group_by = Rule._compile(r"\bGROUP\s+BY\b")
+    _limit = Rule._compile(r"\b(LIMIT|TOP|FETCH\s+(FIRST|NEXT))\b")
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if (
+            self._count_distinct.search(statement)
+            and not self._where.search(statement)
+            and not self._group_by.search(statement)
+            and not self._limit.search(statement)
+        ):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message="COUNT(DISTINCT) without WHERE/GROUP BY -- full table sort + distinct",
+                suggestion="Add a WHERE/LIMIT to restrict scope, or pre-aggregate with GROUP BY",
+            )
+        return None

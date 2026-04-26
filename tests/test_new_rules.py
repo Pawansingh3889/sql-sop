@@ -1,10 +1,11 @@
-"""Tests for v0.6.0 rules: E007, E008, W017, W018, W020, T005."""
+"""Tests for v0.6.0 rules + W019."""
 
 from __future__ import annotations
 
 from sql_guard.rules.errors import AlterAddNotNullNoDefault, DropColumn
 from sql_guard.rules.tsql import CreateIndexWithoutOnline
 from sql_guard.rules.warnings import (
+    CountDistinctUnbounded,
     LeadingWildcardLike,
     OrAcrossColumns,
     TruncateTable,
@@ -140,3 +141,57 @@ def test_t005_flags_clustered_unique_variants():
         rule,
         "CREATE UNIQUE NONCLUSTERED INDEX ix ON orders (id);",
     ) is not None
+
+
+# W019 count-distinct-unbounded -----------------------------------------------
+
+
+def test_w019_flags_count_distinct_without_filter():
+    rule = CountDistinctUnbounded()
+    finding = _stmt(rule, "SELECT COUNT(DISTINCT user_id) FROM events;")
+    assert finding is not None
+    assert finding.rule_id == "W019"
+    assert finding.severity == "warning"
+
+
+def test_w019_passes_with_where():
+    rule = CountDistinctUnbounded()
+    assert (
+        _stmt(
+            rule,
+            "SELECT COUNT(DISTINCT user_id) FROM events WHERE event_date >= '2024-01-01';",
+        )
+        is None
+    )
+
+
+def test_w019_passes_with_group_by():
+    rule = CountDistinctUnbounded()
+    assert (
+        _stmt(
+            rule,
+            "SELECT tenant_id, COUNT(DISTINCT user_id) FROM events GROUP BY tenant_id;",
+        )
+        is None
+    )
+
+
+def test_w019_passes_with_limit():
+    rule = CountDistinctUnbounded()
+    assert (
+        _stmt(rule, "SELECT COUNT(DISTINCT user_id) FROM events LIMIT 1;")
+        is None
+    )
+
+
+def test_w019_handles_whitespace_in_count_distinct():
+    rule = CountDistinctUnbounded()
+    finding = _stmt(rule, "SELECT COUNT (  DISTINCT  user_id) FROM events;")
+    assert finding is not None
+    assert finding.rule_id == "W019"
+
+
+def test_w019_does_not_fire_on_plain_count():
+    rule = CountDistinctUnbounded()
+    assert _stmt(rule, "SELECT COUNT(*) FROM events;") is None
+    assert _stmt(rule, "SELECT COUNT(user_id) FROM events;") is None
