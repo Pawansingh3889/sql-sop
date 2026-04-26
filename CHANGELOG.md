@@ -10,6 +10,12 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+- **W019 `count-distinct-unbounded`** - warns on `COUNT(DISTINCT col)`
+  with no `WHERE`, `GROUP BY`, or `LIMIT` restricting the scope. Forces
+  a full sort + distinct pass over the entire table, a frequent perf
+  surprise on prod. Resolves #7.
+
 ## [0.6.0] - 2026-04-26
 
 ### Added

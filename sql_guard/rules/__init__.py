@@ -15,6 +15,7 @@ from sql_guard.rules.errors import (
 )
 from sql_guard.rules.warnings import (
     CommentedOutCode,
+    CountDistinctUnbounded,
     FunctionOnIndexedColumn,
     GroupByOrdinal,
     HardcodedValues,
@@ -71,6 +72,7 @@ ALL_RULES: list[Rule] = [
     LeadingWildcardLike(),
     OrAcrossColumns(),
     TruncateTable(),
+    CountDistinctUnbounded(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),
