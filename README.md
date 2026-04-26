@@ -24,12 +24,12 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 31 (8 errors, 18 warnings, 5 Python-source) |
-| Tests | 106 |
+| Rules | 37 (10 errors, 22 warnings, 5 Python-source) |
+| Tests | 143 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
 | PyPI downloads | 195+/month |
-| Version | 0.5.0 |
+| Version | 0.6.0 |
 
 ### Fluent API (v0.2.0)
 
@@ -43,7 +43,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 31 rules (26 SQL + 5 Python), including 4 T-SQL-specific rules for SQL Server shops. Zero config. Instant results. 195+ monthly downloads on PyPI.
+Fast, rule-based SQL linter. 37 rules (32 SQL + 5 Python), including 5 T-SQL-specific rules for SQL Server shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 195+ monthly downloads on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, and 20 more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
@@ -209,6 +209,8 @@ sql-sop list-rules                       # show every registered rule
 | E004 | `string-concat-in-where` | `WHERE id = '' + @input` -- SQL injection |
 | E005 | `insert-without-columns` | `INSERT INTO t VALUES (...)` -- breaks on schema change |
 | E006 | `update-without-where` | `UPDATE orders SET status = 'x';` -- overwrites every row |
+| E007 | `alter-add-not-null-no-default` | `ALTER TABLE t ADD c INT NOT NULL;` -- locks table for full rewrite |
+| E008 | `drop-column` | `ALTER TABLE t DROP COLUMN c;` -- irreversible, breaks subscribers |
 
 ### Warnings (advisory by default)
 
@@ -225,6 +227,9 @@ sql-sop list-rules                       # show every registered rule
 | W009 | `missing-semicolon` | Statement not terminated with `;` |
 | W010 | `commented-out-code` | `-- SELECT * FROM old_table` -- use version control |
 | W016 | `not-in-with-subquery` | `WHERE id NOT IN (SELECT ...)` -- silently returns 0 rows on NULL |
+| W017 | `leading-wildcard-like` | `WHERE name LIKE '%smith'` -- non-SARGable, full scan |
+| W018 | `or-across-columns` | `WHERE a = 1 OR b = 2` -- defeats single-column indexes |
+| W020 | `truncate-table` | `TRUNCATE TABLE staging;` -- bypasses triggers, resets identity |
 
 ### T-SQL (v0.5.0+)
 
@@ -239,6 +244,7 @@ positives on non-T-SQL input.
 | T002 | `xp-cmdshell` | `EXEC xp_cmdshell ...` -- shell-exec surface |
 | T003 | `cursor-declaration` | `DECLARE c CURSOR FOR ...` -- row-by-row processing |
 | T004 | `deprecated-outer-join` | `WHERE a.x *= b.y` -- removed in SQL Server 2012+ |
+| T005 | `create-index-without-online` | `CREATE INDEX ix ON t (...)` -- locks table; add `WITH (ONLINE = ON)` |
 
 ### Python scanning (v0.4.0+, opt-in)
 
@@ -266,6 +272,47 @@ sense at the Python level:
 sql-sop check . --disable E002 W008 W010
 ```
 
+### Project config file (`.sql-guard.yml`)
+
+Drop a `.sql-guard.yml` (or `.sql-guard.yaml`) at the repo root. The loader walks up from the current directory; CLI flags merge with and override these settings.
+
+```yaml
+disable:
+  - W005
+  - T001
+ignore:
+  - migrations/legacy/
+  - vendor/
+include_python: true
+severity: warning
+```
+
+### Inline disable comments
+
+Silence a known false positive on a single line, no project-wide override needed:
+
+```sql
+SELECT * FROM lookups; -- sql-guard: disable=W001
+SELECT * FROM users  -- sql-guard: disable=W001,W002
+WHERE name LIKE '%smith';
+
+-- sql-guard: disable-next-line=W017
+SELECT * FROM events WHERE name LIKE '%checkout';
+```
+
+A bare `-- sql-guard: disable` (no equals sign) silences every rule on the line. The same directives work in Python with `#` instead of `--`.
+
+### Lint only changed files
+
+For pre-commit and CI on big repos:
+
+```bash
+sql-sop check . --changed-only                      # working tree
+sql-sop check . --changed-only --changed-base main  # vs a branch ref
+```
+
+Falls back to a full scan with a warning when not in a git repo.
+
 ### Severity filtering
 
 ```bash
@@ -277,6 +324,23 @@ sql-sop check . --severity warning  # show everything (default)
 
 ```bash
 sql-sop check . --fail-fast  # stop after first error found
+```
+
+### SARIF output for GitHub Code Scanning
+
+Render findings inline on PRs in the GitHub Files Changed view:
+
+```bash
+sql-sop check . --format sarif --output results.sarif
+```
+
+In a GitHub Actions workflow:
+
+```yaml
+- run: sql-sop check . --format sarif --output sql-guard.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: sql-guard.sarif
 ```
 
 ---
