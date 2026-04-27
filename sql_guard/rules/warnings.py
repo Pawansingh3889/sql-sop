@@ -526,8 +526,15 @@ class JoinFunctionOnColumn(Rule):
     description = "Function on column in JOIN ... ON prevents index usage"
     multiline = False
 
+    # Match a function call inside the ON predicate only. The negative
+    # lookahead stops the inner match at the next clause keyword (WHERE,
+    # GROUP/ORDER BY, HAVING, JOIN, UNION) or end-of-statement so a clean
+    # JOIN followed by an unrelated WHERE function isn't flagged here --
+    # W003 owns that case.
     _pattern = Rule._compile(
-        r"\bJOIN\b.*\bON\b.*\b(YEAR|MONTH|DAY|DATE|UPPER|LOWER|TRIM|CAST|CONVERT|SUBSTRING|COALESCE)\s*\("
+        r"\bJOIN\b[^;]*?\bON\b"
+        r"(?:(?!\b(?:WHERE|GROUP\s+BY|ORDER\s+BY|HAVING|JOIN|UNION)\b).)*?"
+        r"\b(YEAR|MONTH|DAY|DATE|UPPER|LOWER|TRIM|CAST|CONVERT|SUBSTRING|COALESCE)\s*\("
     )
 
     def check_line(self, line: str, line_number: int, file: str) -> Finding | None:
