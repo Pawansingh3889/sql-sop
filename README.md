@@ -14,7 +14,7 @@
 - [Download Stats](https://pypistats.org/packages/sql-sop)
 - Install: `pip install sql-sop`
 - [Profile](https://github.com/Pawansingh3889)
-- **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`GOVERNANCE.md`](GOVERNANCE.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · [`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE)
+- **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`ROADMAP.md`](ROADMAP.md) · [`GOVERNANCE.md`](GOVERNANCE.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · [`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE)
 
 ## Why Does This Exist?
 
@@ -24,8 +24,8 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 38 (10 errors, 23 warnings, 5 Python-source) |
-| Tests | 149 |
+| Rules | 39 (10 errors, 24 warnings, 5 Python-source) |
+| Tests | 152 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
 | PyPI downloads | 500+/month |
