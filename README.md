@@ -431,6 +431,21 @@ PRs welcome. Keep rules simple, keep patterns fast.
 
 ---
 
+## Contributors
+
+Thank you to the people who have shipped rules and code to sql-sop.
+
+| Contributor | Contribution |
+|---|---|
+| [@Prabhu-1409](https://github.com/Prabhu-1409) | [W013 `window-without-partition`](https://github.com/Pawansingh3889/sql-guard/pull/21). Flags `OVER ()` without `PARTITION BY`, dialect-aware messaging for Postgres and Redshift. |
+| [@mvanhorn](https://github.com/mvanhorn) | [W019 `count-distinct-unbounded`](https://github.com/Pawansingh3889/sql-guard/pull/29). Flags `COUNT(DISTINCT col)` without WHERE, GROUP BY, or LIMIT. |
+
+See [the full contributors graph](https://github.com/Pawansingh3889/sql-guard/graphs/contributors) on GitHub.
+
+Want to add your name here? Pick a [`good first issue`](https://github.com/Pawansingh3889/sql-guard/labels/good%20first%20issue), follow [`CONTRIBUTING.md`](CONTRIBUTING.md), and check the [v0.7 roadmap](ROADMAP.md). Five performance rules are waiting for an author.
+
+---
+
 ## License
 
 MIT
