@@ -366,7 +366,7 @@ Benchmark: 200 SQL files, 20 SQL rules
 
 ## Production Use Case
 
-In a fish production environment, sql-sop runs as a pre-commit hook on all SQL that touches ERP data (RunNumber, OCM_TRANS, OCM_PLU, OCM_TOTALS tables). Combined with read-only database users and Docker isolation, it forms part of a 6-layer safety architecture that prevents accidental writes to the production ERP.
+In a fish production environment, sql-sop runs as a pre-commit hook on all SQL that touches ERP data (RunNumber, OCM tables). Combined with read-only database users and Docker isolation, it forms part of a 6-layer safety architecture that prevents accidental writes to the production ERP.
 
 ---
 
