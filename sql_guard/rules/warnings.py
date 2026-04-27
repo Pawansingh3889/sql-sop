@@ -484,6 +484,38 @@ class CountDistinctUnbounded(Rule):
         return None
 
 
+class CaseWithoutElse(Rule):
+    """W014: CASE expression without ELSE returns NULL for unmatched rows.
+
+    ``CASE WHEN ... THEN ... END`` without an ``ELSE`` branch returns
+    ``NULL`` for any row that doesn't match a ``WHEN`` condition.
+    Often the author assumes the conditions are exhaustive when they
+    aren't, or downstream code can't handle NULLs.
+    """
+
+    id = "W014"
+    name = "case-without-else"
+    severity = "warning"
+    description = "CASE without ELSE returns NULL for unmatched rows"
+    multiline = True
+
+    _case = Rule._compile(r"\bCASE\b")
+    _end = Rule._compile(r"\bEND\b")
+    _else = Rule._compile(r"\bELSE\b")
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if self._case.search(statement) and self._end.search(statement) and not self._else.search(statement):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message="CASE without ELSE -- unmatched rows return NULL",
+                suggestion="Add an explicit ELSE clause, even if it's ELSE NULL for clarity",
+            )
+        return None
+
+
 class WindowMissingPartition(Rule):
     """W013: OVER() without PARTITION BY can yield unpredictable results."""
 

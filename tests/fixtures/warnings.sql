@@ -44,3 +44,11 @@ WHERE dbo.fn_IsHighValue(total) = 1;
 SELECT *
 FROM orders o
 JOIN customers c ON UPPER(o.email) = UPPER(c.email);
+
+-- W014: CASE without ELSE
+SELECT
+  CASE
+    WHEN status = 'paid' THEN 1
+    WHEN status = 'pending' THEN 0
+  END AS paid_flag
+FROM orders;
