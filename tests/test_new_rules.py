@@ -317,3 +317,16 @@ def test_w015_does_not_flag_function_in_where_only():
 
     rule = JoinFunctionOnColumn()
     assert _line(rule, "WHERE UPPER(email) = 'A@B.COM'") is None
+
+
+def test_w015_does_not_flag_clean_join_with_dirty_where():
+    """W015 must stop at the next clause keyword so it doesn't poach W003's WHERE case."""
+    from sql_guard.rules.warnings import JoinFunctionOnColumn
+
+    rule = JoinFunctionOnColumn()
+    sql = (
+        "SELECT * FROM orders o "
+        "JOIN customers c ON o.customer_id = c.id "
+        "WHERE UPPER(o.email) = 'A@B.COM'"
+    )
+    assert _line(rule, sql) is None
