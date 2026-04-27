@@ -14,6 +14,7 @@ from sql_guard.rules.errors import (
     UpdateWithoutWhere,
 )
 from sql_guard.rules.warnings import (
+    CaseWithoutElse,
     CommentedOutCode,
     CountDistinctUnbounded,
     FunctionOnIndexedColumn,
@@ -75,6 +76,7 @@ ALL_RULES: list[Rule] = [
     OrAcrossColumns(),
     TruncateTable(),
     CountDistinctUnbounded(),
+    CaseWithoutElse(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),

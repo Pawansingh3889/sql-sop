@@ -34,3 +34,11 @@ FROM events;
 SELECT *
 FROM customers
 WHERE id NOT IN (SELECT customer_id FROM orders);
+
+-- W014: CASE without ELSE
+SELECT
+  CASE
+    WHEN status = 'paid' THEN 1
+    WHEN status = 'pending' THEN 0
+  END AS paid_flag
+FROM orders;
