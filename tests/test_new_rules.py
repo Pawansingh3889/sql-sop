@@ -275,3 +275,45 @@ def test_w023_passes_plain_where():
 def test_w023_passes_table_column_reference():
     rule = ScalarUdfInWhere()
     assert _stmt(rule, "SELECT id FROM t WHERE x.y = 1;") is None
+
+
+
+# W015 join-function-on-column ------------------------------------------------
+
+
+def test_w015_flags_upper_function_in_join_on():
+    from sql_guard.rules.warnings import JoinFunctionOnColumn
+
+    rule = JoinFunctionOnColumn()
+    finding = _line(
+        rule, "JOIN customers c ON UPPER(o.email) = UPPER(c.email)"
+    )
+    assert finding is not None
+    assert finding.rule_id == "W015"
+    assert finding.severity == "warning"
+
+
+def test_w015_flags_year_in_join_on():
+    from sql_guard.rules.warnings import JoinFunctionOnColumn
+
+    rule = JoinFunctionOnColumn()
+    finding = _line(rule, "JOIN events e ON YEAR(o.created_at) = YEAR(e.day)")
+    assert finding is not None
+    assert finding.rule_id == "W015"
+
+
+def test_w015_passes_when_join_uses_materialized_columns():
+    from sql_guard.rules.warnings import JoinFunctionOnColumn
+
+    rule = JoinFunctionOnColumn()
+    assert _line(
+        rule, "JOIN customers c ON o.email_lower = c.email_lower"
+    ) is None
+
+
+def test_w015_does_not_flag_function_in_where_only():
+    """W003 owns the WHERE case; W015 should stay quiet there."""
+    from sql_guard.rules.warnings import JoinFunctionOnColumn
+
+    rule = JoinFunctionOnColumn()
+    assert _line(rule, "WHERE UPPER(email) = 'A@B.COM'") is None
