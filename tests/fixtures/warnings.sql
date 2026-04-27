@@ -34,3 +34,8 @@ FROM events;
 SELECT *
 FROM customers
 WHERE id NOT IN (SELECT customer_id FROM orders);
+
+-- W015: Function on column in JOIN ... ON
+SELECT *
+FROM orders o
+JOIN customers c ON UPPER(o.email) = UPPER(c.email);
