@@ -10,11 +10,26 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-04-27
+
 ### Added
 
 - **W013 `window-without-partition`** - warns on window functions
-  using OVER () without PARTITION BY, flagging non-deterministic
-  ordering and full-result-set scans.
+  using `OVER ()` without `PARTITION BY`, flagging non-deterministic
+  ordering and full-result-set scans. Dialect-aware messaging across
+  Postgres and Redshift. Contributed by
+  [@Prabhu-1409](https://github.com/Prabhu-1409)
+  ([#21](https://github.com/Pawansingh3889/sql-guard/pull/21)). Resolves #9.
+
+### Repository
+
+- Added [`ROADMAP.md`](ROADMAP.md) describing the v0.7 Performance
+  Rules Pack milestone, tentative v0.8 dialect-aware coverage
+  direction, and the always-out-of-scope set.
+- Added README Contributors section crediting external rule authors
+  (currently @tmchow, @mvanhorn, @Prabhu-1409).
+- Added `scripts/scaffold_rule.py` for new contributors to generate
+  the boilerplate snippets for a new rule.
 
 ## [0.6.1] - 2026-04-26
 
