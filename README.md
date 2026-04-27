@@ -437,8 +437,10 @@ Thank you to the people who have shipped rules and code to sql-sop.
 
 | Contributor | Contribution |
 |---|---|
-| [@Prabhu-1409](https://github.com/Prabhu-1409) | [W013 `window-without-partition`](https://github.com/Pawansingh3889/sql-guard/pull/21). Flags `OVER ()` without `PARTITION BY`, dialect-aware messaging for Postgres and Redshift. |
+| [@tmchow](https://github.com/tmchow) | [W011 `union-without-all`](https://github.com/Pawansingh3889/sql-guard/pull/12). Flags `UNION` where `UNION ALL` would be safe and faster. |
+| [@tmchow](https://github.com/tmchow) | [P005 `sqlalchemy-text-fstring`](https://github.com/Pawansingh3889/sql-guard/pull/25). Catches `sqlalchemy.text(f"...{var}")` patterns that defeat parameter binding. |
 | [@mvanhorn](https://github.com/mvanhorn) | [W019 `count-distinct-unbounded`](https://github.com/Pawansingh3889/sql-guard/pull/29). Flags `COUNT(DISTINCT col)` without WHERE, GROUP BY, or LIMIT. |
+| [@Prabhu-1409](https://github.com/Prabhu-1409) | [W013 `window-without-partition`](https://github.com/Pawansingh3889/sql-guard/pull/21). Flags `OVER ()` without `PARTITION BY`, dialect-aware messaging for Postgres and Redshift. |
 
 See [the full contributors graph](https://github.com/Pawansingh3889/sql-guard/graphs/contributors) on GitHub.
 
