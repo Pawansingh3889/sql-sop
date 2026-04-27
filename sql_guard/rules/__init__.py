@@ -31,7 +31,8 @@ from sql_guard.rules.warnings import (
     SubqueryCouldBeJoin,
     TruncateTable,
     UnionWithoutAll,
-    WindowMissingPartition
+    WindowMissingPartition,
+    CrossJoinExplicit,
 )
 from sql_guard.rules.structural import (
     DeeplyNestedSubquery,
@@ -75,6 +76,7 @@ ALL_RULES: list[Rule] = [
     OrAcrossColumns(),
     TruncateTable(),
     CountDistinctUnbounded(),
+    CrossJoinExplicit(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),

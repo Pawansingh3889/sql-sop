@@ -515,3 +515,34 @@ class WindowMissingPartition(Rule):
                 suggestion="Add PARTITION BY to define window groups clearly",
             )
         return None
+
+
+class CrossJoinExplicit(Rule):
+    """W022: Explicit CROSS JOIN is rarely intentional.
+
+    Cross joins multiply every row in the left table with every row in the
+    right table (a Cartesian product). They are almost always a mistake
+    unless the developer explicitly intends a calendar-grid or lookup-table
+    generation pattern. Warn so the author confirms intent.
+
+    Suppress with an inline ``-- noqa: W022`` comment on the same line.
+    """
+
+    id = "W022"
+    name = "cross-join-explicit"
+    severity = "warning"
+    description = "Explicit CROSS JOIN produces a Cartesian product; confirm this is intentional"
+
+    _cross_join = Rule._compile(r"\bCROSS\s+JOIN\b")
+
+    def check_line(self, line: str, line_number: int, file: str):
+        if self._cross_join.search(line):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=line_number,
+                message="Explicit CROSS JOIN -- Cartesian product, confirm this is intentional",
+                suggestion="If intentional, add '-- noqa: W022' to suppress this warning",
+            )
+        return None

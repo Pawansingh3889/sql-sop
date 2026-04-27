@@ -195,3 +195,39 @@ def test_w019_does_not_fire_on_plain_count():
     rule = CountDistinctUnbounded()
     assert _stmt(rule, "SELECT COUNT(*) FROM events;") is None
     assert _stmt(rule, "SELECT COUNT(user_id) FROM events;") is None
+
+
+# ── W022: cross-join-explicit ──────────────────────────────────────────────
+from sql_guard.rules.warnings import CrossJoinExplicit
+
+
+def test_w022_flags_explicit_cross_join():
+    rule = CrossJoinExplicit()
+    finding = _line(rule, "SELECT * FROM products p CROSS JOIN regions r;")
+    assert finding is not None
+    assert finding.rule_id == "W022"
+    assert finding.severity == "warning"
+
+
+def test_w022_flags_cross_join_case_insensitive():
+    rule = CrossJoinExplicit()
+    finding = _line(rule, "select * from products cross join regions;")
+    assert finding is not None
+    assert finding.rule_id == "W022"
+
+
+def test_w022_passes_regular_inner_join():
+    rule = CrossJoinExplicit()
+    assert _line(rule, "SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id;") is None
+
+
+def test_w022_passes_left_join():
+    rule = CrossJoinExplicit()
+    assert _line(rule, "SELECT * FROM orders o LEFT JOIN customers c ON o.customer_id = c.id;") is None
+
+
+def test_w022_flags_cross_join_with_subquery():
+    rule = CrossJoinExplicit()
+    finding = _line(rule, "SELECT * FROM calendar_dates CROSS JOIN (SELECT 1 AS n UNION ALL SELECT 2);")
+    assert finding is not None
+    assert finding.rule_id == "W022"
