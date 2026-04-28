@@ -34,3 +34,8 @@ FROM events;
 SELECT *
 FROM customers
 WHERE id NOT IN (SELECT customer_id FROM orders);
+
+-- W023: scalar UDF in WHERE
+SELECT order_id, total
+FROM orders
+WHERE dbo.fn_IsHighValue(total) = 1;

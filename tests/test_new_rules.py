@@ -8,6 +8,7 @@ from sql_guard.rules.warnings import (
     CountDistinctUnbounded,
     LeadingWildcardLike,
     OrAcrossColumns,
+    ScalarUdfInWhere,
     TruncateTable,
 )
 
@@ -195,3 +196,82 @@ def test_w019_does_not_fire_on_plain_count():
     rule = CountDistinctUnbounded()
     assert _stmt(rule, "SELECT COUNT(*) FROM events;") is None
     assert _stmt(rule, "SELECT COUNT(user_id) FROM events;") is None
+
+
+# W023 scalar-udf-in-where ----------------------------------------------------
+
+
+def test_w023_flags_dbo_udf_in_where():
+    rule = ScalarUdfInWhere()
+    finding = _stmt(
+        rule,
+        "SELECT order_id FROM orders WHERE dbo.fn_IsHighValue(total) = 1;",
+    )
+    assert finding is not None
+    assert finding.rule_id == "W023"
+    assert finding.severity == "warning"
+
+
+def test_w023_flags_schema_udf_in_where():
+    rule = ScalarUdfInWhere()
+    finding = _stmt(
+        rule,
+        "SELECT id FROM t WHERE myschema.fn_X(col) = 1;",
+    )
+    assert finding is not None
+    assert finding.rule_id == "W023"
+
+
+def test_w023_passes_len_builtin_in_where():
+    rule = ScalarUdfInWhere()
+    assert _stmt(rule, "SELECT id FROM users WHERE LEN(name) > 5;") is None
+
+
+def test_w023_passes_upper_builtin_in_where():
+    rule = ScalarUdfInWhere()
+    assert _stmt(rule, "SELECT id FROM users WHERE UPPER(name) = 'X';") is None
+
+
+def test_w023_passes_udf_in_select_list_only():
+    rule = ScalarUdfInWhere()
+    assert _stmt(rule, "SELECT dbo.fn_X(col) FROM t WHERE id = 1;") is None
+
+
+def test_w023_flags_udf_in_having():
+    rule = ScalarUdfInWhere()
+    finding = _stmt(
+        rule,
+        "SELECT col, COUNT(*) FROM t GROUP BY col HAVING dbo.fn_X(col) > 0;",
+    )
+    assert finding is not None
+    assert finding.rule_id == "W023"
+
+
+def test_w023_flags_udf_in_join_on():
+    rule = ScalarUdfInWhere()
+    finding = _stmt(
+        rule,
+        "SELECT a.id FROM a JOIN b ON dbo.fn_X(a.id) = b.id;",
+    )
+    assert finding is not None
+    assert finding.rule_id == "W023"
+
+
+def test_w023_flags_inner_where_in_exists():
+    rule = ScalarUdfInWhere()
+    finding = _stmt(
+        rule,
+        "SELECT id FROM t WHERE EXISTS (SELECT 1 FROM x WHERE dbo.fn_X(col) = 1);",
+    )
+    assert finding is not None
+    assert finding.rule_id == "W023"
+
+
+def test_w023_passes_plain_where():
+    rule = ScalarUdfInWhere()
+    assert _stmt(rule, "SELECT id FROM orders WHERE total > 1000;") is None
+
+
+def test_w023_passes_table_column_reference():
+    rule = ScalarUdfInWhere()
+    assert _stmt(rule, "SELECT id FROM t WHERE x.y = 1;") is None
