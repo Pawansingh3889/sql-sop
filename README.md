@@ -132,7 +132,7 @@ You want both.
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/Pawansingh3889/sql-guard
-    rev: v0.6.1
+    rev: v0.6.2
     hooks:
       - id: sql-guard
         args: [--severity, error]  # only block on errors locally
