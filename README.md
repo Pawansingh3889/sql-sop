@@ -24,7 +24,7 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 39 (10 errors, 24 warnings, 5 Python-source) |
+| Rules | 40 (10 errors, 25 warnings, 5 Python-source) |
 | Tests | 152 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
@@ -43,7 +43,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 38 rules (33 SQL + 5 Python), including 5 T-SQL-specific rules for SQL Server shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
+Fast, rule-based SQL linter. 40 rules (35 SQL + 5 Python), including SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, and 20 more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
@@ -231,6 +231,7 @@ sql-sop list-rules                       # show every registered rule
 | W017 | `leading-wildcard-like` | `WHERE name LIKE '%smith'` -- non-SARGable, full scan |
 | W018 | `or-across-columns` | `WHERE a = 1 OR b = 2` -- defeats single-column indexes |
 | W020 | `truncate-table` | `TRUNCATE TABLE staging;` -- bypasses triggers, resets identity |
+| W023 | `scalar-udf-in-where` | `WHERE dbo.fn_X(col) = 1` -- row-by-row predicate evaluation |
 
 
 ### T-SQL (v0.5.0+)
@@ -440,6 +441,7 @@ Thank you to the people who have shipped rules and code to sql-sop.
 | [@tmchow](https://github.com/tmchow) | [W011 `union-without-all`](https://github.com/Pawansingh3889/sql-guard/pull/12). Flags `UNION` where `UNION ALL` would be safe and faster. |
 | [@tmchow](https://github.com/tmchow) | [P005 `sqlalchemy-text-fstring`](https://github.com/Pawansingh3889/sql-guard/pull/25). Catches `sqlalchemy.text(f"...{var}")` patterns that defeat parameter binding. |
 | [@mvanhorn](https://github.com/mvanhorn) | [W019 `count-distinct-unbounded`](https://github.com/Pawansingh3889/sql-guard/pull/29). Flags `COUNT(DISTINCT col)` without WHERE, GROUP BY, or LIMIT. |
+| [@mvanhorn](https://github.com/mvanhorn) | W023 `scalar-udf-in-where`. Flags schema-qualified scalar UDF calls inside WHERE, HAVING, and ON predicates. |
 | [@Prabhu-1409](https://github.com/Prabhu-1409) | [W013 `window-without-partition`](https://github.com/Pawansingh3889/sql-guard/pull/21). Flags `OVER ()` without `PARTITION BY`, dialect-aware messaging for Postgres and Redshift. |
 
 See [the full contributors graph](https://github.com/Pawansingh3889/sql-guard/graphs/contributors) on GitHub.

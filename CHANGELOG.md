@@ -10,6 +10,13 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+
+- W023 `scalar-udf-in-where`: warns on `<schema>.<name>(...)` calls in
+  `WHERE`/`HAVING`/`ON` clauses, the canonical T-SQL scalar-UDF
+  anti-pattern. Built-ins (no schema prefix) are unaffected.
+  ([#30](https://github.com/Pawansingh3889/sql-guard/issues/30))
+
 ## [0.6.2] - 2026-04-27
 
 ### Added

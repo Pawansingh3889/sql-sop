@@ -27,6 +27,7 @@ from sql_guard.rules.warnings import (
     NotInWithSubquery,
     OrAcrossColumns,
     OrderByWithoutLimit,
+    ScalarUdfInWhere,
     SelectStar,
     SubqueryCouldBeJoin,
     TruncateTable,
@@ -75,6 +76,7 @@ ALL_RULES: list[Rule] = [
     OrAcrossColumns(),
     TruncateTable(),
     CountDistinctUnbounded(),
+    ScalarUdfInWhere(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),

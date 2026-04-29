@@ -1,4 +1,4 @@
-"""Warning rules (W001-W020) -- advisory, don't block commits by default."""
+"""Warning rules (W001-W023) -- advisory, don't block commits by default."""
 
 from __future__ import annotations
 
@@ -514,4 +514,44 @@ class WindowMissingPartition(Rule):
                 message="Missing PARTITION BY in OVER clause",
                 suggestion="Add PARTITION BY to define window groups clearly",
             )
+        return None
+
+
+class ScalarUdfInWhere(Rule):
+    """W023: T-SQL scalar UDF in WHERE/HAVING/ON predicate.
+
+    Scalar UDFs in predicate positions force row-by-row evaluation
+    and prevent index seeks. Built-ins (LEN, UPPER, SUBSTRING, etc.)
+    are not affected because they lack a schema prefix.
+    """
+
+    id = "W023"
+    name = "scalar-udf-in-where"
+    severity = "warning"
+    description = "Scalar UDF in WHERE/HAVING/ON forces row-by-row evaluation"
+    multiline = True
+
+    _predicate_clause = Rule._compile(
+        r"\b(?:WHERE|HAVING|ON)\b([\s\S]*?)"
+        r"(?=\bGROUP\s+BY\b|\bORDER\s+BY\b|\bHAVING\b|\bUNION\b|"
+        r"\bEXCEPT\b|\bINTERSECT\b|\bLIMIT\b|\bFETCH\b|;|\Z)"
+    )
+    _schema_dotted_call = Rule._compile(
+        r"\b[A-Za-z_][A-Za-z0-9_]*\s*\.\s*[A-Za-z_][A-Za-z0-9_]*\s*\("
+    )
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        for clause_match in self._predicate_clause.finditer(statement):
+            clause_body = clause_match.group(1)
+            if self._schema_dotted_call.search(clause_body):
+                return Finding(
+                    rule_id=self.id,
+                    severity=self.severity,
+                    file=file,
+                    line=start_line,
+                    message="Scalar UDF in predicate forces row-by-row evaluation",
+                    suggestion=(
+                        "Inline the predicate, or use an inline TVF (CROSS APPLY) instead"
+                    ),
+                )
         return None
