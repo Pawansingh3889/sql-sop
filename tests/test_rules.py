@@ -213,6 +213,33 @@ class TestWarningRules:
         w014 = [f for f in result.findings if f.rule_id == "W014"]
         assert not w014
 
+    def test_w014_outer_case_without_else_fires_when_inner_has_else(
+        self, tmp_path
+    ) -> None:
+        # Issue #4 specifically called out the nested case: an outer
+        # CASE with no ELSE must still fire even when an inner CASE
+        # does have one.
+        from sql_guard.rules.warnings import CaseWithoutElse
+
+        rule = CaseWithoutElse()
+        nested = (
+            "SELECT CASE\n"
+            "  WHEN x THEN CASE WHEN y THEN 1 ELSE 2 END\n"
+            "  WHEN z THEN 3\n"
+            "END FROM t;"
+        )
+        finding = rule.check_statement(nested, 1, "test.sql")
+        assert finding is not None
+        assert finding.rule_id == "W014"
+
+    def test_w014_does_not_fire_on_begin_end_block(self) -> None:
+        # T-SQL BEGIN/END blocks should not trip the rule on their own.
+        from sql_guard.rules.warnings import CaseWithoutElse
+
+        rule = CaseWithoutElse()
+        proc = "BEGIN\n  SELECT 1;\nEND;"
+        assert rule.check_statement(proc, 1, "test.sql") is None
+
 
 # ---------------------------------------------------------------------------
 # Clean file

@@ -491,6 +491,13 @@ class CaseWithoutElse(Rule):
     ``NULL`` for any row that doesn't match a ``WHEN`` condition.
     Often the author assumes the conditions are exhaustive when they
     aren't, or downstream code can't handle NULLs.
+
+    Walks ``CASE`` / ``ELSE`` / ``END`` tokens with a depth-aware stack
+    so a nested-but-complete ``CASE`` doesn't mask an outer one that
+    lacks ``ELSE``. Each ``CASE`` block is judged on its own ``ELSE``
+    count. Standalone ``END`` tokens (for example ``BEGIN ... END``
+    blocks in T-SQL) are ignored when no matching ``CASE`` is on the
+    stack.
     """
 
     id = "W014"
@@ -499,20 +506,36 @@ class CaseWithoutElse(Rule):
     description = "CASE without ELSE returns NULL for unmatched rows"
     multiline = True
 
-    _case = Rule._compile(r"\bCASE\b")
-    _end = Rule._compile(r"\bEND\b")
-    _else = Rule._compile(r"\bELSE\b")
+    _case_keyword = Rule._compile(r"\b(CASE|END|ELSE)\b")
 
     def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
-        if self._case.search(statement) and self._end.search(statement) and not self._else.search(statement):
-            return Finding(
-                rule_id=self.id,
-                severity=self.severity,
-                file=file,
-                line=start_line,
-                message="CASE without ELSE -- unmatched rows return NULL",
-                suggestion="Add an explicit ELSE clause, even if it's ELSE NULL for clarity",
-            )
+        # Walk CASE/ELSE/END tokens with a depth-aware stack. Each CASE
+        # pushes an entry; ELSE marks the current entry; END pops and
+        # decides. Nested CASEs are judged independently, so an outer
+        # CASE with no ELSE still fires even if an inner one has ELSE.
+        stack: list[bool] = []  # one entry per open CASE; True if ELSE seen
+        for match in self._case_keyword.finditer(statement):
+            word = match.group(1).upper()
+            if word == "CASE":
+                stack.append(False)
+            elif word == "ELSE":
+                if stack:
+                    stack[-1] = True
+            elif word == "END":
+                if not stack:
+                    # END with no matching CASE -- e.g. a T-SQL BEGIN/END
+                    # block. Skip rather than false-fire.
+                    continue
+                had_else = stack.pop()
+                if not had_else:
+                    return Finding(
+                        rule_id=self.id,
+                        severity=self.severity,
+                        file=file,
+                        line=start_line,
+                        message="CASE without ELSE -- unmatched rows return NULL",
+                        suggestion="Add an explicit ELSE clause, even if it's ELSE NULL for clarity",
+                    )
         return None
 
 
