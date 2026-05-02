@@ -16,7 +16,7 @@ from sql_guard.contracts import Contract
 from sql_guard.git_filter import filter_to_changed
 from sql_guard.reporters import sarif as sarif_reporter
 from sql_guard.reporters.terminal import print_result
-from sql_guard.rules import ALL_RULES, CONTRACT_RULE_CLASSES
+from sql_guard.rules import ALL_RULES
 from sql_guard.rules.python_rules import PYTHON_RULES
 
 app = typer.Typer(

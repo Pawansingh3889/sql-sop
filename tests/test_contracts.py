@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from sql_guard.contracts import Contract, ContractColumn, ContractTable
+from sql_guard.contracts import Contract
 from sql_guard.rules.contracts import (
     ColumnNotInContract,
     NotNullViolation,

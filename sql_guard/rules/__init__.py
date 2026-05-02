@@ -59,6 +59,19 @@ from sql_guard.rules.contracts import (
     build_contract_rules,
 )
 
+__all__ = [
+    "ALL_RULES",
+    "CONTRACT_RULE_CLASSES",
+    "ColumnNotInContract",
+    "NotNullViolation",
+    "PrimaryKeyMissingOnInsert",
+    "Rule",
+    "TableNotInContract",
+    "UnmappedForeignKey",
+    "build_contract_rules",
+    "get_rules",
+]
+
 ALL_RULES: list[Rule] = [
     # Errors (E001-E008)
     DeleteWithoutWhere(),
