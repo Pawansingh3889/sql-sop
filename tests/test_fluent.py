@@ -108,7 +108,8 @@ class TestScanFile:
 class TestScanDir:
     def test_scan_dir(self) -> None:
         result = SqlGuard().scan_dir(FIXTURES)
-        assert result.files_checked == 3
+        # errors.sql, warnings.sql, clean.sql, contract_drift.sql
+        assert result.files_checked == 4
         assert len(result.findings) > 0
 
 
