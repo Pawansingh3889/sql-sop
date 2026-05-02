@@ -10,6 +10,10 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-02
+
+Headline release: schema-aware linting via the new **Contracts pack**, three community-contributed rules (W014 / W015 / W022), and the `schema-snapshot` and `validate-contract` subcommands. Core registry is 43 rules (10 errors, 28 warnings, 5 Python-source). With `--contract` enabled the registry grows to 48 rules (12 errors, 31 warnings, 5 Python-source). Without `--contract` behaviour is identical to v0.6.x and there are no breaking changes.
+
 ### Added
 
 - **W014 `case-without-else`** - warns when a `CASE ... END` block has

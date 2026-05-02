@@ -2,13 +2,18 @@
 
 This is the maintainer's working roadmap. It tells you what's likely to land in upcoming releases, what's deliberately out of scope, and where contributions are most welcome. It's a living document — open an issue to discuss anything that surprises you.
 
-Last updated: 2026-04-27.
+Last updated: 2026-05-02.
 
 ## Current release
 
-**v0.6.x** is in maintenance. Headline features as of v0.6.1 on PyPI: 38 rules (33 SQL + 5 Python), T-SQL safety pack (T001-T005), migration guards, inline `-- sql-guard: disable=...` directives, `.sql-guard.yml` config, `--changed-only` flag, SARIF 2.1.0 output for GitHub Code Scanning, libCST scanner for Python source.
+**v0.7.0** is the current PyPI release. Headline additions over v0.6.x:
 
-`main` is at 39 rules after [W013 window-without-partition](https://github.com/Pawansingh3889/sql-guard/pull/21) merged 2026-04-26. **v0.6.2 patch release pending** to ship W013 to PyPI users.
+- **Contracts pack (C001-C005)** — schema-aware linting against a YAML data contract. Opt-in via `--contract path.yml`; silent without it.
+- **`schema-snapshot` subcommand** — bootstrap a contract from a live database via SQLAlchemy introspection. Requires the `[snapshot]` extra.
+- **`validate-contract` subcommand** — validate the contract YAML before running rules, CI-friendly.
+- Three community-contributed rules: **W014 `case-without-else`** (@hellozzm), **W015 `join-function-on-column`** (@mvanhorn), **W022 `cross-join-explicit`** (@vibeyclaw).
+
+Total: 43 rules in the core registry (10 errors, 28 warnings, 5 Python-source), growing to 48 (12 errors, 31 warnings, 5 Python-source) when `--contract` is supplied.
 
 ## v0.7 — Performance Rules Pack
 
