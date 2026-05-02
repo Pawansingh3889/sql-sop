@@ -45,7 +45,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 Fast, rule-based SQL linter. 43 rules (38 SQL + 5 Python), with an optional Contracts pack (5 schema-aware rules) when you supply `--contract path.yml`. SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
 
-Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, and 20 more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
+Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, contract drift, and 40+ more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
 Used in production data pipelines to lint SQL before it reaches manufacturing ERP databases. Prevents dangerous patterns like DELETE without WHERE from running against production SI Integreater tables.
 
@@ -226,16 +226,30 @@ sql-sop list-rules                       # show every registered rule
 | W008 | `mixed-case-keywords` | `select ... FROM` -- inconsistent casing |
 | W009 | `missing-semicolon` | Statement not terminated with `;` |
 | W010 | `commented-out-code` | `-- SELECT * FROM old_table` -- use version control |
+| W011 | `union-without-all` | `UNION` between disjoint sets -- forces a deduplication sort, `UNION ALL` is faster when uniqueness is guaranteed |
+| W012 | `group-by-ordinal` | `GROUP BY 1, 2` -- fragile to SELECT-list reorders |
 | W013 | `window-missing-partition` | `OVER ()` -- unpredictable results and unclear intent |
 | W014 | `case-without-else` | `CASE WHEN ... THEN ... END` -- unmatched rows return NULL |
 | W015 | `join-function-on-column` | `JOIN customers c ON UPPER(o.email) = UPPER(c.email)` -- kills index seek |
-| W016 | `not-in-with-subquery` | `WHERE id NOT IN (SELECT ...)` -- silently returns 0 rows on NULL 
+| W016 | `not-in-with-subquery` | `WHERE id NOT IN (SELECT ...)` -- silently returns 0 rows on NULL |
 | W017 | `leading-wildcard-like` | `WHERE name LIKE '%smith'` -- non-SARGable, full scan |
 | W018 | `or-across-columns` | `WHERE a = 1 OR b = 2` -- defeats single-column indexes |
+| W019 | `count-distinct-unbounded` | `COUNT(DISTINCT col)` with no WHERE / GROUP BY / LIMIT -- full sort + distinct over the whole table |
 | W020 | `truncate-table` | `TRUNCATE TABLE staging;` -- bypasses triggers, resets identity |
 | W022 | `cross-join-explicit` | `FROM products CROSS JOIN regions` -- Cartesian product, confirm intent |
 | W023 | `scalar-udf-in-where` | `WHERE dbo.fn_X(col) = 1` -- row-by-row predicate evaluation |
 
+
+### Structural (v0.3.0+, sqlparse-based)
+
+Rules that need an AST view of the statement, parsed via sqlparse. Catch
+issues that single-line regex matching cannot reliably see.
+
+| ID | Name | What it catches |
+|---|---|---|
+| S001 | `implicit-cross-join` | `JOIN customers` with no `ON` / `USING` -- accidental Cartesian product |
+| S002 | `deeply-nested-subquery` | Subqueries beyond 3 levels deep -- typically a refactor opportunity |
+| S003 | `unused-cte` | `WITH x AS (...)` defined but never referenced |
 
 ### T-SQL (v0.5.0+)
 
@@ -472,12 +486,15 @@ Thank you to the people who have shipped rules and code to sql-sop.
 | [@tmchow](https://github.com/tmchow) | [W011 `union-without-all`](https://github.com/Pawansingh3889/sql-guard/pull/12). Flags `UNION` where `UNION ALL` would be safe and faster. |
 | [@tmchow](https://github.com/tmchow) | [P005 `sqlalchemy-text-fstring`](https://github.com/Pawansingh3889/sql-guard/pull/25). Catches `sqlalchemy.text(f"...{var}")` patterns that defeat parameter binding. |
 | [@mvanhorn](https://github.com/mvanhorn) | [W019 `count-distinct-unbounded`](https://github.com/Pawansingh3889/sql-guard/pull/29). Flags `COUNT(DISTINCT col)` without WHERE, GROUP BY, or LIMIT. |
-| [@mvanhorn](https://github.com/mvanhorn) | W023 `scalar-udf-in-where`. Flags schema-qualified scalar UDF calls inside WHERE, HAVING, and ON predicates. |
+| [@mvanhorn](https://github.com/mvanhorn) | [W015 `join-function-on-column`](https://github.com/Pawansingh3889/sql-guard/pull/33). JOIN-side companion to W003. Flags function calls wrapping columns inside `JOIN ... ON` predicates. |
+| [@mvanhorn](https://github.com/mvanhorn) | [W023 `scalar-udf-in-where`](https://github.com/Pawansingh3889/sql-guard/pull/34). Flags schema-qualified scalar UDF calls inside WHERE, HAVING, and ON predicates. |
 | [@Prabhu-1409](https://github.com/Prabhu-1409) | [W013 `window-without-partition`](https://github.com/Pawansingh3889/sql-guard/pull/21). Flags `OVER ()` without `PARTITION BY`, dialect-aware messaging for Postgres and Redshift. |
+| [@hellozzm](https://github.com/hellozzm) | [W014 `case-without-else`](https://github.com/Pawansingh3889/sql-guard/pull/32). Walks `CASE`/`END` token-by-token; catches outer `CASE` without `ELSE` even when an inner `CASE` does have one. |
+| [@vibeyclaw](https://github.com/vibeyclaw) | [W022 `cross-join-explicit`](https://github.com/Pawansingh3889/sql-guard/pull/31). Flags explicit `CROSS JOIN`. Strips trailing line comments before matching to avoid false positives on commentary. |
 
 See [the full contributors graph](https://github.com/Pawansingh3889/sql-guard/graphs/contributors) on GitHub.
 
-Want to add your name here? Pick a [`good first issue`](https://github.com/Pawansingh3889/sql-guard/labels/good%20first%20issue), follow [`CONTRIBUTING.md`](CONTRIBUTING.md), and check the [v0.7 roadmap](ROADMAP.md). Five performance rules are waiting for an author.
+Want to add your name here? Pick a [`good first issue`](https://github.com/Pawansingh3889/sql-guard/labels/good%20first%20issue), follow [`CONTRIBUTING.md`](CONTRIBUTING.md), and check the [roadmap](ROADMAP.md) for the next batch of rules. v0.7 just shipped (contracts pack); v0.8 is shaping up around dialect-aware coverage.
 
 ---
 
