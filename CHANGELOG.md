@@ -27,6 +27,15 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   so a clean JOIN with a dirty WHERE leaves W015 quiet and lets W003 own
   that case. Contributed by [@mvanhorn](https://github.com/mvanhorn)
   ([#33](https://github.com/Pawansingh3889/sql-guard/pull/33)).
+- **W022 `cross-join-explicit`** - warns on explicit `CROSS JOIN`. Cross
+  joins multiply every row in the left table with every row in the right
+  table (a Cartesian product). Almost always a mistake unless the author
+  intends a calendar-grid or lookup-table generation pattern. The pattern
+  strips trailing line comments before matching so `-- avoid CROSS JOIN`
+  in a trailing comment does not trip the rule. Suppress with
+  `-- sql-guard: disable=W022` on the same line. Contributed by
+  [@vibeyclaw](https://github.com/vibeyclaw)
+  ([#31](https://github.com/Pawansingh3889/sql-guard/pull/31)).
 - W023 `scalar-udf-in-where`: warns on `<schema>.<name>(...)` calls in
   `WHERE`/`HAVING`/`ON` clauses, the canonical T-SQL scalar-UDF
   anti-pattern. Built-ins (no schema prefix) are unaffected.
