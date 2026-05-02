@@ -36,6 +36,22 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   `-- sql-guard: disable=W022` on the same line. Contributed by
   [@vibeyclaw](https://github.com/vibeyclaw)
   ([#31](https://github.com/Pawansingh3889/sql-guard/pull/31)).
+- **Contract Rules pack (C001-C004)** - new `--contract path.yml` flag
+  loads a data contract describing the expected schema and lints SQL
+  against it. Without a contract the rules are silent, so the addition
+  is fully backwards-compatible. The contract format is a thin subset
+  of the [open data-contract space](https://github.com/datacontract/datacontract-cli):
+  tables -> columns -> type / not_null / primary_key / foreign_key /
+  has_default. Contract path can also be supplied via `contract:` in
+  `.sql-guard.yml`, resolved relative to the config file.
+  - **C001 `column-not-in-contract`** (warning): SQL references a column
+    that isn't declared in the contract for that table.
+  - **C002 `table-not-in-contract`** (warning): statement touches a table
+    not declared in the contract. Disable for partial-coverage contracts.
+  - **C003 `not-null-violation`** (error): INSERT omits a column that the
+    contract marks as NOT NULL with no default.
+  - **C004 `primary-key-missing-on-insert`** (error): INSERT omits a
+    primary-key column that has no default in the contract.
 - W023 `scalar-udf-in-where`: warns on `<schema>.<name>(...)` calls in
   `WHERE`/`HAVING`/`ON` clauses, the canonical T-SQL scalar-UDF
   anti-pattern. Built-ins (no schema prefix) are unaffected.
