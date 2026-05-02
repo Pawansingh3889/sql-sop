@@ -1,0 +1,14 @@
+# Sample contract used by the contract test suite.
+tables:
+  orders:
+    columns:
+      id:           {type: bigint,    not_null: true,  primary_key: true, has_default: true}
+      customer_id:  {type: bigint,    not_null: true,  foreign_key: customers.id}
+      total:        {type: decimal,   not_null: true}
+      status:       {type: varchar}
+      created_at:   {type: timestamp, not_null: true}
+  customers:
+    columns:
+      id:    {type: bigint,  not_null: true, primary_key: true, has_default: true}
+      name:  {type: varchar, not_null: true}
+      email: {type: varchar}
