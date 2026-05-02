@@ -24,12 +24,12 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 43 (10 errors, 28 warnings, 5 Python-source) |
-| Tests | 152 |
+| Rules | 43 (10 errors, 28 warnings, 5 Python-source); 48 with `--contract` |
+| Tests | 210 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
 | PyPI downloads | 500+/month |
-| Version | 0.6.2 |
+| Version | 0.7.0 |
 
 ### Fluent API (v0.2.0)
 
@@ -43,7 +43,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 43 rules (38 SQL + 5 Python), including SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
+Fast, rule-based SQL linter. 43 rules (38 SQL + 5 Python), with an optional Contracts pack (5 schema-aware rules) when you supply `--contract path.yml`. SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, and 20 more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
@@ -132,7 +132,7 @@ You want both.
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/Pawansingh3889/sql-guard
-    rev: v0.6.2
+    rev: v0.7.0
     hooks:
       - id: sql-guard
         args: [--severity, error]  # only block on errors locally
