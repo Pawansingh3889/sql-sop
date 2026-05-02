@@ -266,6 +266,19 @@ working example.
 | C002 | `table-not-in-contract` | `SELECT * FROM ghost_table` -- table absent from the contract |
 | C003 | `not-null-violation` | `INSERT INTO orders (id) VALUES (1)` -- omits a NOT NULL column |
 | C004 | `primary-key-missing-on-insert` | INSERT omits a PK column with no default |
+| C005 | `unmapped-fk` | `JOIN ... ON o.id = c.id` -- columns have no FK relationship in the contract |
+
+Two helper subcommands round out the workflow:
+
+```bash
+# Bootstrap a contract from an existing database (requires sql-sop[snapshot]):
+sql-sop schema-snapshot \
+  --dsn "mssql+pyodbc://user:pass@host/db?driver=ODBC+Driver+18+for+SQL+Server" \
+  --output contract.yml
+
+# Validate a contract YAML structure before running rules (CI-friendly):
+sql-sop validate-contract --contract contract.yml
+```
 
 ### Python scanning (v0.4.0+, opt-in)
 

@@ -36,7 +36,7 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   `-- sql-guard: disable=W022` on the same line. Contributed by
   [@vibeyclaw](https://github.com/vibeyclaw)
   ([#31](https://github.com/Pawansingh3889/sql-guard/pull/31)).
-- **Contract Rules pack (C001-C004)** - new `--contract path.yml` flag
+- **Contract Rules pack (C001-C005)** - new `--contract path.yml` flag
   loads a data contract describing the expected schema and lints SQL
   against it. Without a contract the rules are silent, so the addition
   is fully backwards-compatible. The contract format is a thin subset
@@ -52,6 +52,24 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
     contract marks as NOT NULL with no default.
   - **C004 `primary-key-missing-on-insert`** (error): INSERT omits a
     primary-key column that has no default in the contract.
+  - **C005 `unmapped-fk`** (warning): JOIN predicate uses two columns the
+    contract has no foreign-key relationship for. Catches accidental
+    cross-table joins where the schema declares no relationship between
+    the two columns. Resolves the FK in either direction so the JOIN
+    column order doesn't matter.
+- **`sql-sop schema-snapshot --dsn ... --output contract.yml`** - new
+  subcommand. Connects to a live database via SQLAlchemy, introspects
+  tables / columns / PKs / FKs / nullable, and writes a contract-shaped
+  YAML. Bootstraps the contract workflow: take a snapshot of an existing
+  database, commit it as `contract.yml`, then lint queries against it
+  via `--contract`. Requires `pip install "sql-sop[snapshot]"`. Supports
+  `--schema` (override default schema) and `--include-table` (repeatable,
+  for partial snapshots).
+- **`sql-sop validate-contract --contract contract.yml`** - new
+  subcommand. Loads the contract, validates structure, prints
+  table/column/PK/FK counts, exits non-zero on parse failure. Useful in
+  CI before `check --contract` so a malformed contract fails fast with a
+  readable error rather than an obscure check-time crash.
 - W023 `scalar-udf-in-where`: warns on `<schema>.<name>(...)` calls in
   `WHERE`/`HAVING`/`ON` clauses, the canonical T-SQL scalar-UDF
   anti-pattern. Built-ins (no schema prefix) are unaffected.
