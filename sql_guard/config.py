@@ -41,15 +41,27 @@ class Config:
     ignore: list[str] = field(default_factory=list)
     include_python: bool = False
     severity: str = "warning"
+    contract: Path | None = None
     source: Path | None = None
 
     @classmethod
     def from_dict(cls, data: dict, source: Path | None = None) -> "Config":
+        contract_value = data.get("contract")
+        contract_path: Path | None = None
+        if contract_value:
+            raw_path = Path(str(contract_value))
+            # Resolve contract paths relative to the config file when
+            # supplied, so a project-root config can reference
+            # ``schema/contract.yml`` without fully-qualified paths.
+            if not raw_path.is_absolute() and source is not None:
+                raw_path = source.parent / raw_path
+            contract_path = raw_path
         return cls(
             disable={s.upper() for s in (data.get("disable") or [])},
             ignore=list(data.get("ignore") or []),
             include_python=bool(data.get("include_python", False)),
             severity=str(data.get("severity") or "warning"),
+            contract=contract_path,
             source=source,
         )
 
