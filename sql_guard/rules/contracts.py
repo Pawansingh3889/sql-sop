@@ -243,11 +243,117 @@ class PrimaryKeyMissingOnInsert(ContractRule):
         return None
 
 
+class UnmappedForeignKey(ContractRule):
+    """C005: JOIN predicate uses columns the contract has no foreign key for.
+
+    Catches accidental cross-table joins where the contract declares no
+    relationship between the two columns. Walks every ``alias.col =
+    alias.col`` equality inside a ``JOIN ... ON`` clause and checks
+    whether either side has a ``foreign_key: other_table.col`` pointing
+    at the other side. Equalities involving tables not in the contract
+    are skipped (C002 owns that case).
+    """
+
+    id = "C005"
+    name = "unmapped-fk"
+    severity = "warning"
+    description = "JOIN ... ON uses columns with no FK relationship in the contract"
+    multiline = True
+
+    _from_table = re.compile(
+        r"\b(?:FROM|JOIN)\s+([A-Za-z_][\w]*)(?:\s+(?:AS\s+)?([A-Za-z_][\w]*))?",
+        re.IGNORECASE,
+    )
+    _join_on_block = re.compile(
+        r"\bJOIN\s+[A-Za-z_][\w]*(?:\s+(?:AS\s+)?[A-Za-z_][\w]*)?\s+ON\s+(.+?)"
+        r"(?=\bWHERE\b|\bGROUP\s+BY\b|\bORDER\s+BY\b|\bHAVING\b|\bJOIN\b|;|$)",
+        re.IGNORECASE | re.DOTALL,
+    )
+    _equality = re.compile(
+        r"\b([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\s*=\s*([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\b"
+    )
+
+    def _fk_resolves(
+        self, source_table_name: str, source_col: str,
+        target_table_name: str, target_col: str,
+    ) -> bool:
+        if self.contract is None:
+            return False
+        source_table = self.contract.get_table(source_table_name)
+        if source_table is None:
+            return False
+        col = source_table.columns.get(source_col)
+        if col is None or not col.foreign_key:
+            return False
+        ref_table, _, ref_col = col.foreign_key.partition(".")
+        return (
+            ref_table.lower() == target_table_name.lower()
+            and ref_col.lower() == target_col.lower()
+        )
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if not self.contract:
+            return None
+
+        # alias -> table for every FROM/JOIN target.
+        aliases: dict[str, str] = {}
+        for m in self._from_table.finditer(statement):
+            table_name = m.group(1).lower()
+            alias = (m.group(2) or m.group(1)).lower()
+            aliases[alias] = table_name
+
+        if not aliases:
+            return None
+
+        for join_match in self._join_on_block.finditer(statement):
+            on_body = join_match.group(1)
+            for eq in self._equality.finditer(on_body):
+                left_alias, left_col = eq.group(1).lower(), eq.group(2).lower()
+                right_alias, right_col = eq.group(3).lower(), eq.group(4).lower()
+
+                left_table = aliases.get(left_alias)
+                right_table = aliases.get(right_alias)
+                if left_table is None or right_table is None:
+                    continue
+
+                # Both tables must be in the contract -- C002 owns the
+                # "table not in contract" case.
+                if (
+                    self.contract.get_table(left_table) is None
+                    or self.contract.get_table(right_table) is None
+                ):
+                    continue
+
+                # Either column may declare the FK; check both directions.
+                if self._fk_resolves(left_table, left_col, right_table, right_col):
+                    continue
+                if self._fk_resolves(right_table, right_col, left_table, left_col):
+                    continue
+
+                return Finding(
+                    rule_id=self.id,
+                    severity=self.severity,
+                    file=file,
+                    line=start_line,
+                    message=(
+                        f"JOIN on '{left_alias}.{left_col} = "
+                        f"{right_alias}.{right_col}' has no foreign-key "
+                        f"declaration in the contract"
+                    ),
+                    suggestion=(
+                        "Add a foreign_key: <table>.<column> entry to the "
+                        "owning column in the contract, or correct the JOIN"
+                    ),
+                )
+        return None
+
+
 CONTRACT_RULE_CLASSES: list[type[ContractRule]] = [
     ColumnNotInContract,
     TableNotInContract,
     NotNullViolation,
     PrimaryKeyMissingOnInsert,
+    UnmappedForeignKey,
 ]
 
 

@@ -55,6 +55,7 @@ from sql_guard.rules.contracts import (
     NotNullViolation,
     PrimaryKeyMissingOnInsert,
     TableNotInContract,
+    UnmappedForeignKey,
     build_contract_rules,
 )
 

@@ -1,4 +1,4 @@
-"""Tests for the contract-rules pack (C001-C004)."""
+"""Tests for the contract-rules pack (C001-C005)."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from sql_guard.rules.contracts import (
     NotNullViolation,
     PrimaryKeyMissingOnInsert,
     TableNotInContract,
+    UnmappedForeignKey,
     build_contract_rules,
 )
 
@@ -237,10 +238,57 @@ class TestC004PrimaryKeyMissingOnInsert:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# C005 unmapped-fk
+# ---------------------------------------------------------------------------
+
+
+class TestC005UnmappedForeignKey:
+    def test_passes_when_fk_is_declared(self, contract):
+        # contract_sample.yml has orders.customer_id -> customers.id
+        rule = UnmappedForeignKey(contract=contract)
+        sql = (
+            "SELECT * FROM orders o "
+            "JOIN customers c ON o.customer_id = c.id;"
+        )
+        assert _stmt(rule, sql) is None
+
+    def test_passes_when_fk_declared_other_direction(self, contract):
+        # The contract declares the FK on customer_id; the JOIN order
+        # writes c.id = o.customer_id. Should still resolve.
+        rule = UnmappedForeignKey(contract=contract)
+        sql = (
+            "SELECT * FROM orders o "
+            "JOIN customers c ON c.id = o.customer_id;"
+        )
+        assert _stmt(rule, sql) is None
+
+    def test_flags_join_with_no_declared_fk(self, contract):
+        # orders.id -> customers.id is not a real FK in the contract;
+        # the only relationship is orders.customer_id -> customers.id.
+        rule = UnmappedForeignKey(contract=contract)
+        sql = "SELECT * FROM orders o JOIN customers c ON o.id = c.id;"
+        finding = _stmt(rule, sql)
+        assert finding is not None
+        assert finding.rule_id == "C005"
+        assert "o.id" in finding.message and "c.id" in finding.message
+
+    def test_passes_when_either_side_table_not_in_contract(self, contract):
+        # If a table isn't in the contract at all, C002 owns the case.
+        rule = UnmappedForeignKey(contract=contract)
+        sql = "SELECT * FROM orders o JOIN ghosts g ON o.id = g.order_id;"
+        assert _stmt(rule, sql) is None
+
+    def test_no_op_without_contract(self):
+        rule = UnmappedForeignKey(contract=None)
+        sql = "SELECT * FROM orders o JOIN customers c ON o.id = c.id;"
+        assert _stmt(rule, sql) is None
+
+
 def test_build_contract_rules_with_contract_returns_all(contract):
     rules = build_contract_rules(contract)
     ids = {r.id for r in rules}
-    assert ids == {"C001", "C002", "C003", "C004"}
+    assert ids == {"C001", "C002", "C003", "C004", "C005"}
 
 
 def test_build_contract_rules_without_contract_returns_empty():
