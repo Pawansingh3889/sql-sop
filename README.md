@@ -24,7 +24,7 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 41 (10 errors, 26 warnings, 5 Python-source) |
+| Rules | 42 (10 errors, 27 warnings, 5 Python-source) |
 | Tests | 152 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
@@ -43,7 +43,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 41 rules (36 SQL + 5 Python), including SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
+Fast, rule-based SQL linter. 42 rules (37 SQL + 5 Python), including SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, and 20 more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
@@ -227,6 +227,7 @@ sql-sop list-rules                       # show every registered rule
 | W009 | `missing-semicolon` | Statement not terminated with `;` |
 | W010 | `commented-out-code` | `-- SELECT * FROM old_table` -- use version control |
 | W013 | `window-missing-partition` | `OVER ()` -- unpredictable results and unclear intent |
+| W014 | `case-without-else` | `CASE WHEN ... THEN ... END` -- unmatched rows return NULL |
 | W015 | `join-function-on-column` | `JOIN customers c ON UPPER(o.email) = UPPER(c.email)` -- kills index seek |
 | W016 | `not-in-with-subquery` | `WHERE id NOT IN (SELECT ...)` -- silently returns 0 rows on NULL 
 | W017 | `leading-wildcard-like` | `WHERE name LIKE '%smith'` -- non-SARGable, full scan |

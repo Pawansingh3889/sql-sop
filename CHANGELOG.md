@@ -12,6 +12,13 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Added
 
+- **W014 `case-without-else`** - warns when a `CASE ... END` block has
+  no `ELSE` branch, so unmatched rows return `NULL`. Walks the
+  statement token-by-token tracking nesting, so an outer `CASE` with no
+  `ELSE` still fires even when an inner `CASE` does have one. Fires per
+  unmatched block. Suggests adding `ELSE NULL` for explicitness.
+  Contributed by [@hellozzm](https://github.com/hellozzm)
+  ([#32](https://github.com/Pawansingh3889/sql-guard/pull/32)).
 - **W015 `join-function-on-column`** - warns when a function wraps a
   column inside a `JOIN ... ON` predicate, the JOIN-side companion to W003.
   `JOIN customers c ON UPPER(o.email) = UPPER(c.email)` defeats every

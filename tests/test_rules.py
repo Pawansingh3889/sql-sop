@@ -18,18 +18,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestRuleRegistry:
     def test_all_rules_loaded(self) -> None:
-        assert len(ALL_RULES) == 36
+        assert len(ALL_RULES) == 37
 
     def test_10_errors(self) -> None:
         # 8 E-series + 2 T-series (T002 xp-cmdshell, T004 deprecated-outer-join).
         errors = [r for r in ALL_RULES if r.severity == "error"]
         assert len(errors) == 10
 
-    def test_26_warnings(self) -> None:
-        # 20 W-series + 3 S-series + 3 T-series (T001 with-nolock,
+    def test_27_warnings(self) -> None:
+        # 21 W-series + 3 S-series + 3 T-series (T001 with-nolock,
         # T003 cursor-declaration, T005 create-index-without-online).
         warnings = [r for r in ALL_RULES if r.severity == "warning"]
-        assert len(warnings) == 26
+        assert len(warnings) == 27
 
     def test_unique_ids(self) -> None:
         ids = [r.id for r in ALL_RULES]
@@ -192,6 +192,53 @@ class TestWarningRules:
         result = check([str(sql)])
         w016 = [f for f in result.findings if f.rule_id == "W016"]
         assert not w016
+
+    def test_w014_case_without_else(self) -> None:
+        findings = check([str(FIXTURES / "warnings.sql")])
+        w014 = [f for f in findings.findings if f.rule_id == "W014"]
+        assert len(w014) >= 1
+        assert "CASE" in w014[0].message
+
+    def test_w014_case_with_else_ok(self, tmp_path) -> None:
+        sql = tmp_path / "case_with_else.sql"
+        sql.write_text(
+            "SELECT CASE\n"
+            "  WHEN status = 'paid' THEN 1\n"
+            "  WHEN status = 'pending' THEN 0\n"
+            "  ELSE NULL\n"
+            "END AS paid_flag\n"
+            "FROM orders;\n"
+        )
+        result = check([str(sql)])
+        w014 = [f for f in result.findings if f.rule_id == "W014"]
+        assert not w014
+
+    def test_w014_outer_case_without_else_fires_when_inner_has_else(
+        self, tmp_path
+    ) -> None:
+        # Issue #4 specifically called out the nested case: an outer
+        # CASE with no ELSE must still fire even when an inner CASE
+        # does have one.
+        from sql_guard.rules.warnings import CaseWithoutElse
+
+        rule = CaseWithoutElse()
+        nested = (
+            "SELECT CASE\n"
+            "  WHEN x THEN CASE WHEN y THEN 1 ELSE 2 END\n"
+            "  WHEN z THEN 3\n"
+            "END FROM t;"
+        )
+        finding = rule.check_statement(nested, 1, "test.sql")
+        assert finding is not None
+        assert finding.rule_id == "W014"
+
+    def test_w014_does_not_fire_on_begin_end_block(self) -> None:
+        # T-SQL BEGIN/END blocks should not trip the rule on their own.
+        from sql_guard.rules.warnings import CaseWithoutElse
+
+        rule = CaseWithoutElse()
+        proc = "BEGIN\n  SELECT 1;\nEND;"
+        assert rule.check_statement(proc, 1, "test.sql") is None
 
 
 # ---------------------------------------------------------------------------
