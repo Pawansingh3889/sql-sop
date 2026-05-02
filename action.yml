@@ -1,5 +1,5 @@
 name: 'sql-sop'
-description: 'Fast rule-based SQL linter. Catches DELETE-without-WHERE, SQL injection, and 20+ dangerous patterns.'
+description: 'Fast rule-based SQL linter. 43 rules covering DELETE-without-WHERE, SQL injection, performance traps, T-SQL anti-patterns, and contract drift.'
 author: 'Pawan Singh Kapkoti'
 branding:
   icon: 'shield'
