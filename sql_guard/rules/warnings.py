@@ -643,3 +643,42 @@ class JoinFunctionOnColumn(Rule):
                 suggestion="Materialize the function into a stored column on both sides: JOIN customers c ON o.email_lower = c.email_lower",
             )
         return None
+
+
+class CrossJoinExplicit(Rule):
+    """W022: Explicit CROSS JOIN is rarely intentional.
+
+    Cross joins multiply every row in the left table with every row in the
+    right table (a Cartesian product). They are almost always a mistake
+    unless the developer explicitly intends a calendar-grid or lookup-table
+    generation pattern. Warn so the author confirms intent.
+
+    Suppress with an inline ``-- noqa: W022`` comment on the same line, or
+    use the project-wide ``-- sql-guard: disable=W022`` directive.
+    """
+
+    id = "W022"
+    name = "cross-join-explicit"
+    severity = "warning"
+    description = "Explicit CROSS JOIN produces a Cartesian product; confirm this is intentional"
+    multiline = False
+
+    _cross_join = Rule._compile(r"\bCROSS\s+JOIN\b")
+    _line_comment = Rule._compile(r"--.*$")
+
+    def check_line(self, line: str, line_number: int, file: str) -> Finding | None:
+        # Strip line comments before matching so 'CROSS JOIN' inside a
+        # trailing comment does not trip the rule. String-literal masking
+        # is left to the existing project-wide approach (rules accept the
+        # same edge cases as W003 / W004 for consistency).
+        body = self._line_comment.sub("", line)
+        if self._cross_join.search(body):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=line_number,
+                message="Explicit CROSS JOIN -- Cartesian product, confirm this is intentional",
+                suggestion="If intentional, suppress with '-- sql-guard: disable=W022' on the same line",
+            )
+        return None

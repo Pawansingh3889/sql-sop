@@ -17,6 +17,7 @@ from sql_guard.rules.warnings import (
     CaseWithoutElse,
     CommentedOutCode,
     CountDistinctUnbounded,
+    CrossJoinExplicit,
     FunctionOnIndexedColumn,
     GroupByOrdinal,
     HardcodedValues,
@@ -34,7 +35,7 @@ from sql_guard.rules.warnings import (
     SubqueryCouldBeJoin,
     TruncateTable,
     UnionWithoutAll,
-    WindowMissingPartition
+    WindowMissingPartition,
 )
 from sql_guard.rules.structural import (
     DeeplyNestedSubquery,
@@ -81,6 +82,7 @@ ALL_RULES: list[Rule] = [
     CountDistinctUnbounded(),
     ScalarUdfInWhere(),
     CaseWithoutElse(),
+    CrossJoinExplicit(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),

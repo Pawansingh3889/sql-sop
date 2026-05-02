@@ -6,6 +6,7 @@ from sql_guard.rules.errors import AlterAddNotNullNoDefault, DropColumn
 from sql_guard.rules.tsql import CreateIndexWithoutOnline
 from sql_guard.rules.warnings import (
     CountDistinctUnbounded,
+    CrossJoinExplicit,
     LeadingWildcardLike,
     OrAcrossColumns,
     ScalarUdfInWhere,
@@ -277,7 +278,6 @@ def test_w023_passes_table_column_reference():
     assert _stmt(rule, "SELECT id FROM t WHERE x.y = 1;") is None
 
 
-
 # W015 join-function-on-column ------------------------------------------------
 
 
@@ -330,3 +330,61 @@ def test_w015_does_not_flag_clean_join_with_dirty_where():
         "WHERE UPPER(o.email) = 'A@B.COM'"
     )
     assert _line(rule, sql) is None
+
+
+# W022 cross-join-explicit ----------------------------------------------------
+
+
+def test_w022_flags_explicit_cross_join():
+    rule = CrossJoinExplicit()
+    finding = _line(rule, "SELECT * FROM products p CROSS JOIN regions r;")
+    assert finding is not None
+    assert finding.rule_id == "W022"
+    assert finding.severity == "warning"
+
+
+def test_w022_flags_cross_join_case_insensitive():
+    rule = CrossJoinExplicit()
+    finding = _line(rule, "select * from products cross join regions;")
+    assert finding is not None
+    assert finding.rule_id == "W022"
+
+
+def test_w022_passes_regular_inner_join():
+    rule = CrossJoinExplicit()
+    assert (
+        _line(rule, "SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id;")
+        is None
+    )
+
+
+def test_w022_passes_left_join():
+    rule = CrossJoinExplicit()
+    assert (
+        _line(
+            rule,
+            "SELECT * FROM orders o LEFT JOIN customers c ON o.customer_id = c.id;",
+        )
+        is None
+    )
+
+
+def test_w022_flags_cross_join_with_subquery():
+    rule = CrossJoinExplicit()
+    finding = _line(
+        rule, "SELECT * FROM calendar_dates CROSS JOIN (SELECT 1 AS n UNION ALL SELECT 2);"
+    )
+    assert finding is not None
+    assert finding.rule_id == "W022"
+
+
+def test_w022_does_not_flag_cross_join_inside_trailing_comment():
+    # 'CROSS JOIN' mentioned in a trailing comment must not trip the rule.
+    rule = CrossJoinExplicit()
+    assert (
+        _line(
+            rule,
+            "SELECT * FROM orders o JOIN customers c ON o.id = c.id;  -- avoid CROSS JOIN here",
+        )
+        is None
+    )
