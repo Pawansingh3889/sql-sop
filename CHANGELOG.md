@@ -12,6 +12,14 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Added
 
+- **W015 `join-function-on-column`** - warns when a function wraps a
+  column inside a `JOIN ... ON` predicate, the JOIN-side companion to W003.
+  `JOIN customers c ON UPPER(o.email) = UPPER(c.email)` defeats every
+  index on the joined column. The pattern stops at the next clause keyword
+  (`WHERE`, `GROUP BY`, `ORDER BY`, `HAVING`, the next `JOIN`, or `UNION`)
+  so a clean JOIN with a dirty WHERE leaves W015 quiet and lets W003 own
+  that case. Contributed by [@mvanhorn](https://github.com/mvanhorn)
+  ([#33](https://github.com/Pawansingh3889/sql-guard/pull/33)).
 - W023 `scalar-udf-in-where`: warns on `<schema>.<name>(...)` calls in
   `WHERE`/`HAVING`/`ON` clauses, the canonical T-SQL scalar-UDF
   anti-pattern. Built-ins (no schema prefix) are unaffected.
