@@ -12,10 +12,11 @@ from rich.table import Table
 
 from sql_guard import __version__, config as config_mod
 from sql_guard.checker import check, discover_files
+from sql_guard.contracts import Contract
 from sql_guard.git_filter import filter_to_changed
 from sql_guard.reporters import sarif as sarif_reporter
 from sql_guard.reporters.terminal import print_result
-from sql_guard.rules import ALL_RULES
+from sql_guard.rules import ALL_RULES, CONTRACT_RULE_CLASSES
 from sql_guard.rules.python_rules import PYTHON_RULES
 
 app = typer.Typer(
@@ -65,6 +66,14 @@ def check_cmd(
         "-o",
         help="Write report to this file instead of stdout (sarif format only).",
     ),
+    contract_path: Optional[Path] = typer.Option(
+        None,
+        "--contract",
+        help=(
+            "Path to a data-contract YAML. When set, contract rules (C001-) "
+            "lint queries against the declared schema."
+        ),
+    ),
 ) -> None:
     """Check SQL files for common issues."""
     if not paths:
@@ -80,6 +89,22 @@ def check_cmd(
 
     effective_include_python = include_python or cfg.include_python
     effective_ignore = cfg.ignore or None
+
+    contract: Optional[Contract] = None
+    effective_contract_path = contract_path or cfg.contract
+    if effective_contract_path is not None:
+        try:
+            contract = Contract.from_file(effective_contract_path)
+        except FileNotFoundError:
+            console.print(
+                f"[red]Contract file not found:[/red] {effective_contract_path}"
+            )
+            raise typer.Exit(code=2)
+        except Exception as exc:
+            console.print(
+                f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}"
+            )
+            raise typer.Exit(code=2)
 
     if changed_only:
         discovered = discover_files(
@@ -104,6 +129,7 @@ def check_cmd(
         disabled_rules=disabled or None,
         ignore=effective_ignore,
         include_python=effective_include_python,
+        contract=contract,
     )
 
     if output_format == "sarif":
