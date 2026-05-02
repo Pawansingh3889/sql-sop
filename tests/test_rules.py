@@ -266,7 +266,8 @@ class TestCleanFile:
 class TestChecker:
     def test_files_checked_count(self) -> None:
         result = check([str(FIXTURES)])
-        assert result.files_checked == 3  # errors.sql, warnings.sql, clean.sql
+        # errors.sql, warnings.sql, clean.sql, contract_drift.sql
+        assert result.files_checked == 4
 
     def test_duration_tracked(self) -> None:
         result = check([str(FIXTURES)])

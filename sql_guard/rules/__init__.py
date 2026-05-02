@@ -49,6 +49,28 @@ from sql_guard.rules.tsql import (
     WithNolock,
     XpCmdshell,
 )
+from sql_guard.rules.contracts import (
+    CONTRACT_RULE_CLASSES,
+    ColumnNotInContract,
+    NotNullViolation,
+    PrimaryKeyMissingOnInsert,
+    TableNotInContract,
+    UnmappedForeignKey,
+    build_contract_rules,
+)
+
+__all__ = [
+    "ALL_RULES",
+    "CONTRACT_RULE_CLASSES",
+    "ColumnNotInContract",
+    "NotNullViolation",
+    "PrimaryKeyMissingOnInsert",
+    "Rule",
+    "TableNotInContract",
+    "UnmappedForeignKey",
+    "build_contract_rules",
+    "get_rules",
+]
 
 ALL_RULES: list[Rule] = [
     # Errors (E001-E008)
@@ -96,11 +118,26 @@ ALL_RULES: list[Rule] = [
 ]
 
 
-def get_rules(enabled_ids: set[str] | None = None, disabled_ids: set[str] | None = None) -> list[Rule]:
-    """Return filtered list of rules based on config."""
-    rules = ALL_RULES
+def get_rules(
+    enabled_ids: set[str] | None = None,
+    disabled_ids: set[str] | None = None,
+    contract: "Contract | None" = None,  # noqa: F821 -- forward reference
+) -> list[Rule]:
+    """Return filtered list of rules based on config.
+
+    If ``contract`` is provided, contract-aware rules (C001-...) are
+    instantiated with that contract and appended. Without a contract they
+    are silent and not registered.
+    """
+    rules = list(ALL_RULES)
+    if contract is not None:
+        rules = rules + list(build_contract_rules(contract))
     if enabled_ids:
         rules = [r for r in rules if r.id in enabled_ids]
     if disabled_ids:
         rules = [r for r in rules if r.id not in disabled_ids]
     return rules
+
+
+# Forward import for type hints; placed at bottom to avoid circular import.
+from sql_guard.contracts import Contract  # noqa: E402, F401
