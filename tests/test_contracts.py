@@ -294,3 +294,41 @@ def test_build_contract_rules_with_contract_returns_all(contract):
 def test_build_contract_rules_without_contract_returns_empty():
     rules = build_contract_rules(None)
     assert rules == []
+
+
+# ---------------------------------------------------------------------------
+# End-to-end integration: the contract pack against a fixture file.
+# ---------------------------------------------------------------------------
+
+
+def test_integration_contract_drift_fixture(contract):
+    """Run the full check pipeline with --contract over the drift fixture.
+
+    Asserts that every rule in C001-C005 (except C004, which uses an
+    inline contract because the sample's PK has has_default=true) fires
+    on the fixture.
+    """
+    from sql_guard.checker import check
+
+    fixture = FIXTURES / "contract_drift.sql"
+    result = check([str(fixture)], contract=contract)
+    rule_ids = {f.rule_id for f in result.findings}
+
+    # The four C-rules whose violation patterns the shared sample
+    # contract can express.
+    assert "C001" in rule_ids
+    assert "C002" in rule_ids
+    assert "C003" in rule_ids
+    assert "C005" in rule_ids
+
+
+def test_integration_check_without_contract_skips_c_rules(contract):
+    """Without ``contract=``, the C-rules must not register."""
+    from sql_guard.checker import check
+
+    fixture = FIXTURES / "contract_drift.sql"
+    result = check([str(fixture)])  # no contract
+    rule_ids = {f.rule_id for f in result.findings}
+
+    # No C-rule should have fired since no contract was loaded.
+    assert not any(rid.startswith("C") for rid in rule_ids)
