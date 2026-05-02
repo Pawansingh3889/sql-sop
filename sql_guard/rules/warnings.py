@@ -555,3 +555,36 @@ class ScalarUdfInWhere(Rule):
                     ),
                 )
         return None
+
+
+class JoinFunctionOnColumn(Rule):
+    """W015: Function wrapping a column in JOIN ... ON kills index usage."""
+
+    id = "W015"
+    name = "join-function-on-column"
+    severity = "warning"
+    description = "Function on column in JOIN ... ON prevents index usage"
+    multiline = False
+
+    # Match a function call inside the ON predicate only. The negative
+    # lookahead stops the inner match at the next clause keyword (WHERE,
+    # GROUP/ORDER BY, HAVING, JOIN, UNION) or end-of-statement so a clean
+    # JOIN followed by an unrelated WHERE function isn't flagged here --
+    # W003 owns that case.
+    _pattern = Rule._compile(
+        r"\bJOIN\b[^;]*?\bON\b"
+        r"(?:(?!\b(?:WHERE|GROUP\s+BY|ORDER\s+BY|HAVING|JOIN|UNION)\b).)*?"
+        r"\b(YEAR|MONTH|DAY|DATE|UPPER|LOWER|TRIM|CAST|CONVERT|SUBSTRING|COALESCE)\s*\("
+    )
+
+    def check_line(self, line: str, line_number: int, file: str) -> Finding | None:
+        if self._pattern.search(line):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=line_number,
+                message="Function on column in JOIN ... ON -- kills index usage",
+                suggestion="Materialize the function into a stored column on both sides: JOIN customers c ON o.email_lower = c.email_lower",
+            )
+        return None

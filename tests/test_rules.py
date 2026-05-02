@@ -18,18 +18,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestRuleRegistry:
     def test_all_rules_loaded(self) -> None:
-        assert len(ALL_RULES) == 35
+        assert len(ALL_RULES) == 36
 
     def test_10_errors(self) -> None:
         # 8 E-series + 2 T-series (T002 xp-cmdshell, T004 deprecated-outer-join).
         errors = [r for r in ALL_RULES if r.severity == "error"]
         assert len(errors) == 10
 
-    def test_24_warnings(self) -> None:
-        # 19 W-series + 3 S-series + 3 T-series (T001 with-nolock,
+    def test_26_warnings(self) -> None:
+        # 20 W-series + 3 S-series + 3 T-series (T001 with-nolock,
         # T003 cursor-declaration, T005 create-index-without-online).
         warnings = [r for r in ALL_RULES if r.severity == "warning"]
-        assert len(warnings) == 25
+        assert len(warnings) == 26
 
     def test_unique_ids(self) -> None:
         ids = [r.id for r in ALL_RULES]
@@ -243,3 +243,14 @@ class TestChecker:
     def test_nonexistent_path(self) -> None:
         result = check(["nonexistent_dir/"])
         assert result.files_checked == 0
+
+    def test_w015_join_function_on_column(self) -> None:
+        from sql_guard.rules import get_rules
+        from sql_guard.rules.warnings import JoinFunctionOnColumn
+
+        # Confirm registration
+        assert any(isinstance(r, JoinFunctionOnColumn) for r in get_rules())
+
+        findings = check([str(FIXTURES / "warnings.sql")])
+        w015 = [f for f in findings.findings if f.rule_id == "W015"]
+        assert len(w015) >= 1

@@ -39,3 +39,8 @@ WHERE id NOT IN (SELECT customer_id FROM orders);
 SELECT order_id, total
 FROM orders
 WHERE dbo.fn_IsHighValue(total) = 1;
+
+-- W015: Function on column in JOIN ... ON
+SELECT *
+FROM orders o
+JOIN customers c ON UPPER(o.email) = UPPER(c.email);
