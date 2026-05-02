@@ -34,11 +34,13 @@ dependencies = [
 sql-sop = "sql_guard.cli:app"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.4", "libcst>=1.1.0"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.4", "libcst>=1.1.0", "sqlalchemy>=2.0"]
 # Kept as a no-op extra for backwards-compat with `pip install "sql-sop[structural]"`
 # in existing requirements files; sqlparse is now a core dependency.
 structural = []
 python = ["libcst>=1.1.0"]
+# `schema-snapshot` introspects a live database via SQLAlchemy.
+snapshot = ["sqlalchemy>=2.0"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["sql_guard"]

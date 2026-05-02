@@ -167,6 +167,108 @@ def list_rules() -> None:
     console.print(table)
 
 
+@app.command("validate-contract")
+def validate_contract_cmd(
+    contract_path: Path = typer.Option(
+        ...,
+        "--contract",
+        help="Path to a data-contract YAML to validate.",
+    ),
+) -> None:
+    """Validate a data-contract YAML's structure without running rules.
+
+    Useful in CI before ``check --contract``: a malformed contract fails
+    fast with a clear error message instead of an obscure check-time
+    crash.
+    """
+    if not contract_path.is_file():
+        console.print(f"[red]Contract file not found:[/red] {contract_path}")
+        raise typer.Exit(code=2)
+    try:
+        contract = Contract.from_file(contract_path)
+    except Exception as exc:  # pragma: no cover - exact YAML errors vary by version
+        console.print(f"[red]Invalid contract:[/red] {exc}")
+        raise typer.Exit(code=2)
+
+    table_count = len(contract.tables)
+    if table_count == 0:
+        console.print(
+            f"[yellow]Loaded {contract_path} but no tables were declared. "
+            "The contract has no effect.[/yellow]"
+        )
+        return
+
+    column_count = sum(len(t.columns) for t in contract.tables.values())
+    pk_count = sum(len(t.primary_keys) for t in contract.tables.values())
+    fk_count = sum(
+        1
+        for t in contract.tables.values()
+        for c in t.columns.values()
+        if c.foreign_key
+    )
+
+    console.print(
+        f"[green]OK[/green] {contract_path}: {table_count} tables, "
+        f"{column_count} columns, {pk_count} primary keys, {fk_count} foreign keys."
+    )
+
+
+@app.command("schema-snapshot")
+def schema_snapshot_cmd(
+    dsn: str = typer.Option(
+        ...,
+        "--dsn",
+        help=(
+            "SQLAlchemy connection string, e.g. "
+            "'mssql+pyodbc://user:pass@host/db?driver=ODBC+Driver+18+for+SQL+Server' "
+            "or 'postgresql://user:pass@host/db'."
+        ),
+    ),
+    output_path: Path = typer.Option(
+        Path("contract.yml"),
+        "--output",
+        "-o",
+        help="Where to write the contract YAML (default: ./contract.yml).",
+    ),
+    schema: Optional[str] = typer.Option(
+        None,
+        "--schema",
+        help="Schema name (default: the dialect default, e.g. dbo / public).",
+    ),
+    include_table: Optional[list[str]] = typer.Option(
+        None,
+        "--include-table",
+        help="Restrict the snapshot to these tables. Repeatable.",
+    ),
+) -> None:
+    """Connect to a database and write a contract YAML describing its schema.
+
+    Bootstraps the contract workflow: take a snapshot of an existing
+    database, commit it as ``contract.yml``, then lint queries against
+    it via ``--contract contract.yml``. Requires the ``[snapshot]``
+    extra: ``pip install "sql-sop[snapshot]"``.
+    """
+    from sql_guard import snapshot as snapshot_mod
+
+    try:
+        data = snapshot_mod.introspect(
+            dsn=dsn, schema=schema, include_tables=include_table
+        )
+    except snapshot_mod.SnapshotError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2)
+    except Exception as exc:
+        console.print(f"[red]Snapshot failed:[/red] {exc}")
+        raise typer.Exit(code=2)
+
+    snapshot_mod.write_snapshot(data, output_path)
+
+    table_count = len(data.get("tables") or {})
+    console.print(
+        f"[green]OK[/green] wrote {output_path} with {table_count} tables."
+    )
+
+
 @app.command()
 def version() -> None:
     """Show version."""
