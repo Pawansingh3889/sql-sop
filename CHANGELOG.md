@@ -10,7 +10,18 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
-_Nothing yet. Next release will track post-v0.7.0 work._
+### Added
+
+- **W021 `having-without-group-by`** - warns when `HAVING` appears
+  without a preceding `GROUP BY` in the same query block. The query
+  becomes a single implicit group, almost always a typo for `WHERE`.
+  Strips line and block comments before matching and tracks paren
+  depth so a `GROUP BY` inside a subquery does not satisfy a `HAVING`
+  in the outer query. Known limitation: nested grouped subqueries
+  with their own `HAVING` (depth >0) can produce a false positive.
+  Contributed by [@mvanhorn](https://github.com/mvanhorn)
+  ([#39](https://github.com/Pawansingh3889/sql-guard/pull/39)).
+  Resolves #3.
 
 ## [0.7.0] - 2026-05-02
 
