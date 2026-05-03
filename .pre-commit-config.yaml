@@ -3,6 +3,18 @@
 # Install: ``pre-commit install``. On every commit, hooks in this file run
 # against the staged files and either auto-fix (ruff --fix, trailing
 # whitespace) or block the commit with a readable error.
+#
+# Hosted runs: pre-commit.ci runs these hooks on every PR and opens an
+# auto-update PR weekly to bump the rev pins below.
+
+ci:
+  autofix_commit_msg: |
+    style: pre-commit auto-fixes
+
+    [pre-commit.ci] auto-applied fixes from configured hooks
+  autoupdate_commit_msg: |
+    chore(deps): pre-commit autoupdate
+  autoupdate_schedule: weekly
 
 repos:
   # ── Standard hygiene ──────────────────────────────────────────────
