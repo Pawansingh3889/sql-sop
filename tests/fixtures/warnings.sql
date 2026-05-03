@@ -52,3 +52,6 @@ SELECT
     WHEN status = 'pending' THEN 0
   END AS paid_flag
 FROM orders;
+
+-- W021: HAVING without GROUP BY
+SELECT total FROM orders HAVING total > 1000;

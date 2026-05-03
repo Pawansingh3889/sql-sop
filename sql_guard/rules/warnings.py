@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from sql_guard.rules.base import Finding, Rule
 
 
@@ -157,6 +159,57 @@ class OrderByWithoutLimit(Rule):
                 line=start_line,
                 message="ORDER BY without LIMIT -- sorts entire result set",
                 suggestion="Add LIMIT to avoid sorting unbounded data",
+            )
+        return None
+
+
+class HavingWithoutGroupBy(Rule):
+    """W021: HAVING without GROUP BY treats the whole result as one group."""
+
+    id = "W021"
+    name = "having-without-group-by"
+    severity = "warning"
+    description = "HAVING without GROUP BY is legal but usually a mistake"
+    multiline = True
+
+    _having = Rule._compile(r"\bHAVING\b")
+    _group_by = Rule._compile(r"\bGROUP\s+BY\b")
+    _comments = re.compile(r"--[^\n]*(?=\n|$)|/\*.*?\*/", re.DOTALL)
+
+    @staticmethod
+    def _paren_depth(sql: str) -> int:
+        depth = 0
+        for char in sql:
+            if char == "(":
+                depth += 1
+            elif char == ")" and depth > 0:
+                depth -= 1
+        return depth
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        statement = self._comments.sub("", statement)
+        having_match = self._having.search(statement)
+        if not having_match:
+            return None
+        group_by_match = next(
+            (
+                match
+                for match in self._group_by.finditer(statement[: having_match.start()])
+                if self._paren_depth(statement[: match.start()]) == 0
+            ),
+            None,
+        )
+        # If HAVING appears and either there is no GROUP BY at all,
+        # or HAVING appears before GROUP BY (which is syntactically wrong
+        # but the SQL engine still accepts in some dialects), flag it.
+        if not group_by_match:
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message="HAVING without GROUP BY -- did you mean WHERE?",
+                suggestion="Use WHERE for row filtering, or add GROUP BY before HAVING",
             )
         return None
 
