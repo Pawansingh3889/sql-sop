@@ -23,6 +23,22 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   ([#39](https://github.com/Pawansingh3889/sql-guard/pull/39)).
   Resolves #3.
 
+### Fixed
+
+- **S001 `implicit-cross-join`** - the previous regex only matched a
+  comma immediately after the first word after `FROM`. Most real-world
+  comma-joins slipped through silently: aliased tables
+  (`FROM orders o, customers c`), schema-qualified names
+  (`FROM raw.orders, raw.customers`), three-or-more-way joins, and
+  multi-line layouts. Replaced with a paren-depth-aware scan that
+  walks from each `FROM` keyword to the next `WHERE` / `GROUP BY` /
+  `ORDER BY` / `HAVING` / `LIMIT` / explicit `JOIN` / `UNION` /
+  `EXCEPT` / `INTERSECT`, flagging the first depth-0 comma. Strings
+  and comments are stripped first. `DELETE FROM` is skipped.
+  `, LATERAL ...` is recognised as a legitimate
+  Snowflake/Postgres lateral join and not flagged. Resolves #41
+  (the W027 comma-join request was a duplicate of S001).
+
 ## [0.7.0] - 2026-05-02
 
 Headline release: schema-aware linting via the new **Contracts pack**, three community-contributed rules (W014 / W015 / W022), and the `schema-snapshot` and `validate-contract` subcommands. Core registry is 43 rules (10 errors, 28 warnings, 5 Python-source). With `--contract` enabled the registry grows to 48 rules (12 errors, 31 warnings, 5 Python-source). Without `--contract` behaviour is identical to v0.6.x and there are no breaking changes.
