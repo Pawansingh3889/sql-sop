@@ -121,9 +121,7 @@ class DeprecatedOuterJoin(Rule):
 
     _pattern = Rule._compile(r"(?<![@\w])\w+\s*(?:\*=|=\*)\s*\w+")
 
-    def check_statement(
-        self, statement: str, start_line: int, file: str
-    ) -> Finding | None:
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
         if self._pattern.search(statement):
             return Finding(
                 rule_id=self.id,
@@ -156,9 +154,7 @@ class CreateIndexWithoutOnline(Rule):
     _pattern = Rule._compile(r"\bCREATE\s+(?:UNIQUE\s+)?(?:CLUSTERED\s+|NONCLUSTERED\s+)?INDEX\b")
     _has_online_on = Rule._compile(r"\bONLINE\s*=\s*ON\b")
 
-    def check_statement(
-        self, statement: str, start_line: int, file: str
-    ) -> Finding | None:
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
         if self._pattern.search(statement) and not self._has_online_on.search(statement):
             return Finding(
                 rule_id=self.id,

@@ -49,9 +49,7 @@ def test_sarif_emits_each_finding():
 
 
 def test_sarif_render_returns_valid_json():
-    finding = Finding(
-        rule_id="E001", severity="error", file="x.sql", line=1, message="m"
-    )
+    finding = Finding(rule_id="E001", severity="error", file="x.sql", line=1, message="m")
     blob = sarif_reporter.render(_result(finding))
     parsed = json.loads(blob)
     assert parsed["runs"][0]["results"][0]["ruleId"] == "E001"
@@ -59,8 +57,8 @@ def test_sarif_render_returns_valid_json():
 
 def test_sarif_clamps_line_zero_to_one():
     # SARIF requires startLine >= 1; system findings with line=0 must be normalised.
-    finding = Finding(
-        rule_id="SYS", severity="error", file="x.sql", line=0, message="cannot read"
-    )
+    finding = Finding(rule_id="SYS", severity="error", file="x.sql", line=0, message="cannot read")
     doc = sarif_reporter.build(_result(finding))
-    assert doc["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"]["startLine"] == 1
+    assert (
+        doc["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"]["startLine"] == 1
+    )

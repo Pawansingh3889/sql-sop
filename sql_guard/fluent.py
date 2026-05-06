@@ -67,10 +67,7 @@ class ScanResult:
         if not parts:
             return f"no issues in {self.files_checked} file{'s' if self.files_checked != 1 else ''}"
         count_str = ", ".join(parts)
-        return (
-            f"{count_str} in "
-            f"{self.files_checked} file{'s' if self.files_checked != 1 else ''}"
-        )
+        return f"{count_str} in {self.files_checked} file{'s' if self.files_checked != 1 else ''}"
 
     def __len__(self) -> int:
         return len(self.findings)
@@ -123,7 +120,10 @@ class SqlGuard:
         rules = get_rules(enabled_ids=self._enabled, disabled_ids=self._disabled)
 
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".sql", delete=False, encoding="utf-8",
+            mode="w",
+            suffix=".sql",
+            delete=False,
+            encoding="utf-8",
         ) as tmp:
             tmp.write(sql_string)
             tmp_path = Path(tmp.name)

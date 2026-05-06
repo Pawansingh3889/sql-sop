@@ -1,4 +1,5 @@
 """Tests for structural rules (S001-S003)."""
+
 from __future__ import annotations
 
 
@@ -35,10 +36,7 @@ class TestImplicitCrossJoin:
 
     # Regression: previous regex missed schema-qualified table names.
     def test_comma_join_with_schema_qualified_detected(self) -> None:
-        sql = (
-            "SELECT * FROM raw.orders, raw.customers "
-            "WHERE raw.orders.cust_id = raw.customers.id"
-        )
+        sql = "SELECT * FROM raw.orders, raw.customers WHERE raw.orders.cust_id = raw.customers.id"
         result = ImplicitCrossJoin().check_statement(sql, 1, "test.sql")
         assert result is not None
         assert result.rule_id == "S001"
@@ -55,12 +53,7 @@ class TestImplicitCrossJoin:
 
     # Regression: previous regex missed multi-line FROM clauses.
     def test_comma_join_multiline_detected(self) -> None:
-        sql = (
-            "SELECT *\n"
-            "FROM orders o,\n"
-            "     customers c\n"
-            "WHERE o.cust_id = c.id"
-        )
+        sql = "SELECT *\nFROM orders o,\n     customers c\nWHERE o.cust_id = c.id"
         result = ImplicitCrossJoin().check_statement(sql, 1, "test.sql")
         assert result is not None
         assert result.rule_id == "S001"
@@ -90,10 +83,7 @@ class TestImplicitCrossJoin:
         assert result is None
 
     def test_postgres_lateral_passes(self) -> None:
-        sql = (
-            "SELECT * FROM t1 t, "
-            "LATERAL (SELECT * FROM t2 WHERE t2.id = t.id) AS sub"
-        )
+        sql = "SELECT * FROM t1 t, LATERAL (SELECT * FROM t2 WHERE t2.id = t.id) AS sub"
         result = ImplicitCrossJoin().check_statement(sql, 1, "test.sql")
         assert result is None
 
@@ -117,10 +107,7 @@ class TestImplicitCrossJoin:
 
     # Comments between tables are stripped before scanning.
     def test_comment_between_tables_still_detected(self) -> None:
-        sql = (
-            "SELECT * FROM orders o, /* legacy joined here */ customers c "
-            "WHERE o.cust_id = c.id"
-        )
+        sql = "SELECT * FROM orders o, /* legacy joined here */ customers c WHERE o.cust_id = c.id"
         result = ImplicitCrossJoin().check_statement(sql, 1, "test.sql")
         assert result is not None
         assert result.rule_id == "S001"

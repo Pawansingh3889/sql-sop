@@ -11,16 +11,12 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestScanClean:
     def test_scan_clean_sql_passes(self) -> None:
-        result = SqlGuard().scan(
-            "SELECT id, name FROM users WHERE active = true LIMIT 10;"
-        )
+        result = SqlGuard().scan("SELECT id, name FROM users WHERE active = true LIMIT 10;")
         assert result.passed
         assert len(result.findings) == 0
 
     def test_result_bool_clean(self) -> None:
-        result = SqlGuard().scan(
-            "SELECT id, name FROM users WHERE active = true LIMIT 10;"
-        )
+        result = SqlGuard().scan("SELECT id, name FROM users WHERE active = true LIMIT 10;")
         assert bool(result) is True
 
 
@@ -52,9 +48,7 @@ class TestEnableFilter:
         assert "W002" not in rule_ids
 
     def test_enable_multiple(self) -> None:
-        result = SqlGuard().enable("E001", "W001").scan(
-            "DELETE FROM orders;\nSELECT * FROM users;"
-        )
+        result = SqlGuard().enable("E001", "W001").scan("DELETE FROM orders;\nSELECT * FROM users;")
         rule_ids = {f.rule_id for f in result.findings}
         assert rule_ids <= {"E001", "W001"}
 
@@ -121,9 +115,7 @@ class TestResultSummary:
         assert "1 file" in summary
 
     def test_result_summary_clean(self) -> None:
-        result = SqlGuard().scan(
-            "SELECT id FROM users WHERE active = true LIMIT 10;"
-        )
+        result = SqlGuard().scan("SELECT id FROM users WHERE active = true LIMIT 10;")
         summary = result.summary()
         assert "no issues" in summary
 
@@ -138,9 +130,7 @@ class TestResultSummary:
 
 class TestResultBool:
     def test_result_bool(self) -> None:
-        clean = SqlGuard().scan(
-            "SELECT id FROM users WHERE active = true LIMIT 10;"
-        )
+        clean = SqlGuard().scan("SELECT id FROM users WHERE active = true LIMIT 10;")
         assert bool(clean) is True
 
         dirty = SqlGuard().scan("DELETE FROM orders;")
@@ -150,7 +140,5 @@ class TestResultBool:
         result = SqlGuard().scan("DELETE FROM orders;")
         assert len(result) > 0
 
-        clean = SqlGuard().scan(
-            "SELECT id FROM users WHERE active = true LIMIT 10;"
-        )
+        clean = SqlGuard().scan("SELECT id FROM users WHERE active = true LIMIT 10;")
         assert len(clean) == 0

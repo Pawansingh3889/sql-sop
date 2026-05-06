@@ -7,6 +7,7 @@ regex misses, like implicit cross joins or deeply nested subqueries.
 Based on PyCon DE 2026: "Practical Refactoring with Syntax Trees" (Direr).
 Applies AST-based analysis to SQL instead of Python.
 """
+
 from __future__ import annotations
 
 import re

@@ -116,10 +116,7 @@ def test_t004_does_not_flag_plain_assignment():
 
 def test_t004_does_not_flag_modern_joins():
     rule = DeprecatedOuterJoin()
-    assert (
-        _check_statement(rule, "SELECT * FROM a LEFT OUTER JOIN b ON a.id = b.id")
-        is None
-    )
+    assert _check_statement(rule, "SELECT * FROM a LEFT OUTER JOIN b ON a.id = b.id") is None
 
 
 # W002 / W006 FETCH NEXT regression coverage

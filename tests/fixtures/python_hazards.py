@@ -3,6 +3,7 @@
 This file is never imported or executed by the package; it is read as text
 by the Python scanner. The SQL inside is synthetic and harmless.
 """
+
 from __future__ import annotations
 
 

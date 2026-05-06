@@ -27,13 +27,14 @@ def _require_sqlalchemy() -> Any:
         import sqlalchemy  # type: ignore[import-untyped]
     except ImportError as exc:
         raise SnapshotError(
-            "schema-snapshot requires SQLAlchemy. "
-            "Install with: pip install \"sql-sop[snapshot]\""
+            'schema-snapshot requires SQLAlchemy. Install with: pip install "sql-sop[snapshot]"'
         ) from exc
     return sqlalchemy
 
 
-def _column_to_dict(column: Any, primary_keys: set[str], fk_targets: dict[str, str]) -> dict[str, Any]:
+def _column_to_dict(
+    column: Any, primary_keys: set[str], fk_targets: dict[str, str]
+) -> dict[str, Any]:
     """Convert a SQLAlchemy column to the contract column dict shape."""
     out: dict[str, Any] = {"type": str(column.type)}
     if not column.nullable:

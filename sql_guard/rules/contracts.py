@@ -84,8 +84,7 @@ class ColumnNotInContract(ContractRule):
                         f"for table '{table_name}'"
                     ),
                     suggestion=(
-                        f"Either add '{ref_col}' to the contract or correct "
-                        f"the column name"
+                        f"Either add '{ref_col}' to the contract or correct the column name"
                     ),
                 )
         return None
@@ -162,9 +161,7 @@ class NotNullViolation(ContractRule):
         if table is None:
             return None
 
-        listed_cols = {
-            c.strip().strip("[]`\"").lower() for c in m.group(2).split(",")
-        }
+        listed_cols = {c.strip().strip('[]`"').lower() for c in m.group(2).split(",")}
         missing = [c for c in table.required_columns if c not in listed_cols]
 
         if missing:
@@ -216,9 +213,7 @@ class PrimaryKeyMissingOnInsert(ContractRule):
         if table is None or not table.primary_keys:
             return None
 
-        listed_cols = {
-            c.strip().strip("[]`\"").lower() for c in m.group(2).split(",")
-        }
+        listed_cols = {c.strip().strip('[]`"').lower() for c in m.group(2).split(",")}
         missing_pks = [
             pk
             for pk in table.primary_keys
@@ -274,8 +269,11 @@ class UnmappedForeignKey(ContractRule):
     )
 
     def _fk_resolves(
-        self, source_table_name: str, source_col: str,
-        target_table_name: str, target_col: str,
+        self,
+        source_table_name: str,
+        source_col: str,
+        target_table_name: str,
+        target_col: str,
     ) -> bool:
         if self.contract is None:
             return False
@@ -287,8 +285,7 @@ class UnmappedForeignKey(ContractRule):
             return False
         ref_table, _, ref_col = col.foreign_key.partition(".")
         return (
-            ref_table.lower() == target_table_name.lower()
-            and ref_col.lower() == target_col.lower()
+            ref_table.lower() == target_table_name.lower() and ref_col.lower() == target_col.lower()
         )
 
     def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:

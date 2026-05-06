@@ -47,10 +47,7 @@ def test_parse_case_insensitive_ids():
 
 def test_check_file_respects_inline_disable(tmp_path: Path):
     sql = tmp_path / "demo.sql"
-    sql.write_text(
-        "SELECT * FROM t; -- sql-guard: disable=W001\n"
-        "SELECT * FROM other;\n"
-    )
+    sql.write_text("SELECT * FROM t; -- sql-guard: disable=W001\nSELECT * FROM other;\n")
     findings = check_file(sql, ALL_RULES)
     w001 = [f for f in findings if f.rule_id == "W001"]
     # Line 1 is suppressed; line 2 still fires.
@@ -60,9 +57,6 @@ def test_check_file_respects_inline_disable(tmp_path: Path):
 
 def test_check_file_respects_disable_next_line(tmp_path: Path):
     sql = tmp_path / "demo.sql"
-    sql.write_text(
-        "-- sql-guard: disable-next-line=W001\n"
-        "SELECT * FROM t;\n"
-    )
+    sql.write_text("-- sql-guard: disable-next-line=W001\nSELECT * FROM t;\n")
     findings = check_file(sql, ALL_RULES)
     assert not any(f.rule_id == "W001" for f in findings)

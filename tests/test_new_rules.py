@@ -35,10 +35,13 @@ def test_e007_flags_add_not_null_without_default():
 
 def test_e007_passes_when_default_supplied():
     rule = AlterAddNotNullNoDefault()
-    assert _stmt(
-        rule,
-        "ALTER TABLE orders ADD status VARCHAR(20) NOT NULL DEFAULT 'NEW';",
-    ) is None
+    assert (
+        _stmt(
+            rule,
+            "ALTER TABLE orders ADD status VARCHAR(20) NOT NULL DEFAULT 'NEW';",
+        )
+        is None
+    )
 
 
 def test_e007_passes_when_column_is_nullable():
@@ -131,18 +134,24 @@ def test_t005_flags_basic_create_index():
 
 def test_t005_passes_with_online_on():
     rule = CreateIndexWithoutOnline()
-    assert _stmt(
-        rule,
-        "CREATE INDEX ix_orders_date ON orders (order_date) WITH (ONLINE = ON);",
-    ) is None
+    assert (
+        _stmt(
+            rule,
+            "CREATE INDEX ix_orders_date ON orders (order_date) WITH (ONLINE = ON);",
+        )
+        is None
+    )
 
 
 def test_t005_flags_clustered_unique_variants():
     rule = CreateIndexWithoutOnline()
-    assert _stmt(
-        rule,
-        "CREATE UNIQUE NONCLUSTERED INDEX ix ON orders (id);",
-    ) is not None
+    assert (
+        _stmt(
+            rule,
+            "CREATE UNIQUE NONCLUSTERED INDEX ix ON orders (id);",
+        )
+        is not None
+    )
 
 
 # W019 count-distinct-unbounded -----------------------------------------------
@@ -180,10 +189,7 @@ def test_w019_passes_with_group_by():
 
 def test_w019_passes_with_limit():
     rule = CountDistinctUnbounded()
-    assert (
-        _stmt(rule, "SELECT COUNT(DISTINCT user_id) FROM events LIMIT 1;")
-        is None
-    )
+    assert _stmt(rule, "SELECT COUNT(DISTINCT user_id) FROM events LIMIT 1;") is None
 
 
 def test_w019_handles_whitespace_in_count_distinct():
@@ -285,9 +291,7 @@ def test_w015_flags_upper_function_in_join_on():
     from sql_guard.rules.warnings import JoinFunctionOnColumn
 
     rule = JoinFunctionOnColumn()
-    finding = _line(
-        rule, "JOIN customers c ON UPPER(o.email) = UPPER(c.email)"
-    )
+    finding = _line(rule, "JOIN customers c ON UPPER(o.email) = UPPER(c.email)")
     assert finding is not None
     assert finding.rule_id == "W015"
     assert finding.severity == "warning"
@@ -306,9 +310,7 @@ def test_w015_passes_when_join_uses_materialized_columns():
     from sql_guard.rules.warnings import JoinFunctionOnColumn
 
     rule = JoinFunctionOnColumn()
-    assert _line(
-        rule, "JOIN customers c ON o.email_lower = c.email_lower"
-    ) is None
+    assert _line(rule, "JOIN customers c ON o.email_lower = c.email_lower") is None
 
 
 def test_w015_does_not_flag_function_in_where_only():
@@ -352,10 +354,7 @@ def test_w022_flags_cross_join_case_insensitive():
 
 def test_w022_passes_regular_inner_join():
     rule = CrossJoinExplicit()
-    assert (
-        _line(rule, "SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id;")
-        is None
-    )
+    assert _line(rule, "SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id;") is None
 
 
 def test_w022_passes_left_join():

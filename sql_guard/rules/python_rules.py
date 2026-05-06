@@ -148,9 +148,7 @@ class SqlalchemyTextFstring(PythonRule):
                 file=file,
                 line=hit.line,
                 message="f-string passed to sqlalchemy.text() -- SQL injection risk",
-                suggestion=(
-                    "Use bound parameters: text(\"... WHERE id = :id\"), {\"id\": user_id}"
-                ),
+                suggestion=('Use bound parameters: text("... WHERE id = :id"), {"id": user_id}'),
             )
         return None
 
