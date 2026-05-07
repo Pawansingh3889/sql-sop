@@ -11,6 +11,7 @@ from sql_guard.rules.errors import (
     GrantRevoke,
     InsertWithoutColumns,
     StringConcatInWhere,
+    UpdateFromImplicitJoin,
     UpdateWithoutWhere,
 )
 from sql_guard.rules.warnings import (
@@ -74,7 +75,7 @@ __all__ = [
 ]
 
 ALL_RULES: list[Rule] = [
-    # Errors (E001-E008)
+    # Errors (E001-E009)
     DeleteWithoutWhere(),
     DropWithoutIfExists(),
     GrantRevoke(),
@@ -83,6 +84,7 @@ ALL_RULES: list[Rule] = [
     UpdateWithoutWhere(),
     AlterAddNotNullNoDefault(),
     DropColumn(),
+    UpdateFromImplicitJoin(),
     # Warnings (W001-W023 with gaps)
     SelectStar(),
     MissingLimit(),

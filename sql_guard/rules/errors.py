@@ -1,8 +1,10 @@
-"""Error rules (E001-E008) -- these block commits."""
+"""Error rules (E001-E009) -- these block commits."""
 
 from __future__ import annotations
 
-from sql_guard.rules.base import Finding, Rule
+import re
+
+from sql_guard.rules.base import Finding, Rule, strip_strings_and_comments
 
 
 class DeleteWithoutWhere(Rule):
@@ -222,4 +224,121 @@ class DropColumn(Rule):
                 message="DROP COLUMN is irreversible -- subscribers and rollback break",
                 suggestion="Stop reading the column for one release, then drop in a follow-up",
             )
+        return None
+
+
+class UpdateFromImplicitJoin(Rule):
+    """E009: ``UPDATE ... FROM`` with comma-separated tables.
+
+    T-SQL accepts ``UPDATE customers SET status = o.status FROM customers c,
+    orders o WHERE c.customer_id = o.customer_id``. The comma form is a
+    legacy implicit join: get the WHERE wrong (or omit it) and every row in
+    the target table is updated against the Cartesian product. Silent data
+    corruption, no syntax error.
+
+    Reported as **error** rather than warning (the sister rule S001 covers
+    `SELECT FROM` comma-joins as a warning) because the failure mode here
+    is a write that touches every row of a table, not a read.
+
+    The scan walks from each ``UPDATE`` keyword to the next ``FROM``, then
+    forward through the ``FROM`` clause tracking parenthesis depth, stops
+    at ``WHERE`` / ``GROUP BY`` / ``ORDER BY`` / ``HAVING`` / ``LIMIT`` /
+    explicit ``JOIN`` / ``UNION`` / ``EXCEPT`` / ``INTERSECT``, and flags
+    the first depth-0 comma. Strings and comments are stripped first.
+    Comma followed by ``LATERAL`` is recognised as a legitimate
+    Snowflake/Postgres lateral join and not flagged.
+
+    Suppress with an inline ``-- noqa: E009`` comment on the same line, or
+    use the project-wide ``-- sql-guard: disable=E009`` directive.
+    """
+
+    id = "E009"
+    name = "update-from-without-join"
+    severity = "error"
+    description = (
+        "UPDATE ... FROM with comma-separated tables silently creates a Cartesian product"
+    )
+    multiline = True
+
+    _update_pattern = re.compile(r"\bUPDATE\b", re.IGNORECASE)
+    _from_pattern = re.compile(r"\bFROM\b", re.IGNORECASE)
+    _stop_pattern = re.compile(
+        r"\b("
+        r"WHERE|"
+        r"GROUP\s+BY|ORDER\s+BY|HAVING|"
+        r"LIMIT|FETCH|OFFSET|"
+        r"INNER\s+JOIN|"
+        r"LEFT\s+(?:OUTER\s+)?JOIN|"
+        r"RIGHT\s+(?:OUTER\s+)?JOIN|"
+        r"FULL\s+(?:OUTER\s+)?JOIN|"
+        r"CROSS\s+JOIN|"
+        r"NATURAL\s+(?:INNER\s+|LEFT\s+|RIGHT\s+|FULL\s+)?JOIN|"
+        r"JOIN|"
+        r"UNION|EXCEPT|INTERSECT"
+        r")\b",
+        re.IGNORECASE,
+    )
+    _lateral_pattern = re.compile(r"\s*LATERAL\b", re.IGNORECASE)
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        cleaned = strip_strings_and_comments(statement)
+        n = len(cleaned)
+
+        update_match = self._update_pattern.search(cleaned)
+        if not update_match:
+            return None
+
+        # The FROM clause must come after the UPDATE keyword. A FROM that
+        # appears before UPDATE (e.g. inside a CTE) does not belong to this
+        # UPDATE.
+        from_match = self._from_pattern.search(cleaned, update_match.end())
+        if not from_match:
+            return None
+
+        depth = 0
+        i = from_match.end()
+        while i < n:
+            ch = cleaned[i]
+
+            if ch == "(":
+                depth += 1
+                i += 1
+                continue
+            if ch == ")":
+                depth -= 1
+                if depth < 0:
+                    break
+                i += 1
+                continue
+
+            if depth != 0:
+                i += 1
+                continue
+
+            stop = self._stop_pattern.match(cleaned, i)
+            if stop:
+                break
+            if ch == ";":
+                break
+            if ch == ",":
+                if self._lateral_pattern.match(cleaned, i + 1):
+                    i += 1
+                    continue
+                line_offset = statement[:i].count("\n")
+                return Finding(
+                    rule_id=self.id,
+                    severity=self.severity,
+                    file=file,
+                    line=start_line + line_offset,
+                    message=(
+                        "UPDATE ... FROM with comma-separated tables -- "
+                        "silent Cartesian product risks corrupting every row"
+                    ),
+                    suggestion=(
+                        "Use UPDATE ... FROM a INNER JOIN b ON a.id = b.id "
+                        "(explicit JOIN with ON clause)"
+                    ),
+                )
+
+            i += 1
         return None
