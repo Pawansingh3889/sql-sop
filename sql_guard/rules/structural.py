@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 
-from sql_guard.rules.base import Finding, Rule
+from sql_guard.rules.base import Finding, Rule, strip_strings_and_comments
 
 try:
     import sqlparse
@@ -21,24 +21,6 @@ try:
     HAS_SQLPARSE = True
 except ImportError:
     HAS_SQLPARSE = False
-
-
-_SQL_STRING = re.compile(r"'(?:[^']|'')*'")
-_SQL_LINE_COMMENT = re.compile(r"--[^\n]*")
-_SQL_BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
-
-
-def _strip_strings_and_comments(text: str) -> str:
-    """Replace string literals and comments with empty equivalents.
-
-    Preserves character positions roughly (replaces strings with ``''`` and
-    comments with empty), so commas inside literals or comments do not
-    trigger comma-join detection but the surrounding structure is unchanged.
-    """
-    text = _SQL_STRING.sub("''", text)
-    text = _SQL_LINE_COMMENT.sub("", text)
-    text = _SQL_BLOCK_COMMENT.sub("", text)
-    return text
 
 
 class ImplicitCrossJoin(Rule):
@@ -89,7 +71,7 @@ class ImplicitCrossJoin(Rule):
     _lateral_pattern = re.compile(r"\s*LATERAL\b", re.IGNORECASE)
 
     def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
-        cleaned = _strip_strings_and_comments(statement)
+        cleaned = strip_strings_and_comments(statement)
         n = len(cleaned)
 
         for from_match in self._from_pattern.finditer(cleaned):

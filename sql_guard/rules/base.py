@@ -6,6 +6,26 @@ import re
 from dataclasses import dataclass
 
 
+_SQL_STRING = re.compile(r"'(?:[^']|'')*'")
+_SQL_LINE_COMMENT = re.compile(r"--[^\n]*")
+_SQL_BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
+
+
+def strip_strings_and_comments(text: str) -> str:
+    """Replace SQL string literals and comments with empty equivalents.
+
+    Single-quoted strings (with `''` escapes), `--` line comments, and
+    `/* ... */` block comments are all removed (strings collapse to ``''``,
+    comments to empty). Useful before paren-depth or keyword scanning so
+    commas, parentheses, or keywords inside literals/comments do not
+    affect the scan.
+    """
+    text = _SQL_STRING.sub("''", text)
+    text = _SQL_LINE_COMMENT.sub("", text)
+    text = _SQL_BLOCK_COMMENT.sub("", text)
+    return text
+
+
 @dataclass
 class Finding:
     """A single issue found by a rule."""
