@@ -175,7 +175,9 @@ class _SqlCollector(cst.CSTVisitor if _LIBCST_AVAILABLE else object):
         if target is None:
             return
         if not (
-            isinstance(target, (cst.SimpleString, cst.ConcatenatedString, cst.FormattedString, cst.Name))
+            isinstance(
+                target, (cst.SimpleString, cst.ConcatenatedString, cst.FormattedString, cst.Name)
+            )
             or isinstance(target, cst.BinaryOperation)
             or _is_dot_format(target)
         ):

@@ -133,11 +133,7 @@ class TestWarningRules:
         from sql_guard.rules.warnings import HavingWithoutGroupBy
 
         rule = HavingWithoutGroupBy()
-        statement = (
-            "SELECT status, COUNT(*) FROM orders\n"
-            "-- GROUP BY status\n"
-            "HAVING COUNT(*) > 10;"
-        )
+        statement = "SELECT status, COUNT(*) FROM orders\n-- GROUP BY status\nHAVING COUNT(*) > 10;"
         assert rule.check_statement(statement, 1, "test.sql") is not None
 
     def test_w021_ignores_group_by_in_subquery_before_outer_having(self) -> None:
@@ -203,8 +199,10 @@ class TestWarningRules:
         from sql_guard.rules.warnings import WindowMissingPartition
 
         rule = WindowMissingPartition()
-        statement = "SELECT ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY id) AS rn FROM users;"
-    
+        statement = (
+            "SELECT ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY id) AS rn FROM users;"
+        )
+
         assert rule.check_statement(statement, 1, "test.sql") is None
 
     def test_w016_not_in_with_subquery(self) -> None:
@@ -241,9 +239,7 @@ class TestWarningRules:
         w014 = [f for f in result.findings if f.rule_id == "W014"]
         assert not w014
 
-    def test_w014_outer_case_without_else_fires_when_inner_has_else(
-        self, tmp_path
-    ) -> None:
+    def test_w014_outer_case_without_else_fires_when_inner_has_else(self, tmp_path) -> None:
         # Issue #4 specifically called out the nested case: an outer
         # CASE with no ELSE must still fire even when an inner CASE
         # does have one.
@@ -251,10 +247,7 @@ class TestWarningRules:
 
         rule = CaseWithoutElse()
         nested = (
-            "SELECT CASE\n"
-            "  WHEN x THEN CASE WHEN y THEN 1 ELSE 2 END\n"
-            "  WHEN z THEN 3\n"
-            "END FROM t;"
+            "SELECT CASE\n  WHEN x THEN CASE WHEN y THEN 1 ELSE 2 END\n  WHEN z THEN 3\nEND FROM t;"
         )
         finding = rule.check_statement(nested, 1, "test.sql")
         assert finding is not None

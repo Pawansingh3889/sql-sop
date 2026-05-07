@@ -7,7 +7,10 @@ regex misses, like implicit cross joins or deeply nested subqueries.
 Based on PyCon DE 2026: "Practical Refactoring with Syntax Trees" (Direr).
 Applies AST-based analysis to SQL instead of Python.
 """
+
 from __future__ import annotations
+
+import re
 
 from sql_guard.rules.base import Finding, Rule
 
@@ -20,11 +23,41 @@ except ImportError:
     HAS_SQLPARSE = False
 
 
+_SQL_STRING = re.compile(r"'(?:[^']|'')*'")
+_SQL_LINE_COMMENT = re.compile(r"--[^\n]*")
+_SQL_BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
+
+
+def _strip_strings_and_comments(text: str) -> str:
+    """Replace string literals and comments with empty equivalents.
+
+    Preserves character positions roughly (replaces strings with ``''`` and
+    comments with empty), so commas inside literals or comments do not
+    trigger comma-join detection but the surrounding structure is unchanged.
+    """
+    text = _SQL_STRING.sub("''", text)
+    text = _SQL_LINE_COMMENT.sub("", text)
+    text = _SQL_BLOCK_COMMENT.sub("", text)
+    return text
+
+
 class ImplicitCrossJoin(Rule):
     """S001: Implicit cross join via comma-separated tables in FROM.
 
-    SELECT * FROM orders, customers WHERE ...
-    is an implicit cross join. Use explicit JOIN syntax instead.
+    Detects ``SELECT * FROM orders, customers WHERE ...`` and the realistic
+    variants the older regex missed: aliased tables, schema-qualified
+    names, three-or-more-way joins, and multi-line layout. The scan walks
+    from each ``FROM`` keyword tracking parenthesis depth, stopping at
+    ``WHERE`` / ``GROUP BY`` / ``ORDER BY`` / ``HAVING`` / ``LIMIT`` /
+    ``UNION`` / ``EXCEPT`` / ``INTERSECT`` / explicit ``JOIN``, and flags
+    the first depth-0 comma it finds. Commas inside parenthesised
+    sub-expressions (function calls with multiple args, ``VALUES`` rows,
+    inline subqueries) do not trip the rule. Comma followed by
+    ``LATERAL`` is treated as a legitimate Snowflake/Postgres lateral
+    join and not flagged.
+
+    Suppress with an inline ``-- noqa: S001`` comment on the same line, or
+    use the project-wide ``-- sql-guard: disable=S001`` directive.
     """
 
     id = "S001"
@@ -33,18 +66,86 @@ class ImplicitCrossJoin(Rule):
     description = "Comma-separated tables in FROM clause create an implicit cross join"
     multiline = True
 
-    _from_pattern = Rule._compile(r"\bFROM\s+(\w+\s*,\s*\w+)")
+    _from_pattern = re.compile(r"\bFROM\b", re.IGNORECASE)
+    # Keywords that end the FROM clause. Scan stops here without flagging.
+    _stop_pattern = re.compile(
+        r"\b("
+        r"WHERE|"
+        r"GROUP\s+BY|ORDER\s+BY|HAVING|"
+        r"LIMIT|FETCH|OFFSET|"
+        r"INNER\s+JOIN|"
+        r"LEFT\s+(?:OUTER\s+)?JOIN|"
+        r"RIGHT\s+(?:OUTER\s+)?JOIN|"
+        r"FULL\s+(?:OUTER\s+)?JOIN|"
+        r"CROSS\s+JOIN|"
+        r"NATURAL\s+(?:INNER\s+|LEFT\s+|RIGHT\s+|FULL\s+)?JOIN|"
+        r"JOIN|"
+        r"UNION|EXCEPT|INTERSECT"
+        r")\b",
+        re.IGNORECASE,
+    )
+    # LATERAL after a comma is a real Snowflake/Postgres lateral join, not
+    # an implicit cross join. Skip past it.
+    _lateral_pattern = re.compile(r"\s*LATERAL\b", re.IGNORECASE)
 
     def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
-        if self._from_pattern.search(statement):
-            return Finding(
-                rule_id=self.id,
-                severity=self.severity,
-                file=file,
-                line=start_line,
-                message="Implicit cross join via comma-separated tables in FROM",
-                suggestion="Use explicit JOIN syntax: FROM orders JOIN customers ON ...",
-            )
+        cleaned = _strip_strings_and_comments(statement)
+        n = len(cleaned)
+
+        for from_match in self._from_pattern.finditer(cleaned):
+            # Skip "DELETE FROM" — single-target DELETE; Postgres uses
+            # "USING" for multi-table, MySQL has its own form. A bare
+            # comma after DELETE FROM is invalid syntax in most dialects,
+            # so we don't try to interpret it.
+            preceding = cleaned[: from_match.start()].rstrip().upper()
+            if preceding.endswith("DELETE"):
+                continue
+
+            depth = 0
+            i = from_match.end()
+            while i < n:
+                ch = cleaned[i]
+
+                if ch == "(":
+                    depth += 1
+                    i += 1
+                    continue
+                if ch == ")":
+                    depth -= 1
+                    if depth < 0:
+                        # Unbalanced — FROM was inside a subquery that
+                        # has now closed. Stop scanning this match.
+                        break
+                    i += 1
+                    continue
+
+                if depth != 0:
+                    i += 1
+                    continue
+
+                stop = self._stop_pattern.match(cleaned, i)
+                if stop:
+                    break
+
+                if ch == ";":
+                    break
+
+                if ch == ",":
+                    # Suppress for `, LATERAL ...` — valid lateral join.
+                    if self._lateral_pattern.match(cleaned, i + 1):
+                        i += 1
+                        continue
+                    line_offset = statement[:i].count("\n")
+                    return Finding(
+                        rule_id=self.id,
+                        severity=self.severity,
+                        file=file,
+                        line=start_line + line_offset,
+                        message="Implicit cross join via comma-separated tables in FROM",
+                        suggestion="Use explicit JOIN syntax: FROM a INNER JOIN b ON a.id = b.id",
+                    )
+
+                i += 1
         return None
 
 

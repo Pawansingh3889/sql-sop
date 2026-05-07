@@ -248,8 +248,20 @@ class MixedCaseKeywords(Rule):
     multiline = False
 
     _keywords = [
-        "SELECT", "FROM", "WHERE", "JOIN", "INSERT", "UPDATE", "DELETE",
-        "CREATE", "DROP", "ALTER", "ORDER BY", "GROUP BY", "HAVING", "LIMIT",
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "JOIN",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "CREATE",
+        "DROP",
+        "ALTER",
+        "ORDER BY",
+        "GROUP BY",
+        "HAVING",
+        "LIMIT",
     ]
 
     def check_line(self, line: str, line_number: int, file: str) -> Finding | None:
@@ -598,7 +610,9 @@ class WindowMissingPartition(Rule):
     id = "W013"
     name = "window-missing-partition"
     severity = "warning"
-    description = "OVER() without PARTITION BY may lead to unpredictable results and unclear intent."
+    description = (
+        "OVER() without PARTITION BY may lead to unpredictable results and unclear intent."
+    )
     multiline = True
 
     _over_pattern = Rule._compile(r"\bOVER\s*\(")
@@ -658,9 +672,7 @@ class ScalarUdfInWhere(Rule):
                     file=file,
                     line=start_line,
                     message="Scalar UDF in predicate forces row-by-row evaluation",
-                    suggestion=(
-                        "Inline the predicate, or use an inline TVF (CROSS APPLY) instead"
-                    ),
+                    suggestion=("Inline the predicate, or use an inline TVF (CROSS APPLY) instead"),
                 )
         return None
 

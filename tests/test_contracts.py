@@ -109,9 +109,9 @@ class TestC001ColumnNotInContract:
     def test_handles_alias_or_table_name(self, contract):
         rule = ColumnNotInContract(contract=contract)
         # Bare table name (no alias) should still resolve.
-        assert (
-            _stmt(rule, "SELECT orders.id FROM orders;") is None
-        ), "table-name reference to a real column should pass"
+        assert _stmt(rule, "SELECT orders.id FROM orders;") is None, (
+            "table-name reference to a real column should pass"
+        )
         finding = _stmt(rule, "SELECT orders.bogus FROM orders;")
         assert finding is not None and finding.rule_id == "C001"
 
@@ -173,8 +173,7 @@ class TestC003NotNullViolation:
         assert (
             _stmt(
                 rule,
-                "INSERT INTO orders (customer_id, total, created_at) "
-                "VALUES (1, 99.99, NOW());",
+                "INSERT INTO orders (customer_id, total, created_at) VALUES (1, 99.99, NOW());",
             )
             is None
         )
@@ -202,8 +201,7 @@ class TestC004PrimaryKeyMissingOnInsert:
         assert (
             _stmt(
                 rule,
-                "INSERT INTO orders (customer_id, total, created_at) "
-                "VALUES (1, 99.99, NOW());",
+                "INSERT INTO orders (customer_id, total, created_at) VALUES (1, 99.99, NOW());",
             )
             is None
         )
@@ -247,20 +245,14 @@ class TestC005UnmappedForeignKey:
     def test_passes_when_fk_is_declared(self, contract):
         # contract_sample.yml has orders.customer_id -> customers.id
         rule = UnmappedForeignKey(contract=contract)
-        sql = (
-            "SELECT * FROM orders o "
-            "JOIN customers c ON o.customer_id = c.id;"
-        )
+        sql = "SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id;"
         assert _stmt(rule, sql) is None
 
     def test_passes_when_fk_declared_other_direction(self, contract):
         # The contract declares the FK on customer_id; the JOIN order
         # writes c.id = o.customer_id. Should still resolve.
         rule = UnmappedForeignKey(contract=contract)
-        sql = (
-            "SELECT * FROM orders o "
-            "JOIN customers c ON c.id = o.customer_id;"
-        )
+        sql = "SELECT * FROM orders o JOIN customers c ON c.id = o.customer_id;"
         assert _stmt(rule, sql) is None
 
     def test_flags_join_with_no_declared_fk(self, contract):

@@ -30,9 +30,13 @@ console = Console()
 @app.command("check")
 def check_cmd(
     paths: list[str] = typer.Argument(default=None, help="Files or directories to check."),
-    severity: str = typer.Option("warning", "--severity", "-s", help="Minimum severity: error or warning."),
+    severity: str = typer.Option(
+        "warning", "--severity", "-s", help="Minimum severity: error or warning."
+    ),
     fail_fast: bool = typer.Option(False, "--fail-fast", help="Stop after first error."),
-    disable: Optional[list[str]] = typer.Option(None, "--disable", "-d", help="Rule IDs to disable."),
+    disable: Optional[list[str]] = typer.Option(
+        None, "--disable", "-d", help="Rule IDs to disable."
+    ),
     include_python: bool = typer.Option(
         False,
         "--include-python",
@@ -96,14 +100,10 @@ def check_cmd(
         try:
             contract = Contract.from_file(effective_contract_path)
         except FileNotFoundError:
-            console.print(
-                f"[red]Contract file not found:[/red] {effective_contract_path}"
-            )
+            console.print(f"[red]Contract file not found:[/red] {effective_contract_path}")
             raise typer.Exit(code=2)
         except Exception as exc:
-            console.print(
-                f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}"
-            )
+            console.print(f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}")
             raise typer.Exit(code=2)
 
     if changed_only:
@@ -200,12 +200,7 @@ def validate_contract_cmd(
 
     column_count = sum(len(t.columns) for t in contract.tables.values())
     pk_count = sum(len(t.primary_keys) for t in contract.tables.values())
-    fk_count = sum(
-        1
-        for t in contract.tables.values()
-        for c in t.columns.values()
-        if c.foreign_key
-    )
+    fk_count = sum(1 for t in contract.tables.values() for c in t.columns.values() if c.foreign_key)
 
     console.print(
         f"[green]OK[/green] {contract_path}: {table_count} tables, "
@@ -251,9 +246,7 @@ def schema_snapshot_cmd(
     from sql_guard import snapshot as snapshot_mod
 
     try:
-        data = snapshot_mod.introspect(
-            dsn=dsn, schema=schema, include_tables=include_table
-        )
+        data = snapshot_mod.introspect(dsn=dsn, schema=schema, include_tables=include_table)
     except snapshot_mod.SnapshotError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=2)
@@ -264,9 +257,7 @@ def schema_snapshot_cmd(
     snapshot_mod.write_snapshot(data, output_path)
 
     table_count = len(data.get("tables") or {})
-    console.print(
-        f"[green]OK[/green] wrote {output_path} with {table_count} tables."
-    )
+    console.print(f"[green]OK[/green] wrote {output_path} with {table_count} tables.")
 
 
 @app.command()

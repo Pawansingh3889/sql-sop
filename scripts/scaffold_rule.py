@@ -76,7 +76,7 @@ class {klass}(Rule):
 '''
 
 
-TEST_TEMPLATE = '''\
+TEST_TEMPLATE = """\
 def test_{code_lower}_fires_on_bad_sql():
     rule = {klass}()
     finding = _line(rule, {bad!r})
@@ -87,7 +87,7 @@ def test_{code_lower}_fires_on_bad_sql():
 def test_{code_lower}_passes_on_safe_sql():
     rule = {klass}()
     assert _line(rule, {good!r}) is None
-'''
+"""
 
 
 def main() -> int:
@@ -96,8 +96,12 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__.split("Example:")[1] if "Example:" in __doc__ else "",
     )
-    parser.add_argument("--code", required=True, help="Rule code, e.g. W024 (must match [EWTSP]NNN)")
-    parser.add_argument("--name", required=True, help="Rule name in kebab-case, e.g. negate-of-equality")
+    parser.add_argument(
+        "--code", required=True, help="Rule code, e.g. W024 (must match [EWTSP]NNN)"
+    )
+    parser.add_argument(
+        "--name", required=True, help="Rule name in kebab-case, e.g. negate-of-equality"
+    )
     parser.add_argument("--description", required=True, help="One-line description for the rule")
     parser.add_argument("--regex", default="YOUR_PATTERN_HERE", help="Regex pattern to match")
     parser.add_argument("--message", help="Finding message (defaults to description)")
@@ -106,8 +110,12 @@ def main() -> int:
         default="Refactor for clarity and performance",
         help="Suggested fix shown alongside the finding",
     )
-    parser.add_argument("--bad", default="-- TODO: bad SQL example", help="SQL example that should fire")
-    parser.add_argument("--good", default="-- TODO: safe SQL example", help="SQL example that should not fire")
+    parser.add_argument(
+        "--bad", default="-- TODO: bad SQL example", help="SQL example that should fire"
+    )
+    parser.add_argument(
+        "--good", default="-- TODO: safe SQL example", help="SQL example that should not fire"
+    )
     args = parser.parse_args()
 
     code = args.code.upper()

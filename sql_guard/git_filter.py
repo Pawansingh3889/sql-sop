@@ -54,9 +54,7 @@ def changed_files(base: str | None = None) -> set[Path] | None:
     return out
 
 
-def filter_to_changed(
-    discovered: list[Path], base: str | None = None
-) -> tuple[list[Path], bool]:
+def filter_to_changed(discovered: list[Path], base: str | None = None) -> tuple[list[Path], bool]:
     """Filter ``discovered`` to only the files git reports as changed.
 
     Returns ``(filtered_paths, used_git)``. When git isn't available the

@@ -112,11 +112,7 @@ class TestPythonRules:
     def test_safe_parameterised_produces_no_p_findings(self) -> None:
         # The safe_parameterised function uses a literal SQL with a tuple
         # param — P-rules should not fire for it.
-        hits = [
-            h
-            for h in python_scanner.extract_from_file(PY_FIXTURE)
-            if "WHERE id = ?" in h.sql
-        ]
+        hits = [h for h in python_scanner.extract_from_file(PY_FIXTURE) if "WHERE id = ?" in h.sql]
         assert hits, "safe literal should be extracted"
         for hit in hits:
             assert hit.kind == "literal"
