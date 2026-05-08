@@ -165,3 +165,57 @@ class CreateIndexWithoutOnline(Rule):
                 suggestion="Add WITH (ONLINE = ON) on Enterprise; disable T005 on Standard/Express",
             )
         return None
+
+
+class SelectStarInto(Rule):
+    """T006: ``SELECT * INTO target`` infers column types at runtime.
+
+    T-SQL's ``SELECT * INTO new_table FROM source`` derives the schema of
+    ``new_table`` from whatever the source produces at execution time.
+    If the source columns change shape (a column added, type widened, an
+    index changed) the destination table silently adopts those changes,
+    and any code reading from ``new_table`` finds the schema has shifted
+    underneath it. The data-integrity hit is delayed and hard to trace.
+
+    Recommended pattern: ``CREATE TABLE new_table (...)`` with explicit
+    typed columns, then ``INSERT INTO new_table (col1, col2, ...) SELECT
+    ...``. The destination schema lives in source control and a contract
+    breakage shows up as a compile error rather than silently propagated
+    wrong types.
+
+    The rule fires only on the wildcard form. ``SELECT col1, col2 INTO
+    target FROM source`` still derives types from source columns but at
+    least names what is being copied; it stays a green path and gets
+    caught (if a column type drifts) by the contracts pack at C001/C003.
+
+    Suppress with an inline ``-- noqa: T006`` comment on the same line,
+    or use the project-wide ``-- sql-guard: disable=T006`` directive.
+    """
+
+    id = "T006"
+    name = "select-into-without-typed-fields"
+    severity = "warning"
+    description = (
+        "SELECT * INTO derives the destination schema from the source at runtime"
+    )
+    multiline = True
+
+    _pattern = Rule._compile(r"\bSELECT\s+\*\s+INTO\s+\S+")
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        if self._pattern.search(statement):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message=(
+                    "SELECT * INTO derives the destination schema from the source "
+                    "at runtime -- silent breakage when the source changes shape"
+                ),
+                suggestion=(
+                    "CREATE TABLE target (col1 TYPE, ...) explicitly, then "
+                    "INSERT INTO target (col1, ...) SELECT col1, ... FROM source"
+                ),
+            )
+        return None

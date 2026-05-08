@@ -48,6 +48,7 @@ from sql_guard.rules.tsql import (
     CreateIndexWithoutOnline,
     CursorDeclaration,
     DeprecatedOuterJoin,
+    SelectStarInto,
     WithNolock,
     XpCmdshell,
 )
@@ -113,12 +114,13 @@ ALL_RULES: list[Rule] = [
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),
     UnusedCTE(),
-    # T-SQL specific (T001-T005)
+    # T-SQL specific (T001-T006)
     WithNolock(),
     XpCmdshell(),
     CursorDeclaration(),
     DeprecatedOuterJoin(),
     CreateIndexWithoutOnline(),
+    SelectStarInto(),
 ]
 
 
