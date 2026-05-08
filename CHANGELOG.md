@@ -22,6 +22,18 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   Contributed by [@mvanhorn](https://github.com/mvanhorn)
   ([#39](https://github.com/Pawansingh3889/sql-guard/pull/39)).
   Resolves #3.
+- **E009 `update-from-without-join`** (error) - flags
+  `UPDATE ... FROM a, b WHERE ...` and similar comma-separated FROM
+  clauses on UPDATE statements. T-SQL accepts this legacy implicit
+  join: get the WHERE wrong (or omit it) and every row in the target
+  table is updated against the Cartesian product. Severity is error
+  rather than warning (the sister rule S001 covers SELECT FROM
+  comma-joins as a warning) because the failure mode is a write that
+  touches every row of a table. Walk-from-UPDATE-keyword,
+  paren-depth-aware scan reusing the `strip_strings_and_comments`
+  helper from `base.py`. `, LATERAL ...` is recognised as a
+  legitimate Snowflake/Postgres lateral join and not flagged.
+  Resolves #42.
 
 ### Fixed
 

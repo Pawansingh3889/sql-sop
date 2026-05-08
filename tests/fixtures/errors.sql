@@ -17,3 +17,6 @@ INSERT INTO orders VALUES (1, 'test', 100);
 
 -- E006: UPDATE without WHERE
 UPDATE orders SET status = 'cancelled';
+
+-- E009: UPDATE FROM with comma-separated tables (T-SQL legacy implicit join)
+UPDATE customers SET status = o.status FROM customers c, orders o WHERE c.customer_id = o.customer_id;
