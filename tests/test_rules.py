@@ -91,6 +91,85 @@ class TestErrorRules:
         e006 = [f for f in result.findings if f.rule_id == "E006"]
         assert not e006
 
+    def test_e009_update_from_implicit_join(self) -> None:
+        findings = check([str(FIXTURES / "errors.sql")])
+        e009 = [f for f in findings.findings if f.rule_id == "E009"]
+        assert len(e009) >= 1
+        assert "UPDATE" in e009[0].message
+        assert (
+            "cartesian" in e009[0].message.lower()
+            or "comma-separated" in e009[0].message.lower()
+        )
+
+    def test_e009_explicit_join_ok(self, tmp_path) -> None:
+        # The recommended fix from the rule message must NOT trigger E009.
+        sql = tmp_path / "safe_update_from.sql"
+        sql.write_text(
+            "UPDATE c SET c.status = o.status "
+            "FROM customers c INNER JOIN orders o "
+            "ON c.customer_id = o.customer_id;\n"
+        )
+        result = check([str(sql)])
+        e009 = [f for f in result.findings if f.rule_id == "E009"]
+        assert not e009
+
+    def test_e009_postgres_single_from_table_ok(self, tmp_path) -> None:
+        # Postgres UPDATE ... FROM with a single table is the canonical
+        # form and must not flag.
+        sql = tmp_path / "postgres_update.sql"
+        sql.write_text(
+            "UPDATE customers SET status = o.status "
+            "FROM orders o WHERE customers.id = o.customer_id;\n"
+        )
+        result = check([str(sql)])
+        e009 = [f for f in result.findings if f.rule_id == "E009"]
+        assert not e009
+
+    def test_e009_lateral_after_comma_ok(self, tmp_path) -> None:
+        # `, LATERAL ...` is a real Snowflake / Postgres lateral join.
+        sql = tmp_path / "lateral_update.sql"
+        sql.write_text(
+            "UPDATE c SET tag = sub.tag FROM customers c, "
+            "LATERAL (SELECT tag FROM tags WHERE customer_id = c.id LIMIT 1) sub;\n"
+        )
+        result = check([str(sql)])
+        e009 = [f for f in result.findings if f.rule_id == "E009"]
+        assert not e009
+
+    def test_e009_update_without_from_ok(self, tmp_path) -> None:
+        # No FROM clause at all is a plain single-table UPDATE.
+        sql = tmp_path / "plain_update.sql"
+        sql.write_text(
+            "UPDATE customers SET status = 'active' WHERE id = 1;\n"
+        )
+        result = check([str(sql)])
+        e009 = [f for f in result.findings if f.rule_id == "E009"]
+        assert not e009
+
+    def test_e009_three_table_comma_join_flagged(self, tmp_path) -> None:
+        sql = tmp_path / "three_table.sql"
+        sql.write_text(
+            "UPDATE c SET c.label = p.label "
+            "FROM customers c, orders o, products p "
+            "WHERE c.id = o.customer_id AND o.product_id = p.id;\n"
+        )
+        result = check([str(sql)])
+        e009 = [f for f in result.findings if f.rule_id == "E009"]
+        assert len(e009) == 1
+
+    def test_e009_multiline_comma_join_flagged(self, tmp_path) -> None:
+        sql = tmp_path / "multiline.sql"
+        sql.write_text(
+            "UPDATE customers\n"
+            "SET status = o.status\n"
+            "FROM customers c,\n"
+            "     orders o\n"
+            "WHERE c.customer_id = o.customer_id;\n"
+        )
+        result = check([str(sql)])
+        e009 = [f for f in result.findings if f.rule_id == "E009"]
+        assert len(e009) == 1
+
 
 # ---------------------------------------------------------------------------
 # Warning rules
