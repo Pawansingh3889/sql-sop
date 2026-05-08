@@ -255,9 +255,7 @@ class UpdateFromImplicitJoin(Rule):
     id = "E009"
     name = "update-from-without-join"
     severity = "error"
-    description = (
-        "UPDATE ... FROM with comma-separated tables silently creates a Cartesian product"
-    )
+    description = "UPDATE ... FROM with comma-separated tables silently creates a Cartesian product"
     multiline = True
 
     _update_pattern = re.compile(r"\bUPDATE\b", re.IGNORECASE)

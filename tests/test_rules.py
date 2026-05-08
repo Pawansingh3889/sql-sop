@@ -97,8 +97,7 @@ class TestErrorRules:
         assert len(e009) >= 1
         assert "UPDATE" in e009[0].message
         assert (
-            "cartesian" in e009[0].message.lower()
-            or "comma-separated" in e009[0].message.lower()
+            "cartesian" in e009[0].message.lower() or "comma-separated" in e009[0].message.lower()
         )
 
     def test_e009_explicit_join_ok(self, tmp_path) -> None:
@@ -139,9 +138,7 @@ class TestErrorRules:
     def test_e009_update_without_from_ok(self, tmp_path) -> None:
         # No FROM clause at all is a plain single-table UPDATE.
         sql = tmp_path / "plain_update.sql"
-        sql.write_text(
-            "UPDATE customers SET status = 'active' WHERE id = 1;\n"
-        )
+        sql.write_text("UPDATE customers SET status = 'active' WHERE id = 1;\n")
         result = check([str(sql)])
         e009 = [f for f in result.findings if f.rule_id == "E009"]
         assert not e009
