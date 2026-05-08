@@ -265,6 +265,7 @@ positives on non-T-SQL input.
 | T003 | `cursor-declaration` | `DECLARE c CURSOR FOR ...` -- row-by-row processing |
 | T004 | `deprecated-outer-join` | `WHERE a.x *= b.y` -- removed in SQL Server 2012+ |
 | T005 | `create-index-without-online` | `CREATE INDEX ix ON t (...)` -- locks table; add `WITH (ONLINE = ON)` |
+| T006 | `select-into-without-typed-fields` | `SELECT * INTO target FROM source` -- destination schema is inferred at runtime |
 
 ### Contracts (opt-in via `--contract`)
 
