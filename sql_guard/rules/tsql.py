@@ -195,9 +195,7 @@ class SelectStarInto(Rule):
     id = "T006"
     name = "select-into-without-typed-fields"
     severity = "warning"
-    description = (
-        "SELECT * INTO derives the destination schema from the source at runtime"
-    )
+    description = "SELECT * INTO derives the destination schema from the source at runtime"
     multiline = True
 
     _pattern = Rule._compile(r"\bSELECT\s+\*\s+INTO\s+\S+")
