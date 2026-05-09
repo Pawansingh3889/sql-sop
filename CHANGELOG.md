@@ -46,6 +46,17 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   the explicit-column variant (`SELECT col1, col2 INTO target FROM
   source`) is allowed through here and covered by the contracts pack
   at C001/C003 if a column type drifts. Resolves #43.
+- **W024 `select-distinct-suspicious`** (warning) - fires when a
+  statement contains both top-level `SELECT DISTINCT` and any `JOIN`
+  keyword. The pattern is a common band-aid for a missing join
+  condition or a missing `GROUP BY`: developers reach for `DISTINCT`
+  to swallow row duplication caused by an over-wide JOIN cardinality
+  rather than fixing the join. Standalone `SELECT DISTINCT col FROM t`
+  (no join) is left alone, and aggregate-DISTINCT forms like
+  `COUNT(DISTINCT col)` are not flagged because the regex anchors on
+  `SELECT` directly preceding `DISTINCT`. String literals and comments
+  are stripped first so a mention of "SELECT DISTINCT" inside a string
+  or comment cannot fire the rule. Resolves #40.
 
 ### Fixed
 
