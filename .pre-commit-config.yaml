@@ -37,11 +37,16 @@ repos:
       - id: ruff-format
 
   # ── sql-sop dogfooding itself ─────────────────────────────────────
-  # Runs sql-sop on the project's own fixtures + any staged .sql files
-  # so a regression in a rule is caught before it ships.
+  # Runs sql-sop on staged .sql files so a regression in a rule is
+  # caught before it ships. Test fixtures under ``tests/fixtures/`` are
+  # excluded because those files deliberately contain bad SQL
+  # (E001..E006, S001..S003, etc.) to drive the rule unit tests --
+  # running the linter against them is guaranteed to fail and was
+  # turning pre-commit.ci red on every PR.
   - repo: https://github.com/Pawansingh3889/sql-guard
     rev: v0.7.0
     hooks:
       - id: sql-sop
         args: [--severity, error]
         files: \.sql$
+        exclude: ^tests/fixtures/
