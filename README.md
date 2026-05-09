@@ -238,6 +238,7 @@ sql-sop list-rules                       # show every registered rule
 | W020 | `truncate-table` | `TRUNCATE TABLE staging;` -- bypasses triggers, resets identity |
 | W022 | `cross-join-explicit` | `FROM products CROSS JOIN regions` -- Cartesian product, confirm intent |
 | W023 | `scalar-udf-in-where` | `WHERE dbo.fn_X(col) = 1` -- row-by-row predicate evaluation |
+| W024 | `select-distinct-suspicious` | `SELECT DISTINCT a, b FROM x JOIN y ON ...` -- DISTINCT often masks a missing join condition or GROUP BY |
 
 
 ### Structural (v0.3.0+, sqlparse-based)
