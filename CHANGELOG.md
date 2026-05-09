@@ -34,6 +34,18 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   helper from `base.py`. `, LATERAL ...` is recognised as a
   legitimate Snowflake/Postgres lateral join and not flagged.
   Resolves #42.
+- **T006 `select-into-without-typed-fields`** (warning) - flags
+  T-SQL `SELECT * INTO target FROM source` because the destination
+  table's schema is derived from whatever the source produces at
+  execution time. If the source columns change shape (a column added,
+  type widened, an index changed) the destination silently adopts
+  those changes and any code reading from `target` finds the schema
+  has shifted underneath it. Recommended pattern: `CREATE TABLE
+  target (...)` with explicit typed columns, then `INSERT INTO target
+  (col1, ...) SELECT col1, ...`. Fires only on the wildcard form;
+  the explicit-column variant (`SELECT col1, col2 INTO target FROM
+  source`) is allowed through here and covered by the contracts pack
+  at C001/C003 if a column type drifts. Resolves #43.
 
 ### Fixed
 

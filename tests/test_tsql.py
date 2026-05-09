@@ -1,10 +1,11 @@
-"""Tests for T-SQL-specific rules (T001-T004)."""
+"""Tests for T-SQL-specific rules (T001-T006)."""
 
 from __future__ import annotations
 
 from sql_guard.rules.tsql import (
     CursorDeclaration,
     DeprecatedOuterJoin,
+    SelectStarInto,
     WithNolock,
     XpCmdshell,
 )
@@ -138,3 +139,68 @@ def test_w002_still_accepts_fetch_first():
     rule = MissingLimit()
     sql = "SELECT id FROM orders ORDER BY id FETCH FIRST 10 ROWS ONLY"
     assert _check_statement(rule, sql) is None
+
+
+# T006 select-into-without-typed-fields
+
+
+def test_t006_flags_basic_select_star_into():
+    rule = SelectStarInto()
+    finding = _check_statement(rule, "SELECT * INTO staging_orders FROM orders;")
+    assert finding is not None
+    assert finding.rule_id == "T006"
+    assert finding.severity == "warning"
+
+
+def test_t006_flags_select_star_into_with_where():
+    rule = SelectStarInto()
+    sql = "SELECT * INTO archive_2024 FROM orders WHERE year = 2024;"
+    assert _check_statement(rule, sql) is not None
+
+
+def test_t006_flags_multiline_select_star_into():
+    rule = SelectStarInto()
+    sql = "SELECT *\nINTO staging_orders\nFROM orders;"
+    assert _check_statement(rule, sql) is not None
+
+
+def test_t006_case_insensitive():
+    rule = SelectStarInto()
+    assert _check_statement(rule, "select * into staging from orders;") is not None
+
+
+def test_t006_does_not_flag_typed_columns():
+    # The recommended pass form from the issue.
+    rule = SelectStarInto()
+    sql = "SELECT order_id, customer_id INTO staging_orders FROM orders;"
+    assert _check_statement(rule, sql) is None
+
+
+def test_t006_does_not_flag_single_column_into():
+    rule = SelectStarInto()
+    assert _check_statement(rule, "SELECT id INTO ids FROM orders;") is None
+
+
+def test_t006_does_not_flag_select_star_without_into():
+    rule = SelectStarInto()
+    assert _check_statement(rule, "SELECT * FROM orders WHERE id = 1;") is None
+
+
+def test_t006_does_not_flag_tsql_variable_assignment():
+    # SELECT @x = COUNT(*) FROM ... is a T-SQL local-variable assignment,
+    # not a SELECT * INTO target. No schema is being inferred.
+    rule = SelectStarInto()
+    assert _check_statement(rule, "SELECT @x = COUNT(*) FROM orders;") is None
+
+
+def test_t006_does_not_flag_select_star_inside_cte():
+    rule = SelectStarInto()
+    sql = "WITH s AS (SELECT * FROM orders) SELECT id FROM s;"
+    assert _check_statement(rule, sql) is None
+
+
+def test_t006_message_mentions_runtime_schema():
+    rule = SelectStarInto()
+    finding = _check_statement(rule, "SELECT * INTO staging FROM orders;")
+    assert finding is not None
+    assert "runtime" in finding.message.lower() or "source" in finding.message.lower()
