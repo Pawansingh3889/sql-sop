@@ -10,6 +10,7 @@ from sql_guard.rules.warnings import (
     LeadingWildcardLike,
     OrAcrossColumns,
     ScalarUdfInWhere,
+    SelectDistinctSuspicious,
     TruncateTable,
 )
 
@@ -387,3 +388,85 @@ def test_w022_does_not_flag_cross_join_inside_trailing_comment():
         )
         is None
     )
+
+
+# W024 select-distinct-suspicious ---------------------------------------------
+
+
+def test_w024_flags_distinct_with_inner_join():
+    rule = SelectDistinctSuspicious()
+    finding = _stmt(
+        rule,
+        "SELECT DISTINCT c.id, c.name FROM customers c JOIN orders o ON c.id = o.customer_id;",
+    )
+    assert finding is not None
+    assert finding.rule_id == "W024"
+    assert finding.severity == "warning"
+
+
+def test_w024_flags_distinct_with_left_join():
+    rule = SelectDistinctSuspicious()
+    sql = "SELECT DISTINCT a.id FROM a LEFT JOIN b ON a.id = b.a_id;"
+    assert _stmt(rule, sql) is not None
+
+
+def test_w024_flags_distinct_with_join_multiline():
+    rule = SelectDistinctSuspicious()
+    sql = (
+        "SELECT DISTINCT\n  c.id, c.name\nFROM customers c\nJOIN orders o ON c.id = o.customer_id;"
+    )
+    assert _stmt(rule, sql) is not None
+
+
+def test_w024_case_insensitive():
+    rule = SelectDistinctSuspicious()
+    assert _stmt(rule, "select distinct a from x join y on x.id = y.id;") is not None
+
+
+def test_w024_does_not_flag_distinct_alone():
+    # Single-table DISTINCT is fine -- no JOIN cardinality blow-up to mask.
+    rule = SelectDistinctSuspicious()
+    assert _stmt(rule, "SELECT DISTINCT country FROM customers;") is None
+
+
+def test_w024_does_not_flag_count_distinct_with_join():
+    # Aggregate-DISTINCT is a different pattern; the regex anchors on
+    # "SELECT DISTINCT" directly, not "COUNT(DISTINCT ...)".
+    rule = SelectDistinctSuspicious()
+    sql = "SELECT COUNT(DISTINCT c.id) FROM customers c JOIN orders o ON c.id = o.customer_id;"
+    assert _stmt(rule, sql) is None
+
+
+def test_w024_does_not_flag_sum_distinct_with_join():
+    rule = SelectDistinctSuspicious()
+    sql = "SELECT SUM(DISTINCT amount) FROM payments p JOIN customers c ON p.cust_id = c.id;"
+    assert _stmt(rule, sql) is None
+
+
+def test_w024_does_not_flag_join_without_distinct():
+    rule = SelectDistinctSuspicious()
+    assert _stmt(rule, "SELECT a.id FROM a JOIN b ON a.id = b.a_id;") is None
+
+
+def test_w024_does_not_flag_distinct_inside_string_literal():
+    rule = SelectDistinctSuspicious()
+    sql = "INSERT INTO log(msg) SELECT 'SELECT DISTINCT x JOIN y' FROM t JOIN u ON t.id = u.id;"
+    # Outer SELECT does not have DISTINCT; the literal mentions it.
+    assert _stmt(rule, sql) is None
+
+
+def test_w024_does_not_flag_distinct_inside_comment():
+    rule = SelectDistinctSuspicious()
+    sql = "-- SELECT DISTINCT x FROM y JOIN z\nSELECT id FROM t;"
+    assert _stmt(rule, sql) is None
+
+
+def test_w024_message_mentions_join_or_grouping():
+    rule = SelectDistinctSuspicious()
+    finding = _stmt(
+        rule,
+        "SELECT DISTINCT a FROM x JOIN y ON x.id = y.id;",
+    )
+    assert finding is not None
+    msg = finding.message.lower()
+    assert "join" in msg or "grouping" in msg

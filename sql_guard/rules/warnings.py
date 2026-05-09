@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from sql_guard.rules.base import Finding, Rule
+from sql_guard.rules.base import Finding, Rule, strip_strings_and_comments
 
 
 class SelectStar(Rule):
@@ -506,6 +506,56 @@ class TruncateTable(Rule):
                 line=line_number,
                 message="TRUNCATE TABLE bypasses triggers and resets identity",
                 suggestion="Use DELETE if triggers or partial rollback matter",
+            )
+        return None
+
+
+class SelectDistinctSuspicious(Rule):
+    """W024: ``SELECT DISTINCT`` paired with ``JOIN`` is often a band-aid.
+
+    Developers reach for ``SELECT DISTINCT`` to deduplicate rows when a
+    JOIN cardinality is wider than they expected, often because a join
+    condition is missing or because what they actually want is a
+    ``GROUP BY``. The result reads more rows than necessary and hides
+    the underlying join-condition bug.
+
+    Fires when a statement contains both top-level ``SELECT DISTINCT``
+    and any ``JOIN`` keyword. Standalone ``SELECT DISTINCT col FROM t``
+    (no join) is fine -- the smell is the cross-join blow-up pattern,
+    not legitimate single-table uniqueness.
+
+    ``COUNT(DISTINCT col)`` and other aggregate-DISTINCT forms are not
+    flagged: the regex anchors on ``SELECT`` directly preceding
+    ``DISTINCT``, so ``SELECT COUNT(DISTINCT x) FROM t JOIN u`` does
+    not match.
+    """
+
+    id = "W024"
+    name = "select-distinct-suspicious"
+    severity = "warning"
+    description = "SELECT DISTINCT combined with JOIN often masks a missing join condition"
+    multiline = True
+
+    _select_distinct = Rule._compile(r"\bSELECT\s+DISTINCT\b")
+    _join = Rule._compile(r"\bJOIN\b")
+
+    def check_statement(self, statement: str, start_line: int, file: str) -> Finding | None:
+        # Strip strings and comments so DISTINCT or JOIN inside literal
+        # text or comments cannot trigger a false positive.
+        stripped = strip_strings_and_comments(statement)
+        if self._select_distinct.search(stripped) and self._join.search(stripped):
+            return Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=start_line,
+                message=(
+                    "SELECT DISTINCT with JOIN often masks a missing join condition or grouping"
+                ),
+                suggestion=(
+                    "Verify the JOIN condition is correct and DISTINCT is genuinely needed; "
+                    "consider GROUP BY if you are hiding row duplication"
+                ),
             )
         return None
 
