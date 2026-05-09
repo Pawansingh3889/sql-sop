@@ -1,5 +1,24 @@
 name: Validate PR title
 
+# Lightweight sanity check on PR titles. The previous version of this
+# workflow enforced strict Conventional Commits format ("feat: ...",
+# "fix: ..."), but that conflicted with the project's actual title style
+# ("Add Wxxx rule-name (description)", "Fix Snnn false negatives ...")
+# and so failed silently on every merged PR. This rewrite drops the
+# Conventional Commits check and instead catches the real problems:
+#
+#   1. Empty / whitespace-only titles.
+#   2. Auto-generated branch-name titles ("Feat/foo-bar", "Wip/x"),
+#      which GitHub picks when the human types is wiped out by an async
+#      template load. These titles are ugly in `git log` and merge
+#      commit messages.
+#   3. Excessive length: anything over 100 chars truncates badly in
+#      GitHub UIs and `gh pr list`.
+#
+# To enforce a stricter style later, restore the
+# amannn/action-semantic-pull-request@v5 action and update PR titles
+# accordingly.
+
 on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened]
@@ -11,25 +30,35 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Check conventional commit prefix
-        uses: amannn/action-semantic-pull-request@v5
+      - name: Sanity-check PR title
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          types: |
-            feat
-            fix
-            docs
-            chore
-            ci
-            test
-            style
-            refactor
-            perf
-            build
-          requireScope: false
-          subjectPattern: ^(?![A-Z]).+$
-          subjectPatternError: |
-            PR title subject should start lowercase. E.g. "fix: catch UNION in
-            W008" rather than "fix: Catch UNION in W008".
-          validateSingleCommit: false
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          title="${PR_TITLE}"
+          echo "PR title: ${title}"
+
+          # 1. Reject empty / whitespace-only titles.
+          trimmed=$(echo -n "${title}" | tr -d '[:space:]')
+          if [ -z "${trimmed}" ]; then
+            echo "::error::PR title is empty or whitespace only."
+            exit 1
+          fi
+
+          # 2. Reject GitHub's auto-generated branch-name titles. These
+          #    look like 'Feat/foo-bar', 'Wip/x', 'Chore/y' (capitalised
+          #    branch prefix followed by a slash) and happen when the
+          #    PR template overwrites a freshly-typed title async.
+          if echo "${title}" | grep -Eq '^[A-Z][a-z]+/[a-z0-9-]'; then
+            echo "::error::PR title looks auto-generated from a branch name (e.g. 'Feat/foo-bar'). Please replace it with a descriptive human title."
+            exit 1
+          fi
+
+          # 3. Reject titles longer than 100 chars (truncates in UIs).
+          length=${#title}
+          if [ "${length}" -gt 100 ]; then
+            echo "::error::PR title is ${length} characters; please shorten to 100 or fewer."
+            exit 1
+          fi
+
+          echo "PR title passes basic sanity checks."
