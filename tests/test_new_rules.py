@@ -412,7 +412,9 @@ def test_w024_flags_distinct_with_left_join():
 
 def test_w024_flags_distinct_with_join_multiline():
     rule = SelectDistinctSuspicious()
-    sql = "SELECT DISTINCT\n  c.id, c.name\nFROM customers c\nJOIN orders o ON c.id = o.customer_id;"
+    sql = (
+        "SELECT DISTINCT\n  c.id, c.name\nFROM customers c\nJOIN orders o ON c.id = o.customer_id;"
+    )
     assert _stmt(rule, sql) is not None
 
 
@@ -443,9 +445,7 @@ def test_w024_does_not_flag_sum_distinct_with_join():
 
 def test_w024_does_not_flag_join_without_distinct():
     rule = SelectDistinctSuspicious()
-    assert (
-        _stmt(rule, "SELECT a.id FROM a JOIN b ON a.id = b.a_id;") is None
-    )
+    assert _stmt(rule, "SELECT a.id FROM a JOIN b ON a.id = b.a_id;") is None
 
 
 def test_w024_does_not_flag_distinct_inside_string_literal():
