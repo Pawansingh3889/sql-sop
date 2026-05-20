@@ -15,6 +15,7 @@ from sql_guard.rules.errors import (
     UpdateWithoutWhere,
 )
 from sql_guard.rules.warnings import (
+    AssertionMalformed,
     CaseWithoutElse,
     CommentedOutCode,
     CountDistinctUnbounded,
@@ -112,6 +113,7 @@ ALL_RULES: list[Rule] = [
     HavingWithoutGroupBy(),
     CrossJoinExplicit(),
     ScalarUdfInWhere(),
+    AssertionMalformed(),
     # Structural (S001-S003)
     ImplicitCrossJoin(),
     DeeplyNestedSubquery(),
