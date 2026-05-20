@@ -10,6 +10,10 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-05-20
+
+Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful coverage fix to S001 `implicit-cross-join`. No breaking changes; existing pre-commit configs continue to work without modification.
+
 ### Added
 
 - **W021 `having-without-group-by`** - warns when `HAVING` appears
@@ -73,6 +77,10 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   `, LATERAL ...` is recognised as a legitimate
   Snowflake/Postgres lateral join and not flagged. Resolves #41
   (the W027 comma-join request was a duplicate of S001).
+
+### Documentation
+
+- README and `action.yml` refresh for v0.7.0 (contracts pack, new contributors, missing rules) ([#38](https://github.com/Pawansingh3889/sql-guard/pull/38)).
 
 ## [0.7.0] - 2026-05-02
 
