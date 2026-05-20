@@ -580,6 +580,26 @@ def test_w025_flags_double_qualified_column():
     assert finding.rule_id == "W025"
 
 
+def test_w025_tolerates_extra_spaces_after_dashes():
+    rule = AssertionMalformed()
+    assert _line(rule, "--   @assert: unique(id)") is None
+
+
+def test_w025_tolerates_extra_spaces_around_colon():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert:   unique(id)") is None
+
+
+def test_w025_tolerates_leading_indent_on_comment():
+    rule = AssertionMalformed()
+    assert _line(rule, "    -- @assert: unique(id)") is None
+
+
+def test_w025_tolerates_trailing_whitespace():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: unique(id)   ") is None
+
+
 def test_w025_message_includes_offending_predicate():
     rule = AssertionMalformed()
     finding = _line(rule, "-- @assert: weight is positive")
