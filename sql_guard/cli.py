@@ -13,6 +13,7 @@ from rich.table import Table
 from sql_guard import __version__, config as config_mod
 from sql_guard.checker import check, discover_files
 from sql_guard.contracts import Contract
+from sql_guard.dbt import DbtProject, find_dbt_project, load_dbt_project
 from sql_guard.git_filter import filter_to_changed
 from sql_guard.reporters import sarif as sarif_reporter
 from sql_guard.reporters.terminal import print_result
@@ -78,6 +79,15 @@ def check_cmd(
             "lint queries against the declared schema."
         ),
     ),
+    dbt: bool = typer.Option(
+        False,
+        "--dbt",
+        help=(
+            "Activate the dbt-aware rule pack (DBT001-). Walks up from the "
+            "first checked path to find dbt_project.yml; falls back silently "
+            "if no project is found."
+        ),
+    ),
 ) -> None:
     """Check SQL files for common issues."""
     if not paths:
@@ -106,6 +116,22 @@ def check_cmd(
             console.print(f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}")
             raise typer.Exit(code=2)
 
+    dbt_project: Optional[DbtProject] = None
+    if dbt:
+        start = Path(paths[0]) if paths else Path(".")
+        project_yml = find_dbt_project(start)
+        if project_yml is None:
+            console.print(
+                "[yellow]--dbt: no dbt_project.yml found walking up from "
+                f"{start}; dbt-aware rules are silent.[/yellow]"
+            )
+        else:
+            try:
+                dbt_project = load_dbt_project(project_yml)
+            except Exception as exc:
+                console.print(f"[red]Failed to load dbt project {project_yml}:[/red] {exc}")
+                raise typer.Exit(code=2)
+
     if changed_only:
         discovered = discover_files(
             paths, ignore=effective_ignore, include_python=effective_include_python
@@ -130,6 +156,7 @@ def check_cmd(
         ignore=effective_ignore,
         include_python=effective_include_python,
         contract=contract,
+        dbt_project=dbt_project,
     )
 
     if output_format == "sarif":

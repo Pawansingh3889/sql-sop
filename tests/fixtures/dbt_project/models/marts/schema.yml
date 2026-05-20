@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: fct_orders
+    data_tests:
+      - unique:
+          column_name: order_id
+
+  - name: fct_customers
