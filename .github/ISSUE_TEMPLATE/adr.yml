@@ -1,0 +1,111 @@
+name: ADR (Architecture Decision Record)
+description: Propose a change to how sql-sop works (parser backend, distribution format, new rule pack, etc.)
+title: "[ADR] <one-line summary>"
+labels: ["ADR", "discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for proposals that change *how* sql-sop works,
+        not just *what* it checks. Examples: new parser backend,
+        new distribution format, new rule namespace (DBT*, contracts
+        pack), new CLI flag. Simple rule additions belong in the
+        normal "Rule request" template instead.
+
+        ADRs follow the pattern in `GOVERNANCE.md` § Architecture
+        Decision Records. After discussion lands on a decision, the
+        ADR issue stays open in an archived state as the record of
+        "why we did it this way." A follow-up issue with the task
+        breakdown links back to it.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: One paragraph. What the proposal adds or changes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: |
+        What gap this fills. What problem users hit today. Cite real
+        examples if you have them. Skip the marketing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope-in
+    attributes:
+      label: In scope
+      description: What this PR / direction ships. Bulleted list.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope-out
+    attributes:
+      label: Out of scope (or deferred)
+      description: |
+        What this proposal explicitly does not cover. Per
+        `GOVERNANCE.md` hard lines, "rule-based not AI" and "stable
+        rule IDs" are always out unless this proposal is specifically
+        about changing them.
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility
+      description: |
+        What changes for existing users. Default behaviour, rule-ID
+        impact, new dependencies. Anything that breaks downstream
+        configs needs a deprecation plan -- see `GOVERNANCE.md`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: plan
+    attributes:
+      label: Implementation plan
+      description: |
+        Numbered list of the actual work. Files touched, new tests,
+        README/CHANGELOG updates. Use this to estimate effort and
+        catch scope creep early.
+    validations:
+      required: false
+
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions
+      description: |
+        Decisions not yet made. State your lean for each so the
+        discussion has a starting point. Format: "**Question.** Lean: x."
+    validations:
+      required: false
+
+  - type: textarea
+    id: rejected
+    attributes:
+      label: What I rejected
+      description: |
+        Alternatives considered and dismissed, with one-sentence
+        reasoning each. Documents the why so reviewers don't have to
+        re-litigate the same ground.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: hard-lines
+    attributes:
+      label: Hard-lines check
+      description: Tick what applies; helps reviewers triage faster.
+      options:
+        - label: This proposal stays inside the "rule-based, not AI" hard line
+        - label: This proposal does not rename or remove an existing rule ID
+        - label: This proposal preserves the low-false-positive-rate goal
+        - label: I'm willing to implement this myself if it lands
