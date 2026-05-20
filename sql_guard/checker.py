@@ -181,6 +181,17 @@ def check_file(
                     if fail_fast and finding.severity == "error":
                         return findings
 
+    # Pass 3: file-level rules. Default ``check_file`` returns an empty
+    # list so line- and statement-rules pay nothing here. File-level
+    # rules (e.g. the dbt-aware pack) override it.
+    for rule in rules:
+        for finding in rule.check_file(file_str):
+            if disables.is_disabled(finding.line, finding.rule_id):
+                continue
+            findings.append(finding)
+            if fail_fast and finding.severity == "error":
+                return findings
+
     return findings
 
 

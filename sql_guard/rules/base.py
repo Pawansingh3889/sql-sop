@@ -60,6 +60,16 @@ class Rule:
         """Check a full SQL statement. Override for multi-line rules."""
         return None
 
+    def check_file(self, file: str) -> list[Finding]:
+        """Check a whole file once. Override for file-level rules.
+
+        Returns a list so a single file-level rule can produce multiple
+        findings in one pass (a project-aware rule fires once per
+        offending model, for example). Default is an empty list so
+        existing line / statement rules pay nothing.
+        """
+        return []
+
     @staticmethod
     def _compile(pattern: str) -> re.Pattern:
         """Compile a regex pattern with IGNORECASE. Called once at init."""
