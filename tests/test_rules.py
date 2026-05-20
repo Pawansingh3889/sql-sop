@@ -18,7 +18,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestRuleRegistry:
     def test_all_rules_loaded(self) -> None:
-        assert len(ALL_RULES) == 42
+        assert len(ALL_RULES) == 43
 
     def test_11_errors(self) -> None:
         # 9 E-series + 2 T-series (T002 xp-cmdshell, T004 deprecated-outer-join).
@@ -26,11 +26,11 @@ class TestRuleRegistry:
         assert len(errors) == 11
 
     def test_31_warnings(self) -> None:
-        # 24 W-series + 3 S-series + 4 T-series (T001 with-nolock,
+        # 25 W-series + 3 S-series + 4 T-series (T001 with-nolock,
         # T003 cursor-declaration, T005 create-index-without-online,
         # T006 select-into-without-typed-fields).
         warnings = [r for r in ALL_RULES if r.severity == "warning"]
-        assert len(warnings) == 31
+        assert len(warnings) == 32
 
     def test_unique_ids(self) -> None:
         ids = [r.id for r in ALL_RULES]
@@ -364,8 +364,8 @@ class TestCleanFile:
 class TestChecker:
     def test_files_checked_count(self) -> None:
         result = check([str(FIXTURES)])
-        # errors.sql, warnings.sql, clean.sql, contract_drift.sql
-        assert result.files_checked == 4
+        # errors.sql, warnings.sql, clean.sql, contract_drift.sql, assertions.sql
+        assert result.files_checked == 5
 
     def test_duration_tracked(self) -> None:
         result = check([str(FIXTURES)])
