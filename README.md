@@ -24,8 +24,8 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 43 (10 errors, 28 warnings, 5 Python-source); 48 with `--contract` |
-| Tests | 210 |
+| Rules | 44 (10 errors, 29 warnings, 5 Python-source); 49 with `--contract` |
+| Tests | 269 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
 | PyPI downloads | 500+/month |
@@ -239,6 +239,7 @@ sql-sop list-rules                       # show every registered rule
 | W022 | `cross-join-explicit` | `FROM products CROSS JOIN regions` -- Cartesian product, confirm intent |
 | W023 | `scalar-udf-in-where` | `WHERE dbo.fn_X(col) = 1` -- row-by-row predicate evaluation |
 | W024 | `select-distinct-suspicious` | `SELECT DISTINCT a, b FROM x JOIN y ON ...` -- DISTINCT often masks a missing join condition or GROUP BY |
+| W025 | `assertion-malformed` | `-- @assert: <predicate>` comment whose predicate does not match the sql-sop grammar (`row_count <op> <int>`, `unique(<col>)`, `not_null(<col>)`, `<col> <op> <literal>`) |
 
 
 ### Structural (v0.3.0+, sqlparse-based)
