@@ -1,4 +1,4 @@
-"""Warning rules (W001-W023) -- advisory, don't block commits by default."""
+"""Warning rules (W001-W025) -- advisory, don't block commits by default."""
 
 from __future__ import annotations
 
@@ -797,3 +797,65 @@ class CrossJoinExplicit(Rule):
                 suggestion="If intentional, suppress with '-- sql-guard: disable=W022' on the same line",
             )
         return None
+
+
+class AssertionMalformed(Rule):
+    """W025: ``-- @assert:`` comment with malformed predicate.
+
+    sql-sop defines a small predicate grammar so downstream tooling (or
+    you, reading the file) can mechanically pick up data assertions
+    embedded in SQL. The rule does not execute anything -- it only
+    checks that the predicate parses. Execution belongs in dbt tests,
+    a downstream runner, or a future companion tool.
+
+    Grammar (v1):
+        @assert: row_count <op> <int>
+               | unique(<col>)
+               | not_null(<col>)
+               | <col> <op> <literal>
+        op := = | != | < | <= | > | >=
+
+    Well-formed examples::
+
+        -- @assert: row_count > 0
+        -- @assert: unique(batch_id)
+        -- @assert: not_null(weight)
+        -- @assert: weight > 0
+
+    The rule only flags the malformed shape. Free-form text after
+    `-- @assert:` is the failure mode the rule is designed to catch.
+    """
+
+    id = "W025"
+    name = "assertion-malformed"
+    severity = "warning"
+    description = "-- @assert: predicate does not match the sql-sop assertion grammar"
+
+    _assert_line = Rule._compile(r"--\s*@assert\s*:\s*(.+?)\s*$")
+    _well_formed = Rule._compile(
+        r"^("
+        r"row_count\s*(=|!=|<=|>=|<|>)\s*\d+"
+        r"|unique\s*\(\s*[a-zA-Z_]\w*\s*\)"
+        r"|not_null\s*\(\s*[a-zA-Z_]\w*\s*\)"
+        r"|[a-zA-Z_]\w*\s*(=|!=|<=|>=|<|>)\s*('[^']*'|\"[^\"]*\"|-?\d+(\.\d+)?)"
+        r")$"
+    )
+
+    def check_line(self, line: str, line_number: int, file: str) -> Finding | None:
+        match = self._assert_line.search(line)
+        if not match:
+            return None
+        predicate = match.group(1).strip()
+        if self._well_formed.match(predicate):
+            return None
+        return Finding(
+            rule_id=self.id,
+            severity=self.severity,
+            file=file,
+            line=line_number,
+            message=f"-- @assert: predicate is malformed: {predicate!r}",
+            suggestion=(
+                "Use one of: 'row_count <op> <int>', 'unique(<col>)', "
+                "'not_null(<col>)', '<col> <op> <literal>'"
+            ),
+        )
