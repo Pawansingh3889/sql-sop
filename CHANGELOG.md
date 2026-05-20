@@ -12,6 +12,29 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Added
 
+- **DBT001 `model-without-test`** - first rule in the dbt-aware rule
+  pack. Fires once per `.sql` file inside the project's `model-paths`
+  when the model has no `tests:` (dbt <=1.4) or `data_tests:`
+  (dbt >=1.5) entry in any `schema.yml`. Activated by the new `--dbt`
+  CLI flag; silent without it. Models outside `model-paths` (macros,
+  analyses, snapshots) and non-SQL files are skipped. See the
+  [dbt-aware rule pack ADR] for the broader rule set roadmap.
+
+  This release also lands the scaffolding the rest of the pack will
+  build on:
+  - `sql_guard.dbt` module: walks up to find `dbt_project.yml`,
+    reads `model-paths`, and parses `schema.yml` files into a
+    `DbtProject` value object. Tolerates malformed schema.yml
+    without crashing the lint run.
+  - `Rule.check_file` extension point: a file-level check hook on the
+    base rule class. Default returns an empty list so existing
+    line- and statement-rules pay nothing.
+  - `--dbt` CLI flag and `build_dbt_rules(project)` registry helper
+    that mirror the Contracts Pack opt-in pattern.
+
+  Jinja preprocessing and the remaining six rules in the ADR are
+  intentionally deferred to follow-up PRs.
+
 - **W021 `having-without-group-by`** - warns when `HAVING` appears
   without a preceding `GROUP BY` in the same query block. The query
   becomes a single implicit group, almost always a typo for `WHERE`.
