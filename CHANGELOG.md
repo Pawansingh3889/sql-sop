@@ -8,6 +8,18 @@ sql-sop uses [Semantic Versioning](https://semver.org/).
 Rule removals and rule ID renames are **breaking changes** that require
 a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
+## [0.8.0](https://github.com/Pawansingh3889/sql-guard/compare/v0.7.0...v0.8.0) (2026-05-20)
+
+
+### Features
+
+* **rules:** add W021 having-without-group-by ([#39](https://github.com/Pawansingh3889/sql-guard/issues/39)) ([db78ff9](https://github.com/Pawansingh3889/sql-guard/commit/db78ff9ddb8f9934fb83b6f9775b7994e010bf55))
+
+
+### Documentation
+
+* refresh README and action.yml for v0.7.0 (contracts pack, new contributors, missing rules) ([#38](https://github.com/Pawansingh3889/sql-guard/issues/38)) ([53dca7f](https://github.com/Pawansingh3889/sql-guard/commit/53dca7ff10dd9e17ef55febbdb28d2fea7b75e7e))
+
 ## [Unreleased]
 
 ### Added
