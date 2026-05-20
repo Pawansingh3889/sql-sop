@@ -113,3 +113,45 @@ def test_get_rules_includes_dbt_pack_when_project_supplied():
     rules = get_rules(dbt_project=project)
     ids = {r.id for r in rules}
     assert "DBT001" in ids
+
+
+# CLI integration -----------------------------------------------------------
+
+
+def test_cli_dbt_flag_activates_dbt001(tmp_path):
+    """End-to-end: --dbt flag discovers the project and fires DBT001."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    # Tiny dbt project with one untested model.
+    (tmp_path / "dbt_project.yml").write_text(
+        'name: x\nmodel-paths: ["models"]\n'
+    )
+    models = tmp_path / "models" / "marts"
+    models.mkdir(parents=True)
+    untested = models / "fct_orders.sql"
+    untested.write_text("SELECT 1 AS id;\n")
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["check", "--dbt", str(untested)])
+    assert "DBT001" in result.stdout
+
+
+def test_cli_without_dbt_flag_does_not_fire_dbt001(tmp_path):
+    """Same project, no --dbt: rule is silent."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text(
+        'name: x\nmodel-paths: ["models"]\n'
+    )
+    models = tmp_path / "models" / "marts"
+    models.mkdir(parents=True)
+    untested = models / "fct_orders.sql"
+    untested.write_text("SELECT 1 AS id;\n")
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["check", str(untested)])
+    assert "DBT001" not in result.stdout
