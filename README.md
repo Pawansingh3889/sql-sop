@@ -25,7 +25,7 @@ One bad SQL query can delete production data, expose customer records, or bring 
 | | |
 |---|---|
 | Rules | 44 (10 errors, 29 warnings, 5 Python-source); 49 with `--contract` |
-| Tests | 269 |
+| Tests | 277 |
 | Coverage | 86% |
 | Scan speed | 0.08s across 200 files |
 | PyPI downloads | 500+/month |
