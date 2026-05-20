@@ -289,9 +289,7 @@ def check(
         CheckResult with all findings.
     """
     t0 = time.perf_counter()
-    rules = get_rules(
-        disabled_ids=disabled_rules, contract=contract, dbt_project=dbt_project
-    )
+    rules = get_rules(disabled_ids=disabled_rules, contract=contract, dbt_project=dbt_project)
     discovered = discover_files(paths, ignore=ignore, include_python=include_python)
 
     result = CheckResult()

@@ -113,9 +113,7 @@ def test_load_dbt_project_falls_back_to_default_model_paths(tmp_path):
 
 def test_load_dbt_project_explicit_multiple_model_paths(tmp_path):
     project_yml = tmp_path / "dbt_project.yml"
-    project_yml.write_text(
-        'name: x\nmodel-paths: ["models", "transforms"]\n'
-    )
+    project_yml.write_text('name: x\nmodel-paths: ["models", "transforms"]\n')
     (tmp_path / "models").mkdir()
     (tmp_path / "transforms").mkdir()
     project = load_dbt_project(project_yml)

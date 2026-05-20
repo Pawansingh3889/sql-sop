@@ -54,8 +54,7 @@ class ModelWithoutTest(Rule):
 
         resolved = path.resolve()
         in_models = any(
-            _is_relative_to(resolved, model_dir)
-            for model_dir in self._project.model_paths
+            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
         )
         if not in_models:
             return []

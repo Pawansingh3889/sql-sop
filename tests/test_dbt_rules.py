@@ -9,9 +9,7 @@ from sql_guard.rules import build_dbt_rules, get_rules
 from sql_guard.rules.dbt import ModelWithoutTest
 
 
-FIXTURE_PROJECT_YML = (
-    Path(__file__).parent / "fixtures" / "dbt_project" / "dbt_project.yml"
-)
+FIXTURE_PROJECT_YML = Path(__file__).parent / "fixtures" / "dbt_project" / "dbt_project.yml"
 FIXTURE_MODELS = FIXTURE_PROJECT_YML.parent / "models"
 
 
@@ -54,9 +52,7 @@ def test_dbt001_message_names_the_model():
 
 def test_dbt001_fires_on_unregistered_model(tmp_path):
     # A .sql model under model-paths with no schema.yml entry at all.
-    (tmp_path / "dbt_project.yml").write_text(
-        'name: x\nmodel-paths: ["models"]\n'
-    )
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
     models = tmp_path / "models" / "marts"
     models.mkdir(parents=True)
     rogue = models / "fct_rogue.sql"
@@ -79,9 +75,7 @@ def test_dbt001_skips_non_sql_file():
 
 def test_dbt001_skips_file_outside_model_paths(tmp_path):
     # Tiny project where the .sql file lives in macros/, not models/.
-    (tmp_path / "dbt_project.yml").write_text(
-        'name: x\nmodel-paths: ["models"]\n'
-    )
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
     macros = tmp_path / "macros"
     macros.mkdir()
     macro = macros / "helper.sql"
@@ -125,9 +119,7 @@ def test_cli_dbt_flag_activates_dbt001(tmp_path):
     from sql_guard.cli import app
 
     # Tiny dbt project with one untested model.
-    (tmp_path / "dbt_project.yml").write_text(
-        'name: x\nmodel-paths: ["models"]\n'
-    )
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
     models = tmp_path / "models" / "marts"
     models.mkdir(parents=True)
     untested = models / "fct_orders.sql"
@@ -144,9 +136,7 @@ def test_cli_without_dbt_flag_does_not_fire_dbt001(tmp_path):
 
     from sql_guard.cli import app
 
-    (tmp_path / "dbt_project.yml").write_text(
-        'name: x\nmodel-paths: ["models"]\n'
-    )
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
     models = tmp_path / "models" / "marts"
     models.mkdir(parents=True)
     untested = models / "fct_orders.sql"

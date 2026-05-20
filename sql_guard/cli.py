@@ -129,9 +129,7 @@ def check_cmd(
             try:
                 dbt_project = load_dbt_project(project_yml)
             except Exception as exc:
-                console.print(
-                    f"[red]Failed to load dbt project {project_yml}:[/red] {exc}"
-                )
+                console.print(f"[red]Failed to load dbt project {project_yml}:[/red] {exc}")
                 raise typer.Exit(code=2)
 
     if changed_only:
