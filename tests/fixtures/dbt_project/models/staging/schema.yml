@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: "Raw orders from the source system."
+    tests:
+      - unique:
+          column_name: order_id
