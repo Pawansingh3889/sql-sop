@@ -12,6 +12,16 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Added
 
+- **W025 `assertion-malformed`** - warns when an `-- @assert:` comment
+  carries a predicate that does not match the sql-sop assertion grammar.
+  sql-sop owns the syntax but does not execute the assertion; execution
+  is delegated to dbt tests, a downstream runner, or a future companion
+  tool. v1 grammar covers `row_count <op> <int>`, `unique(<col>)`,
+  `not_null(<col>)`, and `<col> <op> <literal>`. The rule anchors `--`
+  to start-of-line so `-- @assert:` mentioned inside a longer prose
+  comment does not produce a false positive. See the ADR proposal for
+  scope discipline (no execution, no DB connection, stays in the
+  rule-based hard line from `GOVERNANCE.md`).
 - **W021 `having-without-group-by`** - warns when `HAVING` appears
   without a preceding `GROUP BY` in the same query block. The query
   becomes a single implicit group, almost always a typo for `WHERE`.
