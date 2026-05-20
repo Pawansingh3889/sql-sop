@@ -556,6 +556,30 @@ def test_w025_does_not_fire_on_assert_mentioned_inside_other_comment():
     ) is None
 
 
+def test_w025_passes_on_qualified_unique_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: unique(orders.batch_id)") is None
+
+
+def test_w025_passes_on_qualified_not_null_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: not_null(production.weight)") is None
+
+
+def test_w025_passes_on_qualified_column_comparison():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: orders.total > 0") is None
+
+
+def test_w025_flags_double_qualified_column():
+    # `schema.table.column` is two dots; v1 supports one. Anything
+    # deeper falls through to malformed.
+    rule = AssertionMalformed()
+    finding = _line(rule, "-- @assert: schema.table.column > 0")
+    assert finding is not None
+    assert finding.rule_id == "W025"
+
+
 def test_w025_message_includes_offending_predicate():
     rule = AssertionMalformed()
     finding = _line(rule, "-- @assert: weight is positive")
