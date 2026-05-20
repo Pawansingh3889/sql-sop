@@ -836,12 +836,18 @@ class AssertionMalformed(Rule):
     # substring inside another `-- ...` comment (e.g. when the rule is
     # documented in a SQL file).
     _assert_line = Rule._compile(r"^\s*--\s*@assert\s*:\s*(.+?)\s*$")
+    # Column grammar for v1: a bare identifier, optionally qualified with
+    # one dot (e.g. `weight` or `orders.weight`). Two-dot forms such as
+    # `schema.table.column` fall through to the malformed branch.
+    # Quoted identifiers ("col", [col], `col`) are out of scope for v1 --
+    # see the W025 ADR for the rationale.
     _well_formed = Rule._compile(
         r"^("
         r"row_count\s*(=|!=|<=|>=|<|>)\s*\d+"
-        r"|unique\s*\(\s*[a-zA-Z_]\w*\s*\)"
-        r"|not_null\s*\(\s*[a-zA-Z_]\w*\s*\)"
-        r"|[a-zA-Z_]\w*\s*(=|!=|<=|>=|<|>)\s*('[^']*'|\"[^\"]*\"|-?\d+(\.\d+)?)"
+        r"|unique\s*\(\s*[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)?\s*\)"
+        r"|not_null\s*\(\s*[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)?\s*\)"
+        r"|[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)?\s*(=|!=|<=|>=|<|>)\s*"
+        r"('[^']*'|\"[^\"]*\"|-?\d+(\.\d+)?)"
         r")$"
     )
 
