@@ -831,7 +831,11 @@ class AssertionMalformed(Rule):
     severity = "warning"
     description = "-- @assert: predicate does not match the sql-sop assertion grammar"
 
-    _assert_line = Rule._compile(r"--\s*@assert\s*:\s*(.+?)\s*$")
+    # The `--` must open the comment at the start of the line (optionally
+    # indented). This avoids matching `-- @assert:` when it appears as a
+    # substring inside another `-- ...` comment (e.g. when the rule is
+    # documented in a SQL file).
+    _assert_line = Rule._compile(r"^\s*--\s*@assert\s*:\s*(.+?)\s*$")
     _well_formed = Rule._compile(
         r"^("
         r"row_count\s*(=|!=|<=|>=|<|>)\s*\d+"

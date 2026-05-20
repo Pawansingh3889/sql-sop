@@ -545,6 +545,17 @@ def test_w025_does_not_fire_on_plain_sql():
     assert _line(rule, "SELECT * FROM users WHERE id = 1;") is None
 
 
+def test_w025_does_not_fire_on_assert_mentioned_inside_other_comment():
+    # `-- @assert:` appearing as a substring inside a longer comment is
+    # not an assertion -- it is prose describing the feature. The rule
+    # anchors `--` to start-of-line specifically to avoid this case.
+    rule = AssertionMalformed()
+    assert _line(
+        rule,
+        "-- sql-sop reads `-- @assert: row_count > 0` comments",
+    ) is None
+
+
 def test_w025_message_includes_offending_predicate():
     rule = AssertionMalformed()
     finding = _line(rule, "-- @assert: weight is positive")
