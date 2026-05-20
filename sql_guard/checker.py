@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from sql_guard.contracts import Contract
+from sql_guard.dbt import DbtProject
 from sql_guard.rules import get_rules
 from sql_guard.rules.base import Finding, Rule
 from sql_guard.rules.python_rules import PYTHON_RULES
@@ -268,6 +269,7 @@ def check(
     ignore: list[str] | None = None,
     include_python: bool = False,
     contract: Contract | None = None,
+    dbt_project: "DbtProject | None" = None,  # noqa: F821 -- imported below
 ) -> CheckResult:
     """Run all rules against discovered SQL (and optionally Python) files.
 
@@ -280,12 +282,16 @@ def check(
         include_python: Also scan ``.py`` files for embedded SQL via libCST.
         contract: Optional data contract. When provided, contract-aware rules
             (C001-...) are activated and given this contract instance.
+        dbt_project: Optional discovered dbt project. When provided,
+            dbt-aware rules (DBT001-...) are activated and given this project.
 
     Returns:
         CheckResult with all findings.
     """
     t0 = time.perf_counter()
-    rules = get_rules(disabled_ids=disabled_rules, contract=contract)
+    rules = get_rules(
+        disabled_ids=disabled_rules, contract=contract, dbt_project=dbt_project
+    )
     discovered = discover_files(paths, ignore=ignore, include_python=include_python)
 
     result = CheckResult()
