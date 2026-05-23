@@ -1,80 +1,18 @@
 name: Rule request
 description: Suggest a new SQL or Python lint rule
-title: "rule: <one-line description>"
+title: "rule: "
 labels: ["rule-request", "needs-triage"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for helping sharpen sql-sop. One rule-per-issue, please.
-        If you're not sure whether it fits, open it anyway - triage is fast.
-
   - type: textarea
-    id: what
+    id: description
     attributes:
       label: What pattern should this rule catch?
-      description: One sentence. Example - "Warn on UNION when UNION ALL would work."
-      placeholder: "Warn on ..."
-    validations:
-      required: true
-
-  - type: textarea
-    id: fail-example
-    attributes:
-      label: SQL (or Python) example that should fail
-      description: Paste minimal code that should trigger the new rule.
-      render: sql
+      description: |
+        Useful to include if you have them — a SQL example that should
+        fail, an example that should pass, why this matters in
+        production. Skip what you don't have.
       placeholder: |
-        SELECT id FROM orders
-        UNION
-        SELECT id FROM archived_orders;
-    validations:
-      required: true
-
-  - type: textarea
-    id: pass-example
-    attributes:
-      label: SQL (or Python) example that should NOT trigger
-      description: The boundary case - helps us avoid false positives.
-      render: sql
-      placeholder: |
-        SELECT id FROM orders
-        UNION ALL
-        SELECT id FROM archived_orders;
-    validations:
-      required: true
-
-  - type: dropdown
-    id: severity
-    attributes:
-      label: Proposed severity
-      options:
-        - warning (advisory, doesn't block commits)
-        - error (blocks commits / CI)
-        - not sure
-      default: 0
-    validations:
-      required: true
-
-  - type: input
-    id: similar
-    attributes:
-      label: Similar existing rule (if any)
-      description: Which rule ID would you model this on? Helps reviewers.
-      placeholder: "e.g. W003 function-on-column"
-
-  - type: textarea
-    id: why
-    attributes:
-      label: Why does this matter in production?
-      description: A real bug you caught, a code review pattern, a DB outage, etc.
-
-  - type: checkboxes
-    id: scope
-    attributes:
-      label: Scope checks (tick what applies)
-      options:
-        - label: This is a SQL pattern (regex-based rule in `sql_guard/rules/`)
-        - label: This needs AST parsing (structural rule, sqlparse-based)
-        - label: This is a Python scanner rule (libCST, in `sql_guard/rules/python_rules.py`)
-        - label: I'm willing to open a PR for this myself
+        Pattern:
+        Example that should fail:
+        Example that should pass:
+        Why it matters:
