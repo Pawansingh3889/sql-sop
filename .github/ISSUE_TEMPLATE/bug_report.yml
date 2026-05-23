@@ -6,64 +6,20 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a bug. If this is a **security**
-        issue (rule bypass, false negative on a dangerous SQL
-        pattern), please file a [private advisory](../../security/advisories/new)
-        instead of a public issue.
-
-  - type: input
-    id: version
-    attributes:
-      label: sql-sop version
-      description: Output of `sql-sop --version`
-      placeholder: e.g. 0.4.0
-    validations:
-      required: true
-
-  - type: input
-    id: python
-    attributes:
-      label: Python version
-      placeholder: e.g. 3.11.9
-    validations:
-      required: true
-
-  - type: input
-    id: os
-    attributes:
-      label: Operating system
-      placeholder: e.g. Ubuntu 24.04, Windows 11, macOS 14
-    validations:
-      required: true
+        For **security** issues (rule bypass, false negative on a dangerous
+        SQL pattern), please file a
+        [private advisory](../../security/advisories/new) instead of a
+        public issue.
 
   - type: textarea
-    id: sql
+    id: description
     attributes:
-      label: SQL that reproduces the problem
-      description: Paste the SQL string or point at a fixture file.
-      render: sql
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected behaviour
-      description: Which rule (E001, W001, ...) should have fired, or not fired?
-    validations:
-      required: true
-
-  - type: textarea
-    id: actual
-    attributes:
-      label: Actual behaviour
-      description: What sql-sop actually reported. Paste the CLI output.
-      render: shell
-    validations:
-      required: true
-
-  - type: textarea
-    id: extras
-    attributes:
-      label: Additional context
-      description: Anything else that would help — pre-commit config, CI workflow step, environment variables.
+      label: What's wrong?
+      description: |
+        Anything that helps us understand and reproduce. Skip anything
+        that isn't relevant.
+      placeholder: |
+        sql-sop version + Python version (if relevant)
+        What you ran
+        What you expected
+        What actually happened
