@@ -19,7 +19,7 @@ ci:
 repos:
   # ── Standard hygiene ──────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -30,7 +30,7 @@ repos:
 
   # ── Ruff — lint + format, replaces flake8 + isort + black ──────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.0
+    rev: v0.15.14
     hooks:
       - id: ruff
         args: [--fix]
@@ -44,7 +44,7 @@ repos:
   # running the linter against them is guaranteed to fail and was
   # turning pre-commit.ci red on every PR.
   - repo: https://github.com/Pawansingh3889/sql-guard
-    rev: v0.7.0
+    rev: v0.8.0
     hooks:
       - id: sql-sop
         args: [--severity, error]
