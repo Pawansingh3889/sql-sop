@@ -5,6 +5,7 @@ from __future__ import annotations
 from sql_guard.rules.errors import AlterAddNotNullNoDefault, DropColumn
 from sql_guard.rules.tsql import CreateIndexWithoutOnline
 from sql_guard.rules.warnings import (
+    AssertionMalformed,
     CountDistinctUnbounded,
     CrossJoinExplicit,
     LeadingWildcardLike,
@@ -470,3 +471,140 @@ def test_w024_message_mentions_join_or_grouping():
     assert finding is not None
     msg = finding.message.lower()
     assert "join" in msg or "grouping" in msg
+
+
+# W025 assertion-malformed ---------------------------------------------------
+
+
+def test_w025_passes_on_row_count_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: row_count > 0") is None
+
+
+def test_w025_passes_on_row_count_with_large_integer():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: row_count >= 100") is None
+
+
+def test_w025_passes_on_unique_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: unique(batch_id)") is None
+
+
+def test_w025_passes_on_not_null_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: not_null(weight)") is None
+
+
+def test_w025_passes_on_column_literal_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: weight > 0") is None
+
+
+def test_w025_passes_on_column_string_literal_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: status = 'paid'") is None
+
+
+def test_w025_flags_predicate_with_no_operator():
+    rule = AssertionMalformed()
+    finding = _line(rule, "-- @assert: row_count")
+    assert finding is not None
+    assert finding.rule_id == "W025"
+    assert finding.severity == "warning"
+
+
+def test_w025_flags_non_numeric_rhs():
+    rule = AssertionMalformed()
+    finding = _line(rule, "-- @assert: row_count > zero")
+    assert finding is not None
+    assert finding.rule_id == "W025"
+
+
+def test_w025_flags_unique_without_parens():
+    rule = AssertionMalformed()
+    finding = _line(rule, "-- @assert: unique batch_id")
+    assert finding is not None
+    assert finding.rule_id == "W025"
+
+
+def test_w025_flags_freeform_text():
+    rule = AssertionMalformed()
+    finding = _line(rule, "-- @assert: weight is positive")
+    assert finding is not None
+    assert finding.rule_id == "W025"
+
+
+def test_w025_does_not_fire_on_non_assert_comment():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- this is just a comment") is None
+
+
+def test_w025_does_not_fire_on_plain_sql():
+    rule = AssertionMalformed()
+    assert _line(rule, "SELECT * FROM users WHERE id = 1;") is None
+
+
+def test_w025_does_not_fire_on_assert_mentioned_inside_other_comment():
+    # `-- @assert:` appearing as a substring inside a longer comment is
+    # not an assertion -- it is prose describing the feature. The rule
+    # anchors `--` to start-of-line specifically to avoid this case.
+    rule = AssertionMalformed()
+    assert (
+        _line(
+            rule,
+            "-- sql-sop reads `-- @assert: row_count > 0` comments",
+        )
+        is None
+    )
+
+
+def test_w025_passes_on_qualified_unique_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: unique(orders.batch_id)") is None
+
+
+def test_w025_passes_on_qualified_not_null_predicate():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: not_null(production.weight)") is None
+
+
+def test_w025_passes_on_qualified_column_comparison():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: orders.total > 0") is None
+
+
+def test_w025_flags_double_qualified_column():
+    # `schema.table.column` is two dots; v1 supports one. Anything
+    # deeper falls through to malformed.
+    rule = AssertionMalformed()
+    finding = _line(rule, "-- @assert: schema.table.column > 0")
+    assert finding is not None
+    assert finding.rule_id == "W025"
+
+
+def test_w025_tolerates_extra_spaces_after_dashes():
+    rule = AssertionMalformed()
+    assert _line(rule, "--   @assert: unique(id)") is None
+
+
+def test_w025_tolerates_extra_spaces_around_colon():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert:   unique(id)") is None
+
+
+def test_w025_tolerates_leading_indent_on_comment():
+    rule = AssertionMalformed()
+    assert _line(rule, "    -- @assert: unique(id)") is None
+
+
+def test_w025_tolerates_trailing_whitespace():
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: unique(id)   ") is None
+
+
+def test_w025_message_includes_offending_predicate():
+    rule = AssertionMalformed()
+    finding = _line(rule, "-- @assert: weight is positive")
+    assert finding is not None
+    assert "weight is positive" in finding.message
