@@ -8,6 +8,19 @@ sql-sop uses [Semantic Versioning](https://semver.org/).
 Rule removals and rule ID renames are **breaking changes** that require
 a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
+## [0.9.0](https://github.com/Pawansingh3889/sql-guard/compare/v0.8.0...v0.9.0) (2026-05-31)
+
+
+### Features
+
+* dbt-aware rule pack scaffolding + DBT001 model-without-test ([#57](https://github.com/Pawansingh3889/sql-guard/issues/57)) ([7ee1371](https://github.com/Pawansingh3889/sql-guard/commit/7ee1371ba7f18c2c49c12c7cc5d65c85d9769815))
+* **rules:** add W025 assertion-malformed ([#53](https://github.com/Pawansingh3889/sql-guard/issues/53)) ([98caa6d](https://github.com/Pawansingh3889/sql-guard/commit/98caa6dd61edc72a69929796c41efb678fc50509))
+
+
+### Documentation
+
+* **readme:** add Companion tools section linking OpsMind and the compliance dashboard ([#58](https://github.com/Pawansingh3889/sql-guard/issues/58)) ([d8f6c0f](https://github.com/Pawansingh3889/sql-guard/commit/d8f6c0f3b66bd8bfa149377df8f92fa35bd54ab2))
+
 ## [Unreleased]
 
 ## [0.8.0] - 2026-05-20
