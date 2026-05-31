@@ -128,20 +128,38 @@ ALL_RULES: list[Rule] = [
 ]
 
 
+def build_dbt_rules(project: "DbtProject") -> list[Rule]:  # noqa: F821 -- forward reference
+    """Construct the dbt-aware rule pack with a discovered project.
+
+    Each rule needs the project to look up schema.yml entries, model
+    paths, etc. The pack is opt-in via the ``--dbt`` CLI flag, so this
+    helper is only invoked when a project was actually discovered.
+    """
+    from sql_guard.rules.dbt import ModelWithoutTest
+
+    return [ModelWithoutTest(project)]
+
+
 def get_rules(
     enabled_ids: set[str] | None = None,
     disabled_ids: set[str] | None = None,
     contract: "Contract | None" = None,  # noqa: F821 -- forward reference
+    dbt_project: "DbtProject | None" = None,  # noqa: F821 -- forward reference
 ) -> list[Rule]:
     """Return filtered list of rules based on config.
 
     If ``contract`` is provided, contract-aware rules (C001-...) are
     instantiated with that contract and appended. Without a contract they
     are silent and not registered.
+
+    If ``dbt_project`` is provided, dbt-aware rules (DBT001-...) are
+    instantiated with that project and appended. Same opt-in shape.
     """
     rules = list(ALL_RULES)
     if contract is not None:
         rules = rules + list(build_contract_rules(contract))
+    if dbt_project is not None:
+        rules = rules + list(build_dbt_rules(dbt_project))
     if enabled_ids:
         rules = [r for r in rules if r.id in enabled_ids]
     if disabled_ids:
@@ -149,5 +167,6 @@ def get_rules(
     return rules
 
 
-# Forward import for type hints; placed at bottom to avoid circular import.
+# Forward imports for type hints; placed at bottom to avoid circular imports.
 from sql_guard.contracts import Contract  # noqa: E402, F401
+from sql_guard.dbt import DbtProject  # noqa: E402, F401

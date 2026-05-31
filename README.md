@@ -16,6 +16,15 @@
 - [Profile](https://github.com/Pawansingh3889)
 - **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`ROADMAP.md`](ROADMAP.md) · [`GOVERNANCE.md`](GOVERNANCE.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · [`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE)
 
+## Companion tools
+
+sql-sop is the most-downloaded tool in a small set of on-prem tools for regulated manufacturing data. The three are independent on PyPI / GitHub but compose into a platform:
+
+- **[OpsMind](https://github.com/Pawansingh3889/OpsMind)** — On-prem NL-to-SQL AI assistant. OpsMind generates SQL via a local LLM; sql-sop is the static safety layer that validates every generated query against 44 rules before execution. Read-only enforcement plus static pattern checks, defence in depth.
+- **[Manufacturing Compliance Dashboard](https://github.com/Pawansingh3889/manufacturing-compliance-dashboard)** — Live BRC/HACCP dashboard for manufacturing data. Uses the same read-only safety model; sql-sop lints the SQL underpinning its queries.
+
+The dbt-aware rule pack (DBT001+) extends sql-sop into dbt projects. See the [ADR](https://github.com/Pawansingh3889/sql-guard/issues?q=is%3Aissue+label%3AADR) for the broader roadmap.
+
 ## Why Does This Exist?
 
 One bad SQL query can delete production data, expose customer records, or bring down a database. Most teams only find out after the damage is done. sql-sop catches dangerous patterns automatically — before the query ever runs — in 0.08 seconds.

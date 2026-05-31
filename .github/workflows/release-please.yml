@@ -1,0 +1,32 @@
+name: Release Please
+
+# Watches main for Conventional Commits and opens a release PR when one
+# would be cut. Merging that PR creates a v*.*.* tag, which then fires
+# the existing `release.yml` workflow to build + publish to PyPI via
+# Trusted Publishing and attach artifacts to the GitHub release.
+#
+# Manifest mode: version state lives in `.release-please-manifest.json`
+# and the release strategy is configured in `release-please-config.json`.
+# See `GOVERNANCE.md` § Release cadence for the batching policy --
+# Release Please mechanics don't change the policy, they just remove
+# the paperwork.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          token: ${{ secrets.GITHUB_TOKEN }}

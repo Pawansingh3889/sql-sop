@@ -1,48 +1,12 @@
 name: Feature request
-description: Suggest a new rule, rule change, or improvement
+description: Suggest a new rule, change, or improvement
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for suggesting. If you're proposing a **new rule**,
-        see `CONTRIBUTING.md` § "Adding a new rule" for the shape
-        of the work.
-
   - type: textarea
-    id: problem
+    id: description
     attributes:
-      label: What problem does this solve?
-      description: Describe the SQL hazard or developer pain. Examples of the pattern in real code are gold.
-    validations:
-      required: true
-
-  - type: textarea
-    id: proposal
-    attributes:
-      label: Proposed change
-      description: New rule ID (next unused E00N / W0NN / S00N / P00N), name, severity, and a one-sentence description.
-    validations:
-      required: true
-
-  - type: textarea
-    id: examples
-    attributes:
-      label: Examples
-      description: SQL that should fire the rule, and SQL that should NOT (so the false-positive risk is visible).
-      render: sql
-
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives considered
-      description: Why this over existing rules, or over "just educate developers"?
-
-  - type: checkboxes
-    id: breaking
-    attributes:
-      label: Breaking-change check
-      description: Rule removal, ID renaming, or default-severity changes break downstream pre-commit configs.
-      options:
-        - label: This change does NOT remove or rename any existing rule ID or change a default severity.
+      label: What would you like to see?
+      description: |
+        Freeform. Describe the problem, the proposal, and any examples
+        that help. Don't fuss about structure — we'll ask if we need more.

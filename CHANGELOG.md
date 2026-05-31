@@ -10,7 +10,34 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-05-20
+
+Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful coverage fix to S001 `implicit-cross-join`. No breaking changes; existing pre-commit configs continue to work without modification.
+
 ### Added
+
+- **DBT001 `model-without-test`** - first rule in the dbt-aware rule
+  pack. Fires once per `.sql` file inside the project's `model-paths`
+  when the model has no `tests:` (dbt <=1.4) or `data_tests:`
+  (dbt >=1.5) entry in any `schema.yml`. Activated by the new `--dbt`
+  CLI flag; silent without it. Models outside `model-paths` (macros,
+  analyses, snapshots) and non-SQL files are skipped. See the
+  [dbt-aware rule pack ADR] for the broader rule set roadmap.
+
+  This release also lands the scaffolding the rest of the pack will
+  build on:
+  - `sql_guard.dbt` module: walks up to find `dbt_project.yml`,
+    reads `model-paths`, and parses `schema.yml` files into a
+    `DbtProject` value object. Tolerates malformed schema.yml
+    without crashing the lint run.
+  - `Rule.check_file` extension point: a file-level check hook on the
+    base rule class. Default returns an empty list so existing
+    line- and statement-rules pay nothing.
+  - `--dbt` CLI flag and `build_dbt_rules(project)` registry helper
+    that mirror the Contracts Pack opt-in pattern.
+
+  Jinja preprocessing and the remaining six rules in the ADR are
+  intentionally deferred to follow-up PRs.
 
 - **W025 `assertion-malformed`** - warns when an `-- @assert:` comment
   carries a predicate that does not match the sql-sop assertion grammar.
@@ -22,6 +49,7 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   comment does not produce a false positive. See the ADR proposal for
   scope discipline (no execution, no DB connection, stays in the
   rule-based hard line from `GOVERNANCE.md`).
+
 - **W021 `having-without-group-by`** - warns when `HAVING` appears
   without a preceding `GROUP BY` in the same query block. The query
   becomes a single implicit group, almost always a typo for `WHERE`.
@@ -83,6 +111,10 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   `, LATERAL ...` is recognised as a legitimate
   Snowflake/Postgres lateral join and not flagged. Resolves #41
   (the W027 comma-join request was a duplicate of S001).
+
+### Documentation
+
+- README and `action.yml` refresh for v0.7.0 (contracts pack, new contributors, missing rules) ([#38](https://github.com/Pawansingh3889/sql-guard/pull/38)).
 
 ## [0.7.0] - 2026-05-02
 
