@@ -26,8 +26,8 @@ jobs:
     steps:
       - uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: |
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          issue_message: |
             Thanks for opening your first issue on sql-sop! A few pointers:
 
             - If this is a **security / rule-bypass** report, please close
@@ -41,7 +41,7 @@ jobs:
 
             The maintainer replies within 7 calendar days
             (see [`GOVERNANCE.md`](../blob/main/GOVERNANCE.md)).
-          pr-message: |
+          pr_message: |
             Thanks for your first PR on sql-sop! Quick checks:
 
             - `pytest -q` and `ruff check .` pass locally
