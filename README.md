@@ -18,10 +18,10 @@
 
 ## Companion tools
 
-sql-sop is the most-downloaded tool in a small set of on-prem tools for regulated manufacturing data. The three are independent on PyPI / GitHub but compose into a platform:
+sql-sop composes with a few other small on-prem tools:
 
-- **[OpsMind](https://github.com/Pawansingh3889/OpsMind)** — On-prem NL-to-SQL AI assistant. OpsMind generates SQL via a local LLM; sql-sop is the static safety layer that validates every generated query against 44 rules before execution. Read-only enforcement plus static pattern checks, defence in depth.
-- **[Manufacturing Compliance Dashboard](https://github.com/Pawansingh3889/manufacturing-compliance-dashboard)** — Live BRC/HACCP dashboard for manufacturing data. Uses the same read-only safety model; sql-sop lints the SQL underpinning its queries.
+- **[sql-explorer-mcp](https://github.com/Pawansingh3889/sql-explorer-mcp)** — read-only MCP server that lets an AI introspect and query SQL Server / Postgres / SQLite; sql-sop is one of its safety layers, rejecting dangerous queries before they run.
+- **[FloorMind](https://github.com/Pawansingh3889/FloorMind)** — on-prem NL→SQL agent that generates SQL via a local LLM; sql-sop validates every generated query before execution.
 
 The dbt-aware rule pack (DBT001+) extends sql-sop into dbt projects. See the [ADR](https://github.com/Pawansingh3889/sql-guard/issues?q=is%3Aissue+label%3AADR) for the broader roadmap.
 
@@ -56,7 +56,7 @@ Fast, rule-based SQL linter. 43 rules (38 SQL + 5 Python), with an optional Cont
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, contract drift, and 40+ more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
-Used in production data pipelines to lint SQL before it reaches manufacturing ERP databases. Prevents dangerous patterns like DELETE without WHERE from running against production SI Integreater tables.
+Built to catch dangerous patterns like DELETE without WHERE before they ever reach a production database.
 
 For deeper AI-powered analysis, pair with [SQL Ops Reviewer](https://github.com/Pawansingh3889/sql-ops-reviewer).
 
@@ -424,7 +424,7 @@ Benchmark: 200 SQL files, 20 SQL rules
 
 ## Production Use Case
 
-In a fish production environment, sql-sop runs as a pre-commit hook on all SQL that touches ERP data (RunNumber, OCM tables). Combined with read-only database users and Docker isolation, it forms part of a 6-layer safety architecture that prevents accidental writes to the production ERP.
+In a regulated data environment, sql-sop runs as a pre-commit hook on all SQL that touches the database. Combined with read-only database users and container isolation, it forms part of a layered safety setup that prevents accidental writes to production.
 
 ---
 
