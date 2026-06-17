@@ -8,6 +8,9 @@
 [![Playground](https://img.shields.io/badge/playground-try%20online-a07aff)](https://pawansingh3889.github.io/sql-guard/)
 [![Downloads](https://img.shields.io/pypi/dm/sql-sop?color=a07aff)](https://pypi.org/project/sql-sop/)
 [![codecov](https://codecov.io/gh/Pawansingh3889/sql-guard/branch/main/graph/badge.svg)](https://codecov.io/gh/Pawansingh3889/sql-guard)
+
+> Part of the [Governed Agent Stack](https://github.com/Pawansingh3889/governed-agent-stack): free, on-prem building blocks for an AI agent you can point at a real database and audit.
+
 ## Links
 - [GitHub](https://github.com/Pawansingh3889/sql-guard)
 - [PyPI](https://pypi.org/project/sql-sop/)
