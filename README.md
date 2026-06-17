@@ -20,14 +20,14 @@
 
 sql-sop composes with a few other small on-prem tools:
 
-- **[sql-explorer-mcp](https://github.com/Pawansingh3889/sql-explorer-mcp)** — read-only MCP server that lets an AI introspect and query SQL Server / Postgres / SQLite; sql-sop is one of its safety layers, rejecting dangerous queries before they run.
-- **[FloorMind](https://github.com/Pawansingh3889/FloorMind)** — on-prem NL→SQL agent that generates SQL via a local LLM; sql-sop validates every generated query before execution.
+- **[sql-explorer-mcp](https://github.com/Pawansingh3889/sql-explorer-mcp)**: read-only MCP server that lets an AI introspect and query SQL Server / Postgres / SQLite; sql-sop is one of its safety layers, rejecting dangerous queries before they run.
+- **[FloorMind](https://github.com/Pawansingh3889/FloorMind)**: on-prem NL→SQL agent that generates SQL via a local LLM; sql-sop validates every generated query before execution.
 
 The dbt-aware rule pack (DBT001+) extends sql-sop into dbt projects. See the [ADR](https://github.com/Pawansingh3889/sql-guard/issues?q=is%3Aissue+label%3AADR) for the broader roadmap.
 
 ## Why Does This Exist?
 
-One bad SQL query can delete production data, expose customer records, or bring down a database. Most teams only find out after the damage is done. sql-sop catches dangerous patterns automatically — before the query ever runs — in 0.08 seconds.
+One bad SQL query can delete production data, expose customer records, or bring down a database. Most teams only find out after the damage is done. sql-sop catches dangerous patterns automatically, before the query ever runs, in 0.08 seconds.
 
 ### Key Numbers
 
@@ -65,7 +65,7 @@ For deeper AI-powered analysis, pair with [SQL Ops Reviewer](https://github.com/
 ## Quick start
 
 **If sql-sop catches a real bug for you, a GitHub star is the easiest way
-to help — it makes the project more discoverable for people with the same
+to help. It makes the project more discoverable for people with the same
 problem.**
 
 ```bash
