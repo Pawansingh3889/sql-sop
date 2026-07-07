@@ -1,5 +1,7 @@
 # sql-sop
 
+[![PyPI](https://img.shields.io/pypi/v/sql-sop)](https://pypi.org/project/sql-sop/) [![Downloads](https://static.pepy.tech/badge/sql-sop)](https://pepy.tech/projects/sql-sop)
+
 [![CI](https://github.com/Pawansingh3889/sql-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/Pawansingh3889/sql-guard/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/sql-sop)](https://pypi.org/project/sql-sop/)
 [![Python](https://img.shields.io/pypi/pyversions/sql-sop)](https://pypi.org/project/sql-sop/)
