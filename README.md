@@ -21,9 +21,13 @@
 - [Profile](https://github.com/Pawansingh3889)
 - **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`ROADMAP.md`](ROADMAP.md) · [`GOVERNANCE.md`](GOVERNANCE.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · [`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE)
 
+## Where this leads: sql-steward
+
+sql-sop lints the SQL people write. When you want an AI agent to **write and run** SQL against a real database without ever handling a connection string, that is **[sql-steward](https://github.com/Pawansingh3889/sql-steward)**, the governed MCP gateway from the same stack. The agent never writes raw SQL: every query is compiled from a semantic layer you control, blocked PII is refused before retrieval, and every call lands in a tamper-evident audit. sql-sop guards the SQL humans write; sql-steward guards the SQL an agent generates.
+
 ## Companion tools
 
-sql-sop composes with a few other small on-prem tools:
+sql-sop also composes with a few other small on-prem tools:
 
 - **[sql-explorer-mcp](https://github.com/Pawansingh3889/sql-explorer-mcp)**: read-only MCP server that lets an AI introspect and query SQL Server / Postgres / SQLite; sql-sop is one of its safety layers, rejecting dangerous queries before they run.
 - **[FloorMind](https://github.com/Pawansingh3889/FloorMind)**: on-prem NL→SQL agent that generates SQL via a local LLM; sql-sop validates every generated query before execution.
