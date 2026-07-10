@@ -27,10 +27,9 @@ sql-sop lints the SQL people write. When you want an AI agent to **write and run
 
 ## Companion tools
 
-sql-sop also composes with a few other small on-prem tools:
+sql-sop also composes with another small on-prem tool:
 
 - **[sql-explorer-mcp](https://github.com/Pawansingh3889/sql-explorer-mcp)**: read-only MCP server that lets an AI introspect and query SQL Server / Postgres / SQLite; sql-sop is one of its safety layers, rejecting dangerous queries before they run.
-- **[FloorMind](https://github.com/Pawansingh3889/FloorMind)**: on-prem NL→SQL agent that generates SQL via a local LLM; sql-sop validates every generated query before execution.
 
 The dbt-aware rule pack (DBT001+) extends sql-sop into dbt projects. See the [ADR](https://github.com/Pawansingh3889/sql-guard/issues?q=is%3Aissue+label%3AADR) for the broader roadmap.
 
