@@ -42,12 +42,11 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 44 (10 errors, 29 warnings, 5 Python-source); 49 with `--contract` |
-| Tests | 277 |
-| Coverage | 86% |
+| Rules | 48 (9 errors, 25 warnings, 3 structural, 6 T-SQL, 5 Python-source); 53 with `--contract` |
+| Tests | 303 |
 | Scan speed | 0.08s across 200 files |
-| PyPI downloads | 500+/month |
-| Version | 0.7.0 |
+| PyPI installs | 2,000+ (mirrors excluded) |
+| Version | 0.9.0 |
 
 ### Fluent API (v0.2.0)
 
@@ -61,13 +60,13 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 43 rules (38 SQL + 5 Python), with an optional Contracts pack (5 schema-aware rules) when you supply `--contract path.yml`. SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 500+ monthly downloads on PyPI.
+Fast, rule-based SQL linter. 48 rules (43 SQL + 5 Python), with an optional Contracts pack (5 schema-aware rules) when you supply `--contract path.yml`. SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 2,000+ installs on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, contract drift, and 40+ more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
 Built to catch dangerous patterns like DELETE without WHERE before they ever reach a production database.
 
-For deeper AI-powered analysis, pair with [SQL Ops Reviewer](https://github.com/Pawansingh3889/sql-ops-reviewer).
+Want the same rules inside your AI assistant? [sql-sop-mcp](https://github.com/Pawansingh3889/sql-sop-mcp) exposes them over MCP, so the model is told a query is unsafe before it suggests it.
 
 ---
 
@@ -96,63 +95,28 @@ queries/create_orders.sql
 Found 2 issues (1 error, 1 warning) in 1 file (0.001s)
 ```
 
-## The two-layer SQL quality pipeline
+## Where sql-sop runs
 
-Most teams have **no SQL review process**. Some use an AI linter. The problem: AI is slow, expensive, and overkill for catching `DELETE FROM users;`.
+Most teams have **no SQL review process** at all. sql-sop gives you one in two places, both driven by the same rules:
 
-sql-sop and SQL Ops Reviewer solve this together:
+- **Pre-commit** -- runs in under 0.2s on the files you changed, so a bad `DELETE FROM users` is blocked before it is ever committed.
+- **CI** -- runs on every pull request and uploads SARIF, so findings appear inline in the GitHub "Files changed" view through Code Scanning.
 
-```
-                    ┌─────────────────────────────────────┐
-                    │         YOUR SQL FILE                │
-                    └──────────────┬──────────────────────┘
-                                   │
-          ┌────────────────────────┼────────────────────────┐
-          │                        │                        │
-          ▼                        │                        │
-   LAYER 1: PRE-COMMIT             │              LAYER 2: CI
-   ─────────────────               │              ──────────
-   sql-guard                       │              SQL Ops Reviewer
-                                   │
-   When: before every commit       │              When: on every PR
-   Speed: <0.2 seconds             │              Speed: 10-40 seconds
-   How: regex pattern matching     │              How: Ollama LLM analysis
-   Needs: nothing (pure Python)    │              Needs: 4-7 GB (AI model)
-   Catches: 80% of issues          │              Catches: remaining 20%
-                                   │
-   ✓ DELETE without WHERE          │              ✓ wrong JOIN type
-   ✓ SELECT *                      │              ✓ business logic errors
-   ✓ SQL injection patterns        │              ✓ schema-aware suggestions
-   ✓ missing LIMIT                 │              ✓ cross-table consistency
-   ✓ DROP without IF EXISTS        │              ✓ performance rewrites
-          │                        │                        │
-          ▼                        │                        ▼
-   commit blocked or passes        │              PR comment with findings
-          │                        │                        │
-          └────────────────────────┼────────────────────────┘
-                                   │
-                                   ▼
-                         CLEAN SQL IN PRODUCTION
-```
-
-**Layer 1 (sql-guard)** is a smoke detector -- always on, instant, catches fire fast.
-**Layer 2 (SQL Ops Reviewer)** is a fire inspector -- thorough, comes on every PR.
-
-You want both.
+Same engine in both, no AI, no API keys, nothing to host. Fast enough to sit in the commit path, strict enough to gate a PR.
 
 ---
 
-## Set up the full pipeline (5 minutes)
+## Set up (5 minutes)
 
-### Step 1: Pre-commit hook (Layer 1)
+### Step 1: Pre-commit hook
 
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/Pawansingh3889/sql-guard
-    rev: v0.7.0
+  - repo: https://github.com/Pawansingh3889/sql-sop
+    rev: v0.9.0
     hooks:
-      - id: sql-guard
+      - id: sql-sop
         args: [--severity, error]  # only block on errors locally
 ```
 
@@ -161,9 +125,9 @@ pip install pre-commit
 pre-commit install
 ```
 
-Now every `git commit` with `.sql` changes runs sql-guard automatically. Errors block the commit. Warnings are shown but don't block.
+Now every `git commit` with `.sql` changes runs sql-sop automatically. Errors block the commit. Warnings are shown but don't block.
 
-### Step 2: GitHub Actions (Layer 1 + Layer 2)
+### Step 2: GitHub Actions
 
 ```yaml
 # .github/workflows/sql-quality.yml
@@ -177,29 +141,16 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Layer 1: fast rule check (~2 seconds)
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Pawansingh3889/sql-guard@v1
+      - uses: Pawansingh3889/sql-sop@v1
         with:
           severity: warning
-
-  # Layer 2: deep AI review (~30 seconds, runs after lint passes)
-  review:
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: Pawansingh3889/sql-ops-reviewer@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-That's it. Two files. Every SQL change gets:
-1. Instant rule-based lint (sql-guard)
-2. Deep AI review with fix suggestions (SQL Ops Reviewer)
+That's it. Every SQL change gets an instant, rule-based lint on the PR.
 
 ### Step 3 (optional): CLI for manual checks
 
@@ -441,13 +392,13 @@ In a regulated data environment, sql-sop runs as a pre-commit hook on all SQL th
 
 | | sql-sop | sqlfluff | sql-lint |
 |---|---|---|---|
-| Rules | 31 (focused) | 800+ (comprehensive) | ~20 |
+| Rules | 48 (focused) | 800+ (comprehensive) | ~20 |
 | Speed | <0.1s for 200 files | 45s for 200 files | ~2s |
 | Config needed | Zero | Extensive | Minimal |
 | Language | Python | Python | JavaScript |
 | Pre-commit | Yes | Yes | No |
 | GitHub Action | Yes | Community | No |
-| AI integration | Pairs with SQL Ops Reviewer | No | No |
+| AI integration | MCP server (sql-sop-mcp) | No | No |
 
 sql-sop is not a replacement for sqlfluff. It's a fast first pass that catches 80% of real issues with zero setup. If you need dialect-specific formatting and 800 rules, use sqlfluff. If you want instant feedback on dangerous SQL, use sql-guard.
 
