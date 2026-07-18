@@ -1,22 +1,27 @@
 name: Release
 
-# Fires when a tag matching v*.*.* is pushed (e.g. v0.4.0).
-# Builds the sdist + wheel, uploads them to the workflow run for audit,
-# publishes to PyPI via trusted publishing (no long-lived token needed),
-# and creates a GitHub release with the built artifacts attached.
+# Publishes whenever main carries a version PyPI does not have yet.
 #
-# One-time setup on pypi.org before this workflow can succeed:
-#   https://pypi.org/manage/project/sql-sop/settings/publishing/
-#   Add a trusted publisher with:
-#     Owner:        Pawansingh3889
-#     Repository:   sql-guard
-#     Workflow:     release.yml
-#     Environment:  release
-# Until that publisher exists, the `publish` job will fail with an OIDC
-# error — the `build` job still runs so you get the artifacts.
+# Why push-to-main and not just tag-push: the release tag is created by the
+# release bot using GITHUB_TOKEN, and GitHub never starts workflows from
+# events made with that token — which is how v0.9.0 sat tagged but
+# unpublished for six weeks. The merge of the release PR, however, is a
+# push to main by a real user, so that event fires reliably. The `check`
+# job makes it safe to fire on every push: it compares the version in
+# pyproject.toml against PyPI and skips everything when that version is
+# already published. This also self-heals — if a release is ever missed,
+# the next push to main publishes it.
+#
+# Trusted publisher on pypi.org (project sql-sop -> Publishing):
+#   Owner: Pawansingh3889  Repository: sql-sop
+#   Workflow: release.yml  Environment: release
+# The repository field must track any repo rename, or publishing fails
+# with `invalid-publisher` (this bit us after sql-guard -> sql-sop).
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -25,14 +30,39 @@ permissions:
   contents: read
 
 jobs:
+  check:
+    name: Compare version against PyPI
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.decide.outputs.version }}
+      publish: ${{ steps.decide.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decide whether this version needs publishing
+        id: decide
+        run: |
+          version="$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+          code="$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/sql-sop/${version}/json")"
+          if [ "$code" = "404" ]; then
+            publish=true
+          else
+            publish=false
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "publish=${publish}" >> "$GITHUB_OUTPUT"
+          echo "sql-sop ${version}: PyPI says HTTP ${code} -> publish=${publish}"
+
   build:
     name: Build sdist and wheel
+    needs: check
+    if: needs.check.outputs.publish == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -48,7 +78,7 @@ jobs:
         run: ls -lh dist/
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
@@ -65,7 +95,7 @@ jobs:
       id-token: write  # required for PyPI trusted publishing (OIDC)
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
@@ -77,25 +107,29 @@ jobs:
 
   github-release:
     name: Attach artifacts to GitHub Release
-    needs: publish-pypi
+    needs: [check, publish-pypi]
     runs-on: ubuntu-latest
     permissions:
       contents: write  # required for creating a GitHub release
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
 
-      - name: Create GitHub release
+      - name: Create or complete the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${GITHUB_REF##*/}"
-          gh release create "$tag" \
-            --title "$tag" \
-            --generate-notes \
-            dist/*
+          # The tag comes from the published version, never from GITHUB_REF:
+          # on a branch push GITHUB_REF is the branch, and naming a release
+          # after it once produced a release called "main".
+          tag="v${{ needs.check.outputs.version }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/* --clobber
+          else
+            gh release create "$tag" --title "$tag" --generate-notes dist/*
+          fi
