@@ -8,6 +8,13 @@ sql-sop uses [Semantic Versioning](https://semver.org/).
 Rule removals and rule ID renames are **breaking changes** that require
 a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
+## [0.9.1](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.0...v0.9.1) (2026-07-19)
+
+
+### Bug Fixes
+
+* **ci:** use underscore input names for first-interaction@v3 ([#64](https://github.com/Pawansingh3889/sql-sop/issues/64)) ([fb69e41](https://github.com/Pawansingh3889/sql-sop/commit/fb69e410f2e4e31603a81465daa00de18e9887e9))
+
 ## [0.9.0](https://github.com/Pawansingh3889/sql-guard/compare/v0.8.0...v0.9.0) (2026-05-31)
 
 
