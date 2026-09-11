@@ -164,7 +164,7 @@ class DeeplyNestedSubquery(Rule):
                     message=f"Subquery nested {depth} levels deep (max {self.MAX_DEPTH})",
                     suggestion="Refactor using CTEs (WITH clause) for readability",
                 )
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 -- heuristic scan; never crash the caller
             pass
         return None
 

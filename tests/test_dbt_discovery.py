@@ -6,7 +6,6 @@ from pathlib import Path
 
 from sql_guard.dbt import find_dbt_project, load_dbt_project
 
-
 FIXTURE_PROJECT = Path(__file__).parent / "fixtures" / "dbt_project"
 
 
