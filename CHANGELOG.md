@@ -30,6 +30,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+- **DBT002 `direct-table-ref`** - warns on raw table references in FROM/JOIN clauses (e.g., `FROM orders`, `JOIN schema.table`) instead of `{{ ref('model') }}` or `{{ source('src', 'table') }}`. Encourages dbt's dependency graph and execution ordering. ([#75](https://github.com/Pawansingh3889/sql-sop/pull/75))
+
 ## [0.8.0] - 2026-05-20
 
 Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful coverage fix to S001 `implicit-cross-join`. No breaking changes; existing pre-commit configs continue to work without modification.
