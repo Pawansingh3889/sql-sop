@@ -142,6 +142,7 @@ def build_dbt_rules(project: DbtProject) -> list[Rule]:
         ModelWithoutDescription,
         ModelWithoutTest,
         SelectStarInMart,
+        UnquotedVarInterpolation,
     )
 
     return [
@@ -151,6 +152,7 @@ def build_dbt_rules(project: DbtProject) -> list[Rule]:
         HookWithDdl(project),
         SelectStarInMart(project),
         ModelWithoutDescription(project),
+        UnquotedVarInterpolation(project),
     ]
 
 

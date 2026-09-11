@@ -513,6 +513,79 @@ class ModelWithoutDescription(Rule):
         ]
 
 
+class UnquotedVarInterpolation(Rule):
+    """DBT007: ``{{ var(...) }}`` interpolated into SQL with no quotes.
+
+    Named and scored deliberately conservative (see the ADR decision
+    comment, issue #54): ``var()`` values come from ``dbt_project.yml``
+    or the CLI at compile time, set by the project author, not
+    untrusted runtime input. This is not an injection risk. The real
+    failure mode is that an unquoted interpolation produces a syntax
+    error, or silently the wrong literal, the day someone sets that var
+    to a value containing whitespace or a quote. ``warning``, not
+    ``error``.
+
+    Flags ``{{ var(...) }}`` when the character immediately before and
+    after it is not ``'``. Deliberately narrow: a var() call used
+    inside a Jinja control block (``{% if var('flag') %}``) is a
+    different delimiter and never matches; a var() call nested inside
+    another Jinja expression (``{{ config(threshold=var('x')) }}``)
+    has no ``{{`` of its own immediately before ``var`` and doesn't
+    match either. Both are correctly out of scope, not interpolation
+    into SQL text.
+    """
+
+    id = "DBT007"
+    name = "unquoted-var-interpolation"
+    severity = "warning"
+    description = "{{ var(...) }} interpolated into SQL without quotes"
+
+    _var_call = re.compile(r"\{\{\s*var\s*\(.*?\)\s*\}\}", re.IGNORECASE | re.DOTALL)
+
+    def __init__(self, project: DbtProject) -> None:
+        self._project = project
+
+    def check_file(self, file: str) -> list[Finding]:
+        path = Path(file)
+        if path.suffix != ".sql":
+            return []
+
+        resolved = path.resolve()
+        in_models = any(
+            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
+        )
+        if not in_models:
+            return []
+
+        try:
+            content = path.read_text(encoding="utf-8")
+        except OSError:
+            return []
+
+        findings: list[Finding] = []
+        for match in self._var_call.finditer(content):
+            before = content[match.start() - 1] if match.start() > 0 else ""
+            after = content[match.end()] if match.end() < len(content) else ""
+            if before == "'" and after == "'":
+                continue
+
+            line = content[: match.start()].count("\n") + 1
+            findings.append(
+                Finding(
+                    rule_id=self.id,
+                    severity=self.severity,
+                    file=file,
+                    line=line,
+                    message="{{ var(...) }} interpolated without surrounding quotes",
+                    suggestion=(
+                        "Wrap it in quotes: '{{ var(...) }}', unless this is "
+                        "deliberately a bare numeric value."
+                    ),
+                )
+            )
+        return findings
+
+
 def _is_relative_to(child: Path, parent: Path) -> bool:
     """Cross-version Path.is_relative_to helper.
 
