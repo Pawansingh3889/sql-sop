@@ -6,7 +6,12 @@ from pathlib import Path
 
 from sql_guard.dbt import load_dbt_project
 from sql_guard.rules import build_dbt_rules, get_rules
-from sql_guard.rules.dbt import DirectTableRef, IncrementalWithoutUniqueKey, ModelWithoutTest
+from sql_guard.rules.dbt import (
+    DirectTableRef,
+    HookWithDdl,
+    IncrementalWithoutUniqueKey,
+    ModelWithoutTest,
+)
 
 FIXTURE_PROJECT_YML = Path(__file__).parent / "fixtures" / "dbt_project" / "dbt_project.yml"
 FIXTURE_MODELS = FIXTURE_PROJECT_YML.parent / "models"
@@ -304,6 +309,96 @@ def test_dbt003_skips_file_outside_model_paths(tmp_path):
     assert rule.check_file(str(macro)) == []
 
 
+# DBT004 hook-with-ddl --------------------------------------------------------
+
+
+def _dbt004_project(tmp_path, model_sql: str):
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    marts = tmp_path / "models" / "marts"
+    marts.mkdir(parents=True)
+    model_path = marts / "fct_orders.sql"
+    model_path.write_text(model_sql)
+    project = load_dbt_project(tmp_path / "dbt_project.yml")
+    return HookWithDdl(project), model_path
+
+
+def test_dbt004_errors_on_drop_in_pre_hook(tmp_path):
+    sql = "{{ config(pre_hook=\"DROP TABLE staging_x\") }}\nSELECT 1\n"
+    rule, path = _dbt004_project(tmp_path, sql)
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert findings[0].rule_id == "DBT004"
+    assert findings[0].severity == "error"
+    assert "pre_hook" in findings[0].message
+
+
+def test_dbt004_errors_on_truncate_in_post_hook(tmp_path):
+    sql = "{{ config(post_hook=\"TRUNCATE TABLE staging_x\") }}\nSELECT 1\n"
+    rule, path = _dbt004_project(tmp_path, sql)
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert findings[0].severity == "error"
+    assert "post_hook" in findings[0].message
+
+
+def test_dbt004_errors_on_delete_in_hook(tmp_path):
+    sql = "{{ config(post_hook=\"DELETE FROM staging_x WHERE 1=1\") }}\nSELECT 1\n"
+    rule, path = _dbt004_project(tmp_path, sql)
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert findings[0].severity == "error"
+
+
+def test_dbt004_warns_on_alter_in_hook(tmp_path):
+    sql = "{{ config(post_hook=\"ALTER TABLE {{ this }} CLUSTER BY (id)\") }}\nSELECT 1\n"
+    rule, path = _dbt004_project(tmp_path, sql)
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert findings[0].severity == "warning"
+
+
+def test_dbt004_fires_once_per_hook_in_a_list(tmp_path):
+    sql = (
+        "{{ config(post_hook=["
+        "\"GRANT SELECT ON {{ this }} TO reporting\", "
+        "\"DROP TABLE staging_x\""
+        "]) }}\nSELECT 1\n"
+    )
+    rule, path = _dbt004_project(tmp_path, sql)
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert findings[0].severity == "error"
+
+
+def test_dbt004_quiet_for_safe_hook(tmp_path):
+    sql = "{{ config(post_hook=\"GRANT SELECT ON {{ this }} TO reporting\") }}\nSELECT 1\n"
+    rule, path = _dbt004_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt004_quiet_without_hooks(tmp_path):
+    sql = "{{ config(materialized='table') }}\nSELECT 1\n"
+    rule, path = _dbt004_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt004_quiet_without_config_call(tmp_path):
+    rule, path = _dbt004_project(tmp_path, "SELECT 1\n")
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt004_skips_file_outside_model_paths(tmp_path):
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    macros = tmp_path / "macros"
+    macros.mkdir()
+    macro = macros / "helper.sql"
+    macro.write_text("{{ config(pre_hook=\"DROP TABLE staging_x\") }}\nSELECT 1\n")
+
+    project = load_dbt_project(tmp_path / "dbt_project.yml")
+    rule = HookWithDdl(project)
+    assert rule.check_file(str(macro)) == []
+
+
 # Registry wiring -----------------------------------------------------------
 
 
@@ -311,20 +406,20 @@ def test_build_dbt_rules_returns_dbt_pack():
     project = load_dbt_project(FIXTURE_PROJECT_YML)
     rules = build_dbt_rules(project)
     ids = {r.id for r in rules}
-    assert {"DBT001", "DBT002", "DBT003"} <= ids
+    assert {"DBT001", "DBT002", "DBT003", "DBT004"} <= ids
 
 
 def test_get_rules_omits_dbt_pack_by_default():
     rules = get_rules()
     ids = {r.id for r in rules}
-    assert not ids & {"DBT001", "DBT002", "DBT003"}
+    assert not ids & {"DBT001", "DBT002", "DBT003", "DBT004"}
 
 
 def test_get_rules_includes_dbt_pack_when_project_supplied():
     project = load_dbt_project(FIXTURE_PROJECT_YML)
     rules = get_rules(dbt_project=project)
     ids = {r.id for r in rules}
-    assert {"DBT001", "DBT002", "DBT003"} <= ids
+    assert {"DBT001", "DBT002", "DBT003", "DBT004"} <= ids
 
 
 # CLI integration -----------------------------------------------------------
@@ -410,3 +505,20 @@ def test_cli_dbt_flag_activates_dbt003(tmp_path):
     runner = CliRunner()
     result = runner.invoke(app, ["check", "--dbt", str(model)])
     assert "DBT003" in result.stdout
+
+
+def test_cli_dbt_flag_activates_dbt004(tmp_path):
+    """End-to-end: --dbt flag discovers the project and fires DBT004."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    models = tmp_path / "models" / "marts"
+    models.mkdir(parents=True)
+    model = models / "fct_orders.sql"
+    model.write_text("{{ config(pre_hook=\"DROP TABLE staging_x\") }}\nSELECT 1\n")
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["check", "--dbt", str(model)])
+    assert "DBT004" in result.stdout

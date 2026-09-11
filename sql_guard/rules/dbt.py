@@ -283,6 +283,105 @@ class IncrementalWithoutUniqueKey(Rule):
         ]
 
 
+class HookWithDdl(Rule):
+    """DBT004: destructive or structural DDL in pre_hook / post_hook.
+
+    Reads the ``pre_hook`` / ``post_hook`` argument(s) of the
+    ``{{ config(...) }}`` call with a targeted regex, not a general
+    Jinja preprocessor (see the ADR decision comment, issue #54).
+    Handles both a single string and a list of strings, since dbt
+    accepts either.
+
+    Severity splits the destructive from the structural: ``DROP`` /
+    ``TRUNCATE`` / ``DELETE`` wipe data and are almost always a sign a
+    hook is doing something that belongs in its own model or migration
+    -- ``error``. ``ALTER`` is a common, sanctioned pattern (adding a
+    cluster key, a table property tweak) and stays a ``warning`` so it
+    is visible without blocking CI on something that is often fine.
+    """
+
+    id = "DBT004"
+    name = "hook-with-ddl"
+    severity = "error"
+    description = "pre_hook/post_hook contains destructive or structural DDL"
+
+    _config_call = re.compile(
+        r"\{\{\s*config\s*\((?P<args>.*?)\)\s*[-]?\}\}", re.IGNORECASE | re.DOTALL
+    )
+    _hook_arg = re.compile(
+        r"\b(pre_hook|post_hook)\s*=\s*(\[.*?\]|'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\")",
+        re.IGNORECASE | re.DOTALL,
+    )
+    _quoted_string = re.compile(r"'((?:[^'\\]|\\.)*)'|\"((?:[^\"\\]|\\.)*)\"")
+    _destructive = re.compile(r"\b(?:DROP|TRUNCATE|DELETE)\b", re.IGNORECASE)
+    _structural = re.compile(r"\bALTER\b", re.IGNORECASE)
+
+    def __init__(self, project: DbtProject) -> None:
+        self._project = project
+
+    def check_file(self, file: str) -> list[Finding]:
+        path = Path(file)
+        if path.suffix != ".sql":
+            return []
+
+        resolved = path.resolve()
+        in_models = any(
+            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
+        )
+        if not in_models:
+            return []
+
+        try:
+            content = path.read_text(encoding="utf-8")
+        except OSError:
+            return []
+
+        config_match = self._config_call.search(content)
+        if not config_match:
+            return []
+        args = config_match.group("args")
+        line = content[: config_match.start()].count("\n") + 1
+
+        findings: list[Finding] = []
+        for hook_match in self._hook_arg.finditer(args):
+            hook_name = hook_match.group(1)
+            value_blob = hook_match.group(2)
+            statements = [
+                a or b for a, b in self._quoted_string.findall(value_blob) if (a or b)
+            ]
+
+            for statement in statements:
+                if self._destructive.search(statement):
+                    findings.append(
+                        Finding(
+                            rule_id=self.id,
+                            severity="error",
+                            file=file,
+                            line=line,
+                            message=f"{hook_name} contains DROP/TRUNCATE/DELETE",
+                            suggestion=(
+                                "Move destructive DDL out of pre_hook/post_hook "
+                                "and into its own model or migration."
+                            ),
+                        )
+                    )
+                elif self._structural.search(statement):
+                    findings.append(
+                        Finding(
+                            rule_id=self.id,
+                            severity="warning",
+                            file=file,
+                            line=line,
+                            message=f"{hook_name} contains ALTER",
+                            suggestion=(
+                                "Confirm this ALTER is intentional (e.g. a cluster "
+                                "key or table property) and not leftover DDL."
+                            ),
+                        )
+                    )
+        return findings
+
+
 def _is_relative_to(child: Path, parent: Path) -> bool:
     """Cross-version Path.is_relative_to helper.
 
