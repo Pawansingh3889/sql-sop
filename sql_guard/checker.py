@@ -25,6 +25,7 @@ class CheckResult:
     files_checked: int = 0
     files_with_issues: int = 0
     duration_seconds: float = 0.0
+    active_rules: list[Rule] = field(default_factory=list)
 
     @property
     def error_count(self) -> int:
@@ -295,6 +296,7 @@ def check(
 
     result = CheckResult()
     result.files_checked = len(discovered)
+    result.active_rules = rules
 
     for path in discovered:
         if path.suffix == ".py":
