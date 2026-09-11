@@ -8,6 +8,35 @@ sql-sop uses [Semantic Versioning](https://semver.org/).
 Rule removals and rule ID renames are **breaking changes** that require
 a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
+## [0.10.0](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.1...v0.10.0) (2026-09-11)
+
+
+### Features
+
+* **rules:** add DBT002 direct-table-ref ([#75](https://github.com/Pawansingh3889/sql-sop/issues/75)) ([043307e](https://github.com/Pawansingh3889/sql-sop/commit/043307ec2b7d4c9585b2c73bf1c54b8c45ef328e))
+* **rules:** add DBT003 incremental-without-unique-key ([#76](https://github.com/Pawansingh3889/sql-sop/issues/76)) ([24bfdd0](https://github.com/Pawansingh3889/sql-sop/commit/24bfdd042a212c8f0759bcf9e602251b9b565ee4))
+* **rules:** add DBT004 hook-with-ddl ([#77](https://github.com/Pawansingh3889/sql-sop/issues/77)) ([0384a71](https://github.com/Pawansingh3889/sql-sop/commit/0384a7117405b8de31798215ad3bc418fbf1be3c))
+* **rules:** add DBT005 select-star-in-mart ([#80](https://github.com/Pawansingh3889/sql-sop/issues/80)) ([d597577](https://github.com/Pawansingh3889/sql-sop/commit/d5975777a4ddb553f495e2de2ff91708eb62f958))
+* **rules:** add DBT006 model-without-description ([#78](https://github.com/Pawansingh3889/sql-sop/issues/78)) ([848b00e](https://github.com/Pawansingh3889/sql-sop/commit/848b00ef57c856d80c1343edab0e6fbd56e80ccf))
+* **rules:** add DBT007 unquoted-var-interpolation ([#79](https://github.com/Pawansingh3889/sql-sop/issues/79)) ([f62e7b3](https://github.com/Pawansingh3889/sql-sop/commit/f62e7b39fbf36b308dd5135930b22bac6e750362))
+* **w025:** support quoted assertion identifiers ([#92](https://github.com/Pawansingh3889/sql-sop/issues/92)) ([7168dcf](https://github.com/Pawansingh3889/sql-sop/commit/7168dcf36642b9ef835a7bc74d6e2b21efa4c576))
+
+
+### Bug Fixes
+
+* include dbt rules in SARIF descriptors ([#85](https://github.com/Pawansingh3889/sql-sop/issues/85)) ([608ef21](https://github.com/Pawansingh3889/sql-sop/commit/608ef217db1cd619a894631bea48ebac7a614ab9))
+
+
+### Documentation
+
+* remove the moved-to-monorepo banner from the README ([#95](https://github.com/Pawansingh3889/sql-sop/issues/95)) ([d1bd436](https://github.com/Pawansingh3889/sql-sop/commit/d1bd436d8fe28becd543ec300699d0e2578d7ca0))
+
+
+### Code Refactoring
+
+* **dbt:** share config() regex and model-paths check across rules ([#89](https://github.com/Pawansingh3889/sql-sop/issues/89)) ([#96](https://github.com/Pawansingh3889/sql-sop/issues/96)) ([64aaafe](https://github.com/Pawansingh3889/sql-sop/commit/64aaafe049b897cfa94db89da295b9d239e603c5))
+* modernize type hints and ruff config ([#81](https://github.com/Pawansingh3889/sql-sop/issues/81)) ([1f57c2b](https://github.com/Pawansingh3889/sql-sop/commit/1f57c2bef2f58dc34b53639b72d8a67ddf14aba9))
+
 ## [0.9.1](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.0...v0.9.1) (2026-07-19)
 
 
@@ -39,6 +68,7 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 - **DBT007 `unquoted-var-interpolation`** - warns when `{{ var(...) }}` is interpolated into SQL without single quotes on both sides. `var()` values are set by the project author at compile time, so this is about syntax errors and wrong literals, not injection. `var()` used inside `{% ... %}` or nested in another expression is not flagged. ([#79](https://github.com/Pawansingh3889/sql-sop/pull/79))
 
 ### Changed
+- **dbt:** share the `_config_call` regex between DBT003 and DBT004 at module level, and share the model-paths check across dbt rules. ([#89](https://github.com/Pawansingh3889/sql-sop/issues/89))
 - **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
 - **W025 `assertion-malformed`** - accepts quoted identifiers (`"col"`, `[col]`, `` `col` ``) in `unique()`, `not_null()` and comparison predicates, including doubled closing delimiters. Qualification is still limited to one dot outside quotes. Thanks @biggdawg320. ([#92](https://github.com/Pawansingh3889/sql-sop/pull/92))
 
