@@ -790,3 +790,38 @@ def test_cli_dbt_flag_activates_dbt007(tmp_path):
     runner = CliRunner()
     result = runner.invoke(app, ["check", "--dbt", str(model)])
     assert "DBT007" in result.stdout
+
+
+def test_dbt_rules_share_config_call_regex():
+    """DBT003 and DBT004 share the module-level _CONFIG_CALL regex."""
+    from sql_guard.rules.dbt import _CONFIG_CALL, HookWithDdl, IncrementalWithoutUniqueKey
+
+    assert IncrementalWithoutUniqueKey._config_call is _CONFIG_CALL
+    assert HookWithDdl._config_call is _CONFIG_CALL
+
+
+def test_is_model_file_helper(tmp_path):
+    """_is_model_file checks both .sql extension and model-paths containment."""
+    from sql_guard.dbt import DbtProject
+    from sql_guard.rules.dbt import _is_model_file
+
+    models_dir = tmp_path / "models"
+    models_dir.mkdir()
+    project = DbtProject(
+        root=tmp_path,
+        model_paths=(models_dir,),
+    )
+
+    valid_model = models_dir / "stg_orders.sql"
+    valid_model.write_text("SELECT 1;\n")
+    assert _is_model_file(valid_model, project) is True
+
+    non_sql = models_dir / "schema.yml"
+    non_sql.write_text("version: 2\n")
+    assert _is_model_file(non_sql, project) is False
+
+    outside_models = tmp_path / "macros" / "util.sql"
+    outside_models.parent.mkdir()
+    outside_models.write_text("SELECT 1;\n")
+    assert _is_model_file(outside_models, project) is False
+

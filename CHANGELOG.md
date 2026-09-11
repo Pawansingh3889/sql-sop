@@ -39,6 +39,7 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 - **DBT007 `unquoted-var-interpolation`** - warns when `{{ var(...) }}` is interpolated into SQL without single quotes on both sides. `var()` values are set by the project author at compile time, so this is about syntax errors and wrong literals, not injection. `var()` used inside `{% ... %}` or nested in another expression is not flagged. ([#79](https://github.com/Pawansingh3889/sql-sop/pull/79))
 
 ### Changed
+- **dbt:** share the `_config_call` regex between DBT003 and DBT004 at module level, and share the model-paths check across dbt rules. ([#89](https://github.com/Pawansingh3889/sql-sop/issues/89))
 - **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
 - **W025 `assertion-malformed`** - accepts quoted identifiers (`"col"`, `[col]`, `` `col` ``) in `unique()`, `not_null()` and comparison predicates, including doubled closing delimiters. Qualification is still limited to one dot outside quotes. Thanks @biggdawg320. ([#92](https://github.com/Pawansingh3889/sql-sop/pull/92))
 
