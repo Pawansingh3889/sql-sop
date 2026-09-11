@@ -31,7 +31,10 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 ## [Unreleased]
 
 ### Changed
-- **refactor:** modernize type hints across codebase (PEP 604 unions, `Self`, `TypeAliasType`, `collections.abc`). Updated ruff config to 0.12+ conventions; dropped legacy `isort`/`flake8` compatibility sections. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
+- **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
+
+### Fixed
+- **sarif:** the SARIF rule catalogue now includes the rules that were actually active for the run, so opt-in dbt rules (DBT001+) get a matching `runs[].tool.driver.rules` descriptor. Thanks @vjymisal0. ([#85](https://github.com/Pawansingh3889/sql-sop/pull/85))
 
 ## [0.8.0] - 2026-05-20
 

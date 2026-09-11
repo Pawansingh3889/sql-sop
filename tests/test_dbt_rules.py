@@ -111,6 +111,17 @@ def test_get_rules_includes_dbt_pack_when_project_supplied():
 # CLI integration -----------------------------------------------------------
 
 
+def test_dbt_check_result_exposes_active_rules(tmp_path):
+    from sql_guard.checker import check
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    (tmp_path / "models").mkdir()
+    model = tmp_path / "models" / "orders.sql"
+    model.write_text("select 1\n")
+    result = check([str(model)], dbt_project=load_dbt_project(tmp_path / "dbt_project.yml"))
+    assert "DBT001" in {rule.id for rule in result.active_rules}
+
+
 def test_cli_dbt_flag_activates_dbt001(tmp_path):
     """End-to-end: --dbt flag discovers the project and fires DBT001."""
     from typer.testing import CliRunner
