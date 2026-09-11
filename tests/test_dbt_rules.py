@@ -11,6 +11,7 @@ from sql_guard.rules.dbt import (
     DirectTableRef,
     HookWithDdl,
     IncrementalWithoutUniqueKey,
+    ModelWithoutDescription,
     ModelWithoutTest,
     SelectStarInMart,
 )
@@ -486,6 +487,59 @@ def test_checker_keeps_w001_outside_marts(tmp_path):
     assert "DBT005" not in ids_on_line_1
 
 
+# DBT006 model-without-description -------------------------------------------
+
+
+def test_dbt006_quiet_for_model_with_description():
+    project = load_dbt_project(FIXTURE_PROJECT_YML)
+    rule = ModelWithoutDescription(project)
+    path = FIXTURE_MODELS / "staging" / "stg_orders.sql"
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt006_fires_on_model_listed_without_description():
+    project = load_dbt_project(FIXTURE_PROJECT_YML)
+    rule = ModelWithoutDescription(project)
+    # fct_orders is in schema.yml (data_tests: only) but has no description.
+    path = FIXTURE_MODELS / "marts" / "fct_orders.sql"
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert findings[0].rule_id == "DBT006"
+    assert findings[0].severity == "warning"
+    assert "fct_orders" in findings[0].message
+
+
+def test_dbt006_quiet_for_model_not_in_schema_yml(tmp_path):
+    # Unregistered models are DBT001's job, not DBT006's -- avoid double-noise.
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    models = tmp_path / "models" / "marts"
+    models.mkdir(parents=True)
+    rogue = models / "fct_rogue.sql"
+    rogue.write_text("SELECT 1;\n")
+
+    project = load_dbt_project(tmp_path / "dbt_project.yml")
+    rule = ModelWithoutDescription(project)
+    assert rule.check_file(str(rogue)) == []
+
+
+def test_dbt006_skips_non_sql_file():
+    project = load_dbt_project(FIXTURE_PROJECT_YML)
+    rule = ModelWithoutDescription(project)
+    assert rule.check_file(str(FIXTURE_MODELS / "marts" / "helper.py")) == []
+
+
+def test_dbt006_skips_file_outside_model_paths(tmp_path):
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    macros = tmp_path / "macros"
+    macros.mkdir()
+    macro = macros / "helper.sql"
+    macro.write_text("SELECT 1;\n")
+
+    project = load_dbt_project(tmp_path / "dbt_project.yml")
+    rule = ModelWithoutDescription(project)
+    assert rule.check_file(str(macro)) == []
+
+
 # Registry wiring -----------------------------------------------------------
 
 
@@ -493,20 +547,20 @@ def test_build_dbt_rules_returns_dbt_pack():
     project = load_dbt_project(FIXTURE_PROJECT_YML)
     rules = build_dbt_rules(project)
     ids = {r.id for r in rules}
-    assert {"DBT001", "DBT002", "DBT003", "DBT004", "DBT005"} <= ids
+    assert {"DBT001", "DBT002", "DBT003", "DBT004", "DBT005", "DBT006"} <= ids
 
 
 def test_get_rules_omits_dbt_pack_by_default():
     rules = get_rules()
     ids = {r.id for r in rules}
-    assert not ids & {"DBT001", "DBT002", "DBT003", "DBT004", "DBT005"}
+    assert not ids & {"DBT001", "DBT002", "DBT003", "DBT004", "DBT005", "DBT006"}
 
 
 def test_get_rules_includes_dbt_pack_when_project_supplied():
     project = load_dbt_project(FIXTURE_PROJECT_YML)
     rules = get_rules(dbt_project=project)
     ids = {r.id for r in rules}
-    assert {"DBT001", "DBT002", "DBT003", "DBT004", "DBT005"} <= ids
+    assert {"DBT001", "DBT002", "DBT003", "DBT004", "DBT005", "DBT006"} <= ids
 
 
 # CLI integration -----------------------------------------------------------
@@ -627,3 +681,23 @@ def test_cli_dbt_flag_activates_dbt005(tmp_path):
     result = runner.invoke(app, ["check", "--dbt", str(model)])
     assert "DBT005" in result.stdout
     assert "W001" not in result.stdout
+
+
+def test_cli_dbt_flag_activates_dbt006(tmp_path):
+    """End-to-end: --dbt flag discovers the project and fires DBT006."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    models = tmp_path / "models" / "marts"
+    models.mkdir(parents=True)
+    (models / "schema.yml").write_text(
+        "version: 2\nmodels:\n  - name: fct_orders\n    tests: []\n"
+    )
+    model = models / "fct_orders.sql"
+    model.write_text("SELECT 1 AS id;\n")
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["check", "--dbt", str(model)])
+    assert "DBT006" in result.stdout

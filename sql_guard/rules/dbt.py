@@ -459,6 +459,60 @@ class SelectStarInMart(Rule):
         return findings
 
 
+class ModelWithoutDescription(Rule):
+    """DBT006: dbt model listed in schema.yml has no ``description:``.
+
+    Catches metadata drift after a refactor: a model gets renamed or
+    split, someone adds the new entry to schema.yml so DBT001 stays
+    quiet, but the description never gets written. Silent for a model
+    that isn't in schema.yml at all -- that's DBT001's job, not this
+    rule's; flagging both for the same missing entry would be the kind
+    of double-noise the ADR (issue #54) explicitly wants to avoid.
+    """
+
+    id = "DBT006"
+    name = "model-without-description"
+    severity = "warning"
+    description = "dbt model has no description: in schema.yml"
+
+    def __init__(self, project: DbtProject) -> None:
+        self._project = project
+
+    def check_file(self, file: str) -> list[Finding]:
+        path = Path(file)
+        if path.suffix != ".sql":
+            return []
+
+        resolved = path.resolve()
+        in_models = any(
+            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
+        )
+        if not in_models:
+            return []
+
+        model_name = path.stem
+        entry = next(
+            (m for m in self._project.models if m.name == model_name),
+            None,
+        )
+        if entry is None:
+            # Not in schema.yml at all -- DBT001 covers that gap.
+            return []
+        if entry.description:
+            return []
+
+        return [
+            Finding(
+                rule_id=self.id,
+                severity=self.severity,
+                file=file,
+                line=1,
+                message=f"dbt model '{model_name}' has no description: in schema.yml",
+                suggestion=f"Add a description: to the '{model_name}' entry in schema.yml.",
+            )
+        ]
+
+
 def _is_relative_to(child: Path, parent: Path) -> bool:
     """Cross-version Path.is_relative_to helper.
 
