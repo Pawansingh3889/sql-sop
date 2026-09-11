@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 from sql_guard.checker import check
 from sql_guard.rules import ALL_RULES, get_rules
 
