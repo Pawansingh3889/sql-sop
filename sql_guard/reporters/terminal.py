@@ -55,5 +55,5 @@ def print_result(result: CheckResult) -> None:
     console.print(
         "[dim]Missing a pattern sql-sop should catch? "
         "File a rule request: "
-        "https://github.com/Pawansingh3889/sql-guard/issues/new?template=rule-request.yml[/dim]"
+        "https://github.com/Pawansingh3889/sql-sop/issues/new?template=rule-request.yml[/dim]"
     )

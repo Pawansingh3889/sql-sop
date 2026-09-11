@@ -6,7 +6,7 @@ enterprise, SSRS datasets). They fire on text patterns that do not appear
 in BigQuery or Postgres code, so they can run unconditionally with near-
 zero false-positive rate on non-T-SQL input.
 
-See https://github.com/Pawansingh3889/sql-guard/issues/22 for scope.
+See https://github.com/Pawansingh3889/sql-sop/issues/22 for scope.
 """
 
 from __future__ import annotations

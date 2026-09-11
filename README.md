@@ -2,20 +2,20 @@
 
 [![PyPI](https://img.shields.io/pypi/v/sql-sop)](https://pypi.org/project/sql-sop/) [![Downloads](https://static.pepy.tech/badge/sql-sop)](https://pepy.tech/projects/sql-sop)
 
-[![CI](https://github.com/Pawansingh3889/sql-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/Pawansingh3889/sql-guard/actions/workflows/ci.yml)
+[![CI](https://github.com/Pawansingh3889/sql-sop/actions/workflows/ci.yml/badge.svg)](https://github.com/Pawansingh3889/sql-sop/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/sql-sop)](https://pypi.org/project/sql-sop/)
 [![Python](https://img.shields.io/pypi/pyversions/sql-sop)](https://pypi.org/project/sql-sop/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/gBr77yYPkD)
 [![Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-sql--sop-a07aff?logo=githubactions&logoColor=white)](https://github.com/marketplace/actions/sql-sop)
-[![Playground](https://img.shields.io/badge/playground-try%20online-a07aff)](https://pawansingh3889.github.io/sql-guard/)
+[![Playground](https://img.shields.io/badge/playground-try%20online-a07aff)](https://pawansingh3889.github.io/sql-sop/)
 [![Downloads](https://img.shields.io/pypi/dm/sql-sop?color=a07aff)](https://pypi.org/project/sql-sop/)
-[![codecov](https://codecov.io/gh/Pawansingh3889/sql-guard/branch/main/graph/badge.svg)](https://codecov.io/gh/Pawansingh3889/sql-guard)
+[![codecov](https://codecov.io/gh/Pawansingh3889/sql-sop/branch/main/graph/badge.svg)](https://codecov.io/gh/Pawansingh3889/sql-sop)
 
 > Part of the [Governed Agent Stack](https://github.com/Pawansingh3889/governed-agent-stack): free, on-prem building blocks for an AI agent you can point at a real database and audit.
 
 ## Links
-- [GitHub](https://github.com/Pawansingh3889/sql-guard)
+- [GitHub](https://github.com/Pawansingh3889/sql-sop)
 - [PyPI](https://pypi.org/project/sql-sop/)
 - [Download Stats](https://pypistats.org/packages/sql-sop)
 - Install: `pip install sql-sop`
@@ -32,7 +32,7 @@ sql-sop also composes with another small on-prem tool:
 
 - **[sql-explorer-mcp](https://github.com/Pawansingh3889/sql-explorer-mcp)**: read-only MCP server that lets an AI introspect and query SQL Server / Postgres / SQLite; sql-sop is one of its safety layers, rejecting dangerous queries before they run.
 
-The dbt-aware rule pack (DBT001+) extends sql-sop into dbt projects. See the [ADR](https://github.com/Pawansingh3889/sql-guard/issues?q=is%3Aissue+label%3AADR) for the broader roadmap.
+The dbt-aware rule pack (DBT001+) extends sql-sop into dbt projects. See the [ADR](https://github.com/Pawansingh3889/sql-sop/issues?q=is%3Aissue+label%3AADR) for the broader roadmap.
 
 ## Why Does This Exist?
 
@@ -407,8 +407,8 @@ sql-sop is not a replacement for sqlfluff. It's a fast first pass that catches 8
 ## Contributing
 
 ```bash
-git clone https://github.com/Pawansingh3889/sql-guard.git
-cd sql-guard
+git clone https://github.com/Pawansingh3889/sql-sop.git
+cd sql-sop
 pip install -e ".[dev]"
 pytest
 ```
@@ -455,18 +455,18 @@ Thank you to the people who have shipped rules and code to sql-sop.
 
 | Contributor | Contribution |
 |---|---|
-| [@tmchow](https://github.com/tmchow) | [W011 `union-without-all`](https://github.com/Pawansingh3889/sql-guard/pull/12). Flags `UNION` where `UNION ALL` would be safe and faster. |
-| [@tmchow](https://github.com/tmchow) | [P005 `sqlalchemy-text-fstring`](https://github.com/Pawansingh3889/sql-guard/pull/25). Catches `sqlalchemy.text(f"...{var}")` patterns that defeat parameter binding. |
-| [@mvanhorn](https://github.com/mvanhorn) | [W019 `count-distinct-unbounded`](https://github.com/Pawansingh3889/sql-guard/pull/29). Flags `COUNT(DISTINCT col)` without WHERE, GROUP BY, or LIMIT. |
-| [@mvanhorn](https://github.com/mvanhorn) | [W015 `join-function-on-column`](https://github.com/Pawansingh3889/sql-guard/pull/33). JOIN-side companion to W003. Flags function calls wrapping columns inside `JOIN ... ON` predicates. |
-| [@mvanhorn](https://github.com/mvanhorn) | [W023 `scalar-udf-in-where`](https://github.com/Pawansingh3889/sql-guard/pull/34). Flags schema-qualified scalar UDF calls inside WHERE, HAVING, and ON predicates. |
-| [@Prabhu-1409](https://github.com/Prabhu-1409) | [W013 `window-without-partition`](https://github.com/Pawansingh3889/sql-guard/pull/21). Flags `OVER ()` without `PARTITION BY`, dialect-aware messaging for Postgres and Redshift. |
-| [@hellozzm](https://github.com/hellozzm) | [W014 `case-without-else`](https://github.com/Pawansingh3889/sql-guard/pull/32). Walks `CASE`/`END` token-by-token; catches outer `CASE` without `ELSE` even when an inner `CASE` does have one. |
-| [@vibeyclaw](https://github.com/vibeyclaw) | [W022 `cross-join-explicit`](https://github.com/Pawansingh3889/sql-guard/pull/31). Flags explicit `CROSS JOIN`. Strips trailing line comments before matching to avoid false positives on commentary. |
+| [@tmchow](https://github.com/tmchow) | [W011 `union-without-all`](https://github.com/Pawansingh3889/sql-sop/pull/12). Flags `UNION` where `UNION ALL` would be safe and faster. |
+| [@tmchow](https://github.com/tmchow) | [P005 `sqlalchemy-text-fstring`](https://github.com/Pawansingh3889/sql-sop/pull/25). Catches `sqlalchemy.text(f"...{var}")` patterns that defeat parameter binding. |
+| [@mvanhorn](https://github.com/mvanhorn) | [W019 `count-distinct-unbounded`](https://github.com/Pawansingh3889/sql-sop/pull/29). Flags `COUNT(DISTINCT col)` without WHERE, GROUP BY, or LIMIT. |
+| [@mvanhorn](https://github.com/mvanhorn) | [W015 `join-function-on-column`](https://github.com/Pawansingh3889/sql-sop/pull/33). JOIN-side companion to W003. Flags function calls wrapping columns inside `JOIN ... ON` predicates. |
+| [@mvanhorn](https://github.com/mvanhorn) | [W023 `scalar-udf-in-where`](https://github.com/Pawansingh3889/sql-sop/pull/34). Flags schema-qualified scalar UDF calls inside WHERE, HAVING, and ON predicates. |
+| [@Prabhu-1409](https://github.com/Prabhu-1409) | [W013 `window-without-partition`](https://github.com/Pawansingh3889/sql-sop/pull/21). Flags `OVER ()` without `PARTITION BY`, dialect-aware messaging for Postgres and Redshift. |
+| [@hellozzm](https://github.com/hellozzm) | [W014 `case-without-else`](https://github.com/Pawansingh3889/sql-sop/pull/32). Walks `CASE`/`END` token-by-token; catches outer `CASE` without `ELSE` even when an inner `CASE` does have one. |
+| [@vibeyclaw](https://github.com/vibeyclaw) | [W022 `cross-join-explicit`](https://github.com/Pawansingh3889/sql-sop/pull/31). Flags explicit `CROSS JOIN`. Strips trailing line comments before matching to avoid false positives on commentary. |
 
-See [the full contributors graph](https://github.com/Pawansingh3889/sql-guard/graphs/contributors) on GitHub.
+See [the full contributors graph](https://github.com/Pawansingh3889/sql-sop/graphs/contributors) on GitHub.
 
-Want to add your name here? Pick a [`good first issue`](https://github.com/Pawansingh3889/sql-guard/labels/good%20first%20issue), follow [`CONTRIBUTING.md`](CONTRIBUTING.md), and check the [roadmap](ROADMAP.md) for the next batch of rules. v0.7 just shipped (contracts pack); v0.8 is shaping up around dialect-aware coverage.
+Want to add your name here? Pick a [`good first issue`](https://github.com/Pawansingh3889/sql-sop/labels/good%20first%20issue), follow [`CONTRIBUTING.md`](CONTRIBUTING.md), and check the [roadmap](ROADMAP.md) for the next batch of rules. v0.7 just shipped (contracts pack); v0.8 is shaping up around dialect-aware coverage.
 
 ---
 
