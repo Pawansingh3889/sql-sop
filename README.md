@@ -1,12 +1,3 @@
-> [!IMPORTANT]
-> **This repository has moved into the [Governed Agent Stack](https://github.com/Pawansingh3889/governed-agent-stack) monorepo.**
->
-> Active development is now at [`packages/sql-sop/`](https://github.com/Pawansingh3889/governed-agent-stack/tree/main/packages/sql-sop).
-> This repo is archived and read-only. Its full commit history is preserved here;
-> new work, issues and releases happen in the monorepo.
-
----
-
 # sql-sop
 
 [![PyPI](https://img.shields.io/pypi/v/sql-sop)](https://pypi.org/project/sql-sop/) [![Downloads](https://static.pepy.tech/badge/sql-sop)](https://pepy.tech/projects/sql-sop)
