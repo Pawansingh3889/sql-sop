@@ -290,4 +290,4 @@ def schema_snapshot_cmd(
 @app.command()
 def version() -> None:
     """Show version."""
-    console.print(f"sql-guard {__version__}")
+    console.print(f"sql-sop {__version__}")
