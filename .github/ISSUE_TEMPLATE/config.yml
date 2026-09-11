@@ -1,1 +1,11 @@
-PLACEHOLDER
+blank_issues_enabled: true
+contact_links:
+  - name: Security report (rule bypass, false negative, CVE)
+    url: https://github.com/Pawansingh3889/sql-sop/security/advisories/new
+    about: Security issues go through the private advisory channel, not a public issue. See SECURITY.md.
+  - name: "Usage question - 'how do I...?'"
+    url: https://github.com/Pawansingh3889/sql-sop/discussions/categories/q-a
+    about: Ask in Discussions - lower friction than an issue, often a faster reply.
+  - name: General discussion / open-ended question
+    url: https://github.com/Pawansingh3889/sql-sop/discussions
+    about: Anything that isn't a bug, rule request, or feature proposal.
