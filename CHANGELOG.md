@@ -30,6 +30,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+- **DBT003 `incremental-without-unique-key`** - errors when an incremental dbt model lacks a `unique_key` in its config. Without it, re-runs can produce duplicate rows. Context-dependent severity: error for `merge` strategy, warning for `append`/`delete+insert`. ([#76](https://github.com/Pawansingh3889/sql-sop/pull/76))
+
 ## [0.8.0] - 2026-05-20
 
 Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful coverage fix to S001 `implicit-cross-join`. No breaking changes; existing pre-commit configs continue to work without modification.
