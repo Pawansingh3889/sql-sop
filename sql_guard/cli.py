@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from sql_guard import __version__, config as config_mod
+from sql_guard import __version__
+from sql_guard import config as config_mod
 from sql_guard.checker import check, discover_files
 from sql_guard.contracts import Contract
 from sql_guard.dbt import DbtProject, find_dbt_project, load_dbt_project
@@ -35,7 +35,7 @@ def check_cmd(
         "warning", "--severity", "-s", help="Minimum severity: error or warning."
     ),
     fail_fast: bool = typer.Option(False, "--fail-fast", help="Stop after first error."),
-    disable: Optional[list[str]] = typer.Option(
+    disable: list[str] | None = typer.Option(
         None, "--disable", "-d", help="Rule IDs to disable."
     ),
     include_python: bool = typer.Option(
@@ -43,7 +43,7 @@ def check_cmd(
         "--include-python",
         help="Also scan .py files for SQL strings in execute() calls (requires sql-sop[python]).",
     ),
-    config_path: Optional[Path] = typer.Option(
+    config_path: Path | None = typer.Option(
         None,
         "--config",
         "-c",
@@ -54,7 +54,7 @@ def check_cmd(
         "--changed-only",
         help="Lint only files reported as changed by git (working tree by default).",
     ),
-    changed_base: Optional[str] = typer.Option(
+    changed_base: str | None = typer.Option(
         None,
         "--changed-base",
         help="Compare against this git ref instead of the working tree (e.g. origin/main).",
@@ -65,13 +65,13 @@ def check_cmd(
         "-f",
         help="Output format: terminal (default) or sarif (for GitHub Code Scanning).",
     ),
-    output_path: Optional[Path] = typer.Option(
+    output_path: Path | None = typer.Option(
         None,
         "--output",
         "-o",
         help="Write report to this file instead of stdout (sarif format only).",
     ),
-    contract_path: Optional[Path] = typer.Option(
+    contract_path: Path | None = typer.Option(
         None,
         "--contract",
         help=(
@@ -104,7 +104,7 @@ def check_cmd(
     effective_include_python = include_python or cfg.include_python
     effective_ignore = cfg.ignore or None
 
-    contract: Optional[Contract] = None
+    contract: Contract | None = None
     effective_contract_path = contract_path or cfg.contract
     if effective_contract_path is not None:
         try:
@@ -112,11 +112,11 @@ def check_cmd(
         except FileNotFoundError:
             console.print(f"[red]Contract file not found:[/red] {effective_contract_path}")
             raise typer.Exit(code=2)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
             console.print(f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}")
             raise typer.Exit(code=2)
 
-    dbt_project: Optional[DbtProject] = None
+    dbt_project: DbtProject | None = None
     if dbt:
         start = Path(paths[0]) if paths else Path(".")
         project_yml = find_dbt_project(start)
@@ -128,7 +128,7 @@ def check_cmd(
         else:
             try:
                 dbt_project = load_dbt_project(project_yml)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
                 console.print(f"[red]Failed to load dbt project {project_yml}:[/red] {exc}")
                 raise typer.Exit(code=2)
 
@@ -213,7 +213,7 @@ def validate_contract_cmd(
         raise typer.Exit(code=2)
     try:
         contract = Contract.from_file(contract_path)
-    except Exception as exc:  # pragma: no cover - exact YAML errors vary by version
+    except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2 (yaml errors vary by version)
         console.print(f"[red]Invalid contract:[/red] {exc}")
         raise typer.Exit(code=2)
 
@@ -252,12 +252,12 @@ def schema_snapshot_cmd(
         "-o",
         help="Where to write the contract YAML (default: ./contract.yml).",
     ),
-    schema: Optional[str] = typer.Option(
+    schema: str | None = typer.Option(
         None,
         "--schema",
         help="Schema name (default: the dialect default, e.g. dbo / public).",
     ),
-    include_table: Optional[list[str]] = typer.Option(
+    include_table: list[str] | None = typer.Option(
         None,
         "--include-table",
         help="Restrict the snapshot to these tables. Repeatable.",
@@ -277,7 +277,7 @@ def schema_snapshot_cmd(
     except snapshot_mod.SnapshotError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=2)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
         console.print(f"[red]Snapshot failed:[/red] {exc}")
         raise typer.Exit(code=2)
 

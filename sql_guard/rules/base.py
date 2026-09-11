@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-
 _SQL_STRING = re.compile(r"'(?:[^']|'')*'")
 _SQL_LINE_COMMENT = re.compile(r"--[^\n]*")
 _SQL_BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)

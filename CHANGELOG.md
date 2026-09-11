@@ -31,7 +31,10 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 ## [Unreleased]
 
 ### Added
-- **DBT002 `direct-table-ref`** - warns on raw table references in FROM/JOIN clauses (e.g., `FROM orders`, `JOIN schema.table`) instead of `{{ ref('model') }}` or `{{ source('src', 'table') }}`. Encourages dbt's dependency graph and execution ordering. ([#75](https://github.com/Pawansingh3889/sql-sop/pull/75))
+- **DBT002 `direct-table-ref`** - warns on a raw table name after `FROM`/`JOIN` in a dbt model (e.g. `FROM orders`, `JOIN raw_db.orders`) where `{{ ref(...) }}` or `{{ source(...) }}` should be used. Skips CTE names, subqueries, any `{{ ... }}` target, and system schemas such as `information_schema`. ([#75](https://github.com/Pawansingh3889/sql-sop/pull/75))
+
+### Changed
+- **refactor:** modernize type hints across codebase (PEP 604 unions, `Self`, `TypeAliasType`, `collections.abc`). Updated ruff config to 0.12+ conventions; dropped legacy `isort`/`flake8` compatibility sections. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
 
 ## [0.8.0] - 2026-05-20
 
