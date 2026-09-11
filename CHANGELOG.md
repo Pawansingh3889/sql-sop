@@ -30,6 +30,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+- **DBT004 `hook-with-ddl`** - errors on DDL (`CREATE`, `ALTER`, `DROP`, `TRUNCATE`, `GRANT`, `REVOKE`) inside dbt `pre-hook` / `post-hook`. Hooks run inside dbt's transaction; DDL commits implicitly and breaks rollback semantics. Split by keyword for granular suppression. ([#77](https://github.com/Pawansingh3889/sql-sop/pull/77))
+
 ## [0.8.0] - 2026-05-20
 
 Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful coverage fix to S001 `implicit-cross-join`. No breaking changes; existing pre-commit configs continue to work without modification.
