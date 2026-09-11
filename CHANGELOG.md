@@ -30,6 +30,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+- **DBT006 `model-without-description`** - warns when a dbt model declared in `schema.yml` lacks a `description:` field. Descriptions are the contract for downstream consumers and render in dbt docs. ([#78](https://github.com/Pawansingh3889/sql-sop/pull/78))
+
 ## [0.8.0] - 2026-05-20
 
 Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful coverage fix to S001 `implicit-cross-join`. No breaking changes; existing pre-commit configs continue to work without modification.
