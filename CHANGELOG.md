@@ -30,6 +30,21 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Added
+- **DBT002 `direct-table-ref`** - warns on a raw table name after `FROM`/`JOIN` in a dbt model (e.g. `FROM orders`, `JOIN raw_db.orders`) where `{{ ref(...) }}` or `{{ source(...) }}` should be used. Skips CTE names, subqueries, any `{{ ... }}` target, and system schemas such as `information_schema`. ([#75](https://github.com/Pawansingh3889/sql-sop/pull/75))
+- **DBT003 `incremental-without-unique-key`** - flags `materialized='incremental'` with no `unique_key` in the model's `{{ config(...) }}` call. Error when `incremental_strategy` is `merge` or `delete+insert` (duplicate rows), warning when no strategy is set (the adapter default varies), silent for `append` and `insert_overwrite`. ([#76](https://github.com/Pawansingh3889/sql-sop/pull/76))
+- **DBT004 `hook-with-ddl`** - flags `pre_hook`/`post_hook` statements in the `{{ config(...) }}` call, as a single string or a list. Error for `DROP`, `TRUNCATE`, and `DELETE`; warning for `ALTER`, which is often a sanctioned cluster-key or table-property change. Other statements such as `GRANT` are not flagged. ([#77](https://github.com/Pawansingh3889/sql-sop/pull/77))
+- **DBT005 `select-star-in-mart`** - warns on `SELECT *` in a model under a `marts` directory (case-insensitive) inside `model-paths`. When it fires, the plain W001 `select-star` finding on the same line is dropped so the line is not reported twice. The directory name is not configurable yet (#83). ([#80](https://github.com/Pawansingh3889/sql-sop/pull/80))
+- **DBT006 `model-without-description`** - warns when a model listed in `schema.yml` has no `description:`. Models missing from `schema.yml` entirely are left to DBT001, so the same gap is not reported twice. ([#78](https://github.com/Pawansingh3889/sql-sop/pull/78))
+- **DBT007 `unquoted-var-interpolation`** - warns when `{{ var(...) }}` is interpolated into SQL without single quotes on both sides. `var()` values are set by the project author at compile time, so this is about syntax errors and wrong literals, not injection. `var()` used inside `{% ... %}` or nested in another expression is not flagged. ([#79](https://github.com/Pawansingh3889/sql-sop/pull/79))
+
+### Changed
+- **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
+- **W025 `assertion-malformed`** - accepts quoted identifiers (`"col"`, `[col]`, `` `col` ``) in `unique()`, `not_null()` and comparison predicates, including doubled closing delimiters. Qualification is still limited to one dot outside quotes. Thanks @biggdawg320. ([#92](https://github.com/Pawansingh3889/sql-sop/pull/92))
+
+### Fixed
+- **sarif:** the SARIF rule catalogue now includes the rules that were actually active for the run, so opt-in dbt rules (DBT001+) get a matching `runs[].tool.driver.rules` descriptor. Thanks @vjymisal0. ([#85](https://github.com/Pawansingh3889/sql-sop/pull/85))
+
 ## [0.8.0] - 2026-05-20
 
 Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful coverage fix to S001 `implicit-cross-join`. No breaking changes; existing pre-commit configs continue to work without modification.

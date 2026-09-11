@@ -7,4 +7,4 @@ try:
 except PackageNotFoundError:  # pragma: no cover — only hit before install
     __version__ = "0.0.0+unknown"
 
-from sql_guard.fluent import SqlGuard as SqlGuard  # noqa: PLC0414, E402
+from sql_guard.fluent import SqlGuard as SqlGuard

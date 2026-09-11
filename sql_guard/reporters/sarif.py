@@ -26,10 +26,15 @@ def _level(severity: str) -> str:
     return {"error": "error", "warning": "warning"}.get(severity, "note")
 
 
-def _all_rule_descriptors() -> list[dict]:
-    """Build the SARIF rule catalogue."""
+def _all_rule_descriptors(active_rules=None) -> list[dict]:
+    """Build the SARIF rule catalogue, including opt-in active rules."""
+    rules = active_rules or [*ALL_RULES, *PYTHON_RULES]
     descriptors: list[dict] = []
-    for rule in [*ALL_RULES, *PYTHON_RULES]:
+    seen: set[str] = set()
+    for rule in rules:
+        if rule.id in seen:
+            continue
+        seen.add(rule.id)
         descriptors.append(
             {
                 "id": rule.id,
@@ -76,7 +81,7 @@ def build(result: CheckResult) -> dict:
                         "name": "sql-guard",
                         "version": __version__,
                         "informationUri": INFO_URI,
-                        "rules": _all_rule_descriptors(),
+                        "rules": _all_rule_descriptors(result.active_rules),
                     },
                 },
                 "results": results,

@@ -12,9 +12,9 @@ environments and the ``.sql`` linting continues to work.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 try:  # libCST is an optional extra — see pyproject.toml [python] extra
     import libcst as cst
@@ -54,7 +54,7 @@ def libcst_available() -> bool:
     return _LIBCST_AVAILABLE
 
 
-def _call_attr_name(call: "cst.Call") -> str | None:
+def _call_attr_name(call: cst.Call) -> str | None:
     """Return the attribute name for ``something.method(...)`` calls."""
     func = call.func
     if isinstance(func, cst.Attribute):
@@ -64,11 +64,11 @@ def _call_attr_name(call: "cst.Call") -> str | None:
     return None
 
 
-def _is_fstring(node: "cst.BaseExpression") -> bool:
+def _is_fstring(node: cst.BaseExpression) -> bool:
     return isinstance(node, cst.FormattedString)
 
 
-def _is_string_concat(node: "cst.BaseExpression") -> bool:
+def _is_string_concat(node: cst.BaseExpression) -> bool:
     if not isinstance(node, cst.BinaryOperation):
         return False
     if not isinstance(node.operator, cst.Add):
@@ -76,7 +76,7 @@ def _is_string_concat(node: "cst.BaseExpression") -> bool:
     return _contains_string(node.left) or _contains_string(node.right)
 
 
-def _is_percent_format(node: "cst.BaseExpression") -> bool:
+def _is_percent_format(node: cst.BaseExpression) -> bool:
     if not isinstance(node, cst.BinaryOperation):
         return False
     if not isinstance(node.operator, cst.Modulo):
@@ -84,7 +84,7 @@ def _is_percent_format(node: "cst.BaseExpression") -> bool:
     return isinstance(node.left, cst.SimpleString)
 
 
-def _is_dot_format(node: "cst.BaseExpression") -> bool:
+def _is_dot_format(node: cst.BaseExpression) -> bool:
     if not isinstance(node, cst.Call):
         return False
     func = node.func
@@ -95,7 +95,7 @@ def _is_dot_format(node: "cst.BaseExpression") -> bool:
     return isinstance(func.value, (cst.SimpleString, cst.ConcatenatedString))
 
 
-def _contains_string(node: "cst.BaseExpression") -> bool:
+def _contains_string(node: cst.BaseExpression) -> bool:
     if isinstance(node, (cst.SimpleString, cst.ConcatenatedString, cst.FormattedString)):
         return True
     if isinstance(node, cst.BinaryOperation):
@@ -103,7 +103,7 @@ def _contains_string(node: "cst.BaseExpression") -> bool:
     return False
 
 
-def _literal_string_value(node: "cst.BaseExpression") -> str | None:
+def _literal_string_value(node: cst.BaseExpression) -> str | None:
     """Return the literal value of a string node if it is safely constant."""
     if isinstance(node, cst.SimpleString):
         return node.evaluated_value
@@ -115,14 +115,14 @@ def _literal_string_value(node: "cst.BaseExpression") -> str | None:
     return None
 
 
-def _first_positional(call: "cst.Call") -> "cst.BaseExpression | None":
+def _first_positional(call: cst.Call) -> cst.BaseExpression | None:
     for arg in call.args:
         if arg.keyword is None:
             return arg.value
     return None
 
 
-def _classify(expr: "cst.BaseExpression") -> str:
+def _classify(expr: cst.BaseExpression) -> str:
     if _is_fstring(expr):
         return "fstring"
     if _is_string_concat(expr):
@@ -141,20 +141,20 @@ class _SqlCollector(cst.CSTVisitor if _LIBCST_AVAILABLE else object):
 
     METADATA_DEPENDENCIES = ()  # populated in __init__ to keep import-time cheap
 
-    def __init__(self, wrapper: "cst.MetadataWrapper") -> None:
+    def __init__(self, wrapper: cst.MetadataWrapper) -> None:
         super().__init__()
         self._wrapper = wrapper
         self._positions = wrapper.resolve(cst.metadata.PositionProvider)
         self.sql_hits: list[ExtractedSql] = []
 
     # ---- helpers ---------------------------------------------------------
-    def _line_of(self, node: "cst.CSTNode") -> int:
+    def _line_of(self, node: cst.CSTNode) -> int:
         try:
             return self._positions[node].start.line
         except KeyError:
             return 0
 
-    def _record(self, node: "cst.BaseExpression", call_name: str) -> None:
+    def _record(self, node: cst.BaseExpression, call_name: str) -> None:
         kind = _classify(node)
         literal = _literal_string_value(node) or ""
         self.sql_hits.append(
@@ -167,7 +167,7 @@ class _SqlCollector(cst.CSTVisitor if _LIBCST_AVAILABLE else object):
         )
 
     # ---- visitors --------------------------------------------------------
-    def visit_Call(self, node: "cst.Call") -> None:  # noqa: N802 - libcst API
+    def visit_Call(self, node: cst.Call) -> None:
         name = _call_attr_name(node)
         if name not in EXECUTE_METHODS:
             return
@@ -176,15 +176,15 @@ class _SqlCollector(cst.CSTVisitor if _LIBCST_AVAILABLE else object):
             return
         if not (
             isinstance(
-                target, (cst.SimpleString, cst.ConcatenatedString, cst.FormattedString, cst.Name)
+                target,
+                (cst.SimpleString, cst.ConcatenatedString, cst.FormattedString, cst.Name, cst.BinaryOperation),
             )
-            or isinstance(target, cst.BinaryOperation)
             or _is_dot_format(target)
         ):
             return
         self._record(target, name)
 
-    def visit_Assign(self, node: "cst.Assign") -> None:  # noqa: N802 - libcst API
+    def visit_Assign(self, node: cst.Assign) -> None:
         # sql = "..." style assignments so the rules still see the SQL even
         # when it is passed through a variable.
         if len(node.targets) != 1:

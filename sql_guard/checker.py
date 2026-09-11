@@ -7,13 +7,14 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from sql_guard import python_scanner
 from sql_guard.contracts import Contract
 from sql_guard.dbt import DbtProject
+from sql_guard.inline_disable import DisableMap
+from sql_guard.inline_disable import parse as parse_disables
 from sql_guard.rules import get_rules
 from sql_guard.rules.base import Finding, Rule
 from sql_guard.rules.python_rules import PYTHON_RULES
-from sql_guard import python_scanner
-from sql_guard.inline_disable import DisableMap, parse as parse_disables
 
 
 @dataclass
@@ -24,6 +25,7 @@ class CheckResult:
     files_checked: int = 0
     files_with_issues: int = 0
     duration_seconds: float = 0.0
+    active_rules: list[Rule] = field(default_factory=list)
 
     @property
     def error_count(self) -> int:
@@ -127,7 +129,7 @@ def check_file(
     except UnicodeDecodeError:
         try:
             content = path.read_text(encoding="latin-1")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- any unreadable file becomes a SYS finding, not a crash
             return [
                 Finding(
                     rule_id="SYS",
@@ -192,6 +194,18 @@ def check_file(
             findings.append(finding)
             if fail_fast and finding.severity == "error":
                 return findings
+
+    # DBT005 (select-star-in-mart) is a dbt-aware refinement of W001
+    # (select-star): same SELECT *, more specific message. Firing both
+    # for one line is exactly the double-noise the dbt-aware rule pack
+    # ADR (issue #54) wants to avoid, so a co-located DBT005 finding
+    # wins and the plain W001 finding on that file:line is dropped.
+    # W001 itself stays dbt-unaware; the dedup lives here.
+    dbt005_lines = {f.line for f in findings if f.rule_id == "DBT005"}
+    if dbt005_lines:
+        findings = [
+            f for f in findings if not (f.rule_id == "W001" and f.line in dbt005_lines)
+        ]
 
     return findings
 
@@ -269,7 +283,7 @@ def check(
     ignore: list[str] | None = None,
     include_python: bool = False,
     contract: Contract | None = None,
-    dbt_project: "DbtProject | None" = None,  # noqa: F821 -- imported below
+    dbt_project: DbtProject | None = None,
 ) -> CheckResult:
     """Run all rules against discovered SQL (and optionally Python) files.
 
@@ -294,6 +308,7 @@ def check(
 
     result = CheckResult()
     result.files_checked = len(discovered)
+    result.active_rules = rules
 
     for path in discovered:
         if path.suffix == ".py":
