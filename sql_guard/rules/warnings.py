@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import ClassVar
 
 from sql_guard.rules.base import Finding, Rule, strip_strings_and_comments
 
@@ -247,7 +248,7 @@ class MixedCaseKeywords(Rule):
     description = "Inconsistent keyword casing reduces readability"
     multiline = False
 
-    _keywords = [
+    _keywords: ClassVar[list[str]] = [
         "SELECT",
         "FROM",
         "WHERE",
