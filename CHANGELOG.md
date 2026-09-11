@@ -31,7 +31,15 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 ## [Unreleased]
 
 ### Added
-- **DBT004 `hook-with-ddl`** - errors on DDL (`CREATE`, `ALTER`, `DROP`, `TRUNCATE`, `GRANT`, `REVOKE`) inside dbt `pre-hook` / `post-hook`. Hooks run inside dbt's transaction; DDL commits implicitly and breaks rollback semantics. Split by keyword for granular suppression. ([#77](https://github.com/Pawansingh3889/sql-sop/pull/77))
+- **DBT002 `direct-table-ref`** - warns on a raw table name after `FROM`/`JOIN` in a dbt model (e.g. `FROM orders`, `JOIN raw_db.orders`) where `{{ ref(...) }}` or `{{ source(...) }}` should be used. Skips CTE names, subqueries, any `{{ ... }}` target, and system schemas such as `information_schema`. ([#75](https://github.com/Pawansingh3889/sql-sop/pull/75))
+- **DBT003 `incremental-without-unique-key`** - flags `materialized='incremental'` with no `unique_key` in the model's `{{ config(...) }}` call. Error when `incremental_strategy` is `merge` or `delete+insert` (duplicate rows), warning when no strategy is set (the adapter default varies), silent for `append` and `insert_overwrite`. ([#76](https://github.com/Pawansingh3889/sql-sop/pull/76))
+- **DBT004 `hook-with-ddl`** - flags `pre_hook`/`post_hook` statements in the `{{ config(...) }}` call, as a single string or a list. Error for `DROP`, `TRUNCATE`, and `DELETE`; warning for `ALTER`, which is often a sanctioned cluster-key or table-property change. Other statements such as `GRANT` are not flagged. ([#77](https://github.com/Pawansingh3889/sql-sop/pull/77))
+
+### Changed
+- **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
+
+### Fixed
+- **sarif:** the SARIF rule catalogue now includes the rules that were actually active for the run, so opt-in dbt rules (DBT001+) get a matching `runs[].tool.driver.rules` descriptor. Thanks @vjymisal0. ([#85](https://github.com/Pawansingh3889/sql-sop/pull/85))
 
 ## [0.8.0] - 2026-05-20
 
