@@ -135,9 +135,9 @@ def build_dbt_rules(project: DbtProject) -> list[Rule]:
     paths, etc. The pack is opt-in via the ``--dbt`` CLI flag, so this
     helper is only invoked when a project was actually discovered.
     """
-    from sql_guard.rules.dbt import ModelWithoutTest
+    from sql_guard.rules.dbt import DirectTableRef, ModelWithoutTest
 
-    return [ModelWithoutTest(project)]
+    return [ModelWithoutTest(project), DirectTableRef(project)]
 
 
 def get_rules(
