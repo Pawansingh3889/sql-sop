@@ -8,7 +8,6 @@ from sql_guard.dbt import load_dbt_project
 from sql_guard.rules import build_dbt_rules, get_rules
 from sql_guard.rules.dbt import ModelWithoutTest
 
-
 FIXTURE_PROJECT_YML = Path(__file__).parent / "fixtures" / "dbt_project" / "dbt_project.yml"
 FIXTURE_MODELS = FIXTURE_PROJECT_YML.parent / "models"
 

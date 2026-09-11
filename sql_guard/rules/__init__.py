@@ -3,6 +3,15 @@
 from __future__ import annotations
 
 from sql_guard.rules.base import Rule
+from sql_guard.rules.contracts import (
+    CONTRACT_RULE_CLASSES,
+    ColumnNotInContract,
+    NotNullViolation,
+    PrimaryKeyMissingOnInsert,
+    TableNotInContract,
+    UnmappedForeignKey,
+    build_contract_rules,
+)
 from sql_guard.rules.errors import (
     AlterAddNotNullNoDefault,
     DeleteWithoutWhere,
@@ -13,6 +22,19 @@ from sql_guard.rules.errors import (
     StringConcatInWhere,
     UpdateFromImplicitJoin,
     UpdateWithoutWhere,
+)
+from sql_guard.rules.structural import (
+    DeeplyNestedSubquery,
+    ImplicitCrossJoin,
+    UnusedCTE,
+)
+from sql_guard.rules.tsql import (
+    CreateIndexWithoutOnline,
+    CursorDeclaration,
+    DeprecatedOuterJoin,
+    SelectStarInto,
+    WithNolock,
+    XpCmdshell,
 )
 from sql_guard.rules.warnings import (
     AssertionMalformed,
@@ -40,28 +62,6 @@ from sql_guard.rules.warnings import (
     TruncateTable,
     UnionWithoutAll,
     WindowMissingPartition,
-)
-from sql_guard.rules.structural import (
-    DeeplyNestedSubquery,
-    ImplicitCrossJoin,
-    UnusedCTE,
-)
-from sql_guard.rules.tsql import (
-    CreateIndexWithoutOnline,
-    CursorDeclaration,
-    DeprecatedOuterJoin,
-    SelectStarInto,
-    WithNolock,
-    XpCmdshell,
-)
-from sql_guard.rules.contracts import (
-    CONTRACT_RULE_CLASSES,
-    ColumnNotInContract,
-    NotNullViolation,
-    PrimaryKeyMissingOnInsert,
-    TableNotInContract,
-    UnmappedForeignKey,
-    build_contract_rules,
 )
 
 __all__ = [
@@ -128,7 +128,7 @@ ALL_RULES: list[Rule] = [
 ]
 
 
-def build_dbt_rules(project: "DbtProject") -> list[Rule]:  # noqa: F821 -- forward reference
+def build_dbt_rules(project: DbtProject) -> list[Rule]:
     """Construct the dbt-aware rule pack with a discovered project.
 
     Each rule needs the project to look up schema.yml entries, model
@@ -143,8 +143,8 @@ def build_dbt_rules(project: "DbtProject") -> list[Rule]:  # noqa: F821 -- forwa
 def get_rules(
     enabled_ids: set[str] | None = None,
     disabled_ids: set[str] | None = None,
-    contract: "Contract | None" = None,  # noqa: F821 -- forward reference
-    dbt_project: "DbtProject | None" = None,  # noqa: F821 -- forward reference
+    contract: Contract | None = None,
+    dbt_project: DbtProject | None = None,
 ) -> list[Rule]:
     """Return filtered list of rules based on config.
 
@@ -168,5 +168,5 @@ def get_rules(
 
 
 # Forward imports for type hints; placed at bottom to avoid circular imports.
-from sql_guard.contracts import Contract  # noqa: E402, F401
-from sql_guard.dbt import DbtProject  # noqa: E402, F401
+from sql_guard.contracts import Contract
+from sql_guard.dbt import DbtProject
