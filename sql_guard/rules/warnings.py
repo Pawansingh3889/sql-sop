@@ -809,7 +809,7 @@ class AssertionMalformed(Rule):
     checks that the predicate parses. Execution belongs in dbt tests,
     a downstream runner, or a future companion tool.
 
-    Grammar (v1):
+    Grammar:
         @assert: row_count <op> <int>
                | unique(<col>)
                | not_null(<col>)
@@ -837,17 +837,18 @@ class AssertionMalformed(Rule):
     # substring inside another `-- ...` comment (e.g. when the rule is
     # documented in a SQL file).
     _assert_line = Rule._compile(r"^\s*--\s*@assert\s*:\s*(.+?)\s*$")
-    # Column grammar for v1: a bare identifier, optionally qualified with
-    # one dot (e.g. `weight` or `orders.weight`). Two-dot forms such as
-    # `schema.table.column` fall through to the malformed branch.
-    # Quoted identifiers ("col", [col], `col`) are out of scope for v1 --
-    # see the W025 ADR for the rationale.
+    # Dialect-agnostic identifiers: bare or nonempty quoted components,
+    # with doubled closing delimiters representing literal delimiters.
+    # A dot inside quotes is content, not a qualification separator.
+    _identifier = r'(?:[a-zA-Z_]\w*|"(?:[^"\r\n]|"")+"|\[(?:[^\]\r\n]|\]\])+\]|`(?:[^`\r\n]|``)+`)'
+    _column = rf"{_identifier}(?:\.{_identifier})?"
+    # Preserve the one-qualification limit, operators and literal grammar.
     _well_formed = Rule._compile(
         r"^("
         r"row_count\s*(=|!=|<=|>=|<|>)\s*\d+"
-        r"|unique\s*\(\s*[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)?\s*\)"
-        r"|not_null\s*\(\s*[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)?\s*\)"
-        r"|[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)?\s*(=|!=|<=|>=|<|>)\s*"
+        rf"|unique\s*\(\s*{_column}\s*\)"
+        rf"|not_null\s*\(\s*{_column}\s*\)"
+        rf"|{_column}\s*(=|!=|<=|>=|<|>)\s*"
         r"('[^']*'|\"[^\"]*\"|-?\d+(\.\d+)?)"
         r")$"
     )

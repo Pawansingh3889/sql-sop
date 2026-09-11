@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from sql_guard.rules.errors import AlterAddNotNullNoDefault, DropColumn
 from sql_guard.rules.tsql import CreateIndexWithoutOnline
 from sql_guard.rules.warnings import (
@@ -474,6 +476,42 @@ def test_w024_message_mentions_join_or_grouping():
 
 
 # W025 assertion-malformed ---------------------------------------------------
+
+
+@pytest.mark.parametrize("template", ["unique({})", "not_null({})", "{} >= 0"])
+@pytest.mark.parametrize(
+    ("valid", "invalid"),
+    [
+        ('"batch-id"', '"batch-id'),
+        ('[batch id]', '[batch id'),
+        ('`batch_id`', '`batch_id'),
+        ('"a""b"', '"a"b"'),
+        ('[a]]b]', '[a]b]'),
+        ('`a``b`', '`a`b`'),
+        ('orders."batch-id"', 'orders."batch-id'),
+        ('"orders".batch_id', '"orders.batch_id'),
+        ('[orders].[batch id]', '[orders].[batch id'),
+        ('`orders`.`batch_id`', '`orders`.`batch_id'),
+        ('"orders".[batch id]', '"orders".[batch id`'),
+        ('"schema.table"."column"', '"schema"."table"."column"'),
+        ('"a.b"', '"a".."b"'),
+        ('[a)b]', '[a)b'),
+        ('""""', '""'),
+        ('[]]]', '[]'),
+        ('````', '``'),
+    ],
+)
+def test_w025_quoted_identifier_pairs(template: str, valid: str, invalid: str):
+    rule = AssertionMalformed()
+    assert _line(rule, "-- @assert: " + template.format(valid)) is None
+    finding = _line(rule, "-- @assert: " + template.format(invalid))
+    assert finding is not None
+    assert finding.rule_id == "W025"
+
+
+@pytest.mark.parametrize("predicate", ['"amount" = -1.5', '[status] = \'paid\'', '`x` = "yes"'])
+def test_w025_quoted_identifiers_preserve_literals(predicate: str):
+    assert _line(AssertionMalformed(), "-- @assert: " + predicate) is None
 
 
 def test_w025_passes_on_row_count_predicate():
