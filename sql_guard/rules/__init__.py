@@ -140,6 +140,7 @@ def build_dbt_rules(project: DbtProject) -> list[Rule]:
         HookWithDdl,
         IncrementalWithoutUniqueKey,
         ModelWithoutTest,
+        SelectStarInMart,
     )
 
     return [
@@ -147,6 +148,7 @@ def build_dbt_rules(project: DbtProject) -> list[Rule]:
         DirectTableRef(project),
         IncrementalWithoutUniqueKey(project),
         HookWithDdl(project),
+        SelectStarInMart(project),
     ]
 
 

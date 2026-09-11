@@ -195,6 +195,18 @@ def check_file(
             if fail_fast and finding.severity == "error":
                 return findings
 
+    # DBT005 (select-star-in-mart) is a dbt-aware refinement of W001
+    # (select-star): same SELECT *, more specific message. Firing both
+    # for one line is exactly the double-noise the dbt-aware rule pack
+    # ADR (issue #54) wants to avoid, so a co-located DBT005 finding
+    # wins and the plain W001 finding on that file:line is dropped.
+    # W001 itself stays dbt-unaware; the dedup lives here.
+    dbt005_lines = {f.line for f in findings if f.rule_id == "DBT005"}
+    if dbt005_lines:
+        findings = [
+            f for f in findings if not (f.rule_id == "W001" and f.line in dbt005_lines)
+        ]
+
     return findings
 
 
