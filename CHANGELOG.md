@@ -40,6 +40,7 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Changed
 - **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
+- **W025 `assertion-malformed`** - accepts quoted identifiers (`"col"`, `[col]`, `` `col` ``) in `unique()`, `not_null()` and comparison predicates, including doubled closing delimiters. Qualification is still limited to one dot outside quotes. Thanks @biggdawg320. ([#92](https://github.com/Pawansingh3889/sql-sop/pull/92))
 
 ### Fixed
 - **sarif:** the SARIF rule catalogue now includes the rules that were actually active for the run, so opt-in dbt rules (DBT001+) get a matching `runs[].tool.driver.rules` descriptor. Thanks @vjymisal0. ([#85](https://github.com/Pawansingh3889/sql-sop/pull/85))
