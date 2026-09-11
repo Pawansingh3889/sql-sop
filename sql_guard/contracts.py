@@ -73,13 +73,13 @@ class Contract:
     tables: dict[str, ContractTable] = field(default_factory=dict)
 
     @classmethod
-    def from_file(cls, path: str | Path) -> "Contract":
+    def from_file(cls, path: str | Path) -> Contract:
         """Load a contract from a YAML file."""
         raw = Path(path).read_text(encoding="utf-8")
         return cls.from_dict(yaml.safe_load(raw) or {})
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Contract":
+    def from_dict(cls, data: dict[str, Any]) -> Contract:
         """Build a contract from a parsed YAML dict."""
         contract = cls()
         for table_name, table_data in (data.get("tables") or {}).items():

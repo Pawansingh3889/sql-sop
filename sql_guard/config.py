@@ -45,7 +45,7 @@ class Config:
     source: Path | None = None
 
     @classmethod
-    def from_dict(cls, data: dict, source: Path | None = None) -> "Config":
+    def from_dict(cls, data: dict, source: Path | None = None) -> Config:
         contract_value = data.get("contract")
         contract_path: Path | None = None
         if contract_value:
@@ -88,5 +88,7 @@ def load(path: Path | None = None) -> Config:
         return Config()
     raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     if not isinstance(raw, dict):
-        raise ValueError(f"{config_path}: expected a YAML mapping at the top level")
+        # ValueError, not TypeError: a non-mapping YAML is bad config content,
+        # and the ValueError contract is pinned by tests.
+        raise ValueError(f"{config_path}: expected a YAML mapping at the top level")  # noqa: TRY004
     return Config.from_dict(raw, source=config_path)
