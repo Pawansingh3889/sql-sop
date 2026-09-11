@@ -13,10 +13,11 @@ Severity split, per the ADR:
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from sql_guard.dbt import DbtProject
-from sql_guard.rules.base import Finding, Rule
+from sql_guard.rules.base import Finding, Rule, strip_strings_and_comments
 
 
 class ModelWithoutTest(Rule):
@@ -81,6 +82,107 @@ class ModelWithoutTest(Rule):
                 ),
             )
         ]
+
+
+class DirectTableRef(Rule):
+    """DBT002: raw table name in FROM/JOIN instead of ref()/source().
+
+    Flags ``FROM orders`` / ``JOIN raw_db.orders`` where a dbt model
+    should instead use ``{{ ref('orders') }}`` or
+    ``{{ source('raw_db', 'orders') }}`` so dbt can build the dependency
+    graph and run models in the right order.
+
+    Design (see the ADR decision comment, issue #54): no Jinja
+    preprocessing. The check walks the untouched file text looking for
+    ``FROM`` / ``JOIN`` keywords and inspects whatever token follows:
+
+    - Starts with ``{{``: already templated (``ref``, ``source``,
+      ``this``, ``var``, or any other macro). Not this rule's concern.
+    - Starts with ``(``: a subquery, not a table name. Skip.
+    - A bare or dotted identifier: a candidate raw reference, unless it
+      names a CTE defined earlier in the same statement (``WITH x AS
+      (...)`` / ``, y AS (...)``) or falls under an allowlisted system
+      schema (``information_schema``, ``pg_catalog``, and friends).
+
+    Because nothing is rewritten or stripped before the scan, the line
+    number reported is always the file's own line number.
+    """
+
+    id = "DBT002"
+    name = "direct-table-ref"
+    severity = "warning"
+    description = "Raw table name in FROM/JOIN instead of ref()/source()"
+
+    _keyword = re.compile(r"\b(?:FROM|JOIN)\b", re.IGNORECASE)
+    _identifier = re.compile(r"[A-Za-z_][A-Za-z0-9_$]*(?:\.[A-Za-z_][A-Za-z0-9_$]*)*")
+    _cte_name = re.compile(r"\bWITH\s+(\w+)\s+AS\b|,\s*(\w+)\s+AS\s*\(", re.IGNORECASE)
+
+    # System/information schemas dbt users legitimately query directly.
+    _allowlisted_schemas = frozenset(
+        {"information_schema", "pg_catalog", "pg_temp", "sys", "mysql", "performance_schema"}
+    )
+
+    def __init__(self, project: DbtProject) -> None:
+        self._project = project
+
+    def check_file(self, file: str) -> list[Finding]:
+        path = Path(file)
+        if path.suffix != ".sql":
+            return []
+
+        resolved = path.resolve()
+        in_models = any(
+            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
+        )
+        if not in_models:
+            return []
+
+        try:
+            content = path.read_text(encoding="utf-8")
+        except OSError:
+            return []
+
+        cleaned = strip_strings_and_comments(content)
+        cte_names = {
+            (m.group(1) or m.group(2)).upper() for m in self._cte_name.finditer(cleaned)
+        }
+
+        findings: list[Finding] = []
+        for kw in self._keyword.finditer(cleaned):
+            i = kw.end()
+            while i < len(cleaned) and cleaned[i].isspace():
+                i += 1
+            rest = cleaned[i:]
+
+            if rest.startswith(("{{", "(")):
+                continue
+
+            match = self._identifier.match(rest)
+            if not match:
+                continue
+            name = match.group(0)
+
+            parts = name.split(".")
+            if parts[-1].upper() in cte_names:
+                continue
+            if any(p.lower() in self._allowlisted_schemas for p in parts):
+                continue
+
+            line = cleaned[: kw.start()].count("\n") + 1
+            findings.append(
+                Finding(
+                    rule_id=self.id,
+                    severity=self.severity,
+                    file=file,
+                    line=line,
+                    message=f"Raw table reference '{name}' instead of ref()/source()",
+                    suggestion=(
+                        "Use {{ ref('model_name') }} for other dbt models or "
+                        "{{ source('source_name', 'table_name') }} for raw sources."
+                    ),
+                )
+            )
+        return findings
 
 
 def _is_relative_to(child: Path, parent: Path) -> bool:
