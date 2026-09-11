@@ -17,7 +17,6 @@ from pathlib import Path
 
 import yaml
 
-
 # Default model-paths used by dbt when the key is absent from
 # dbt_project.yml. Matches dbt's own default ("models") as of dbt 1.7.
 _DEFAULT_MODEL_PATHS = ("models",)

@@ -7,13 +7,14 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from sql_guard import python_scanner
 from sql_guard.contracts import Contract
 from sql_guard.dbt import DbtProject
+from sql_guard.inline_disable import DisableMap
+from sql_guard.inline_disable import parse as parse_disables
 from sql_guard.rules import get_rules
 from sql_guard.rules.base import Finding, Rule
 from sql_guard.rules.python_rules import PYTHON_RULES
-from sql_guard import python_scanner
-from sql_guard.inline_disable import DisableMap, parse as parse_disables
 
 
 @dataclass
@@ -24,6 +25,7 @@ class CheckResult:
     files_checked: int = 0
     files_with_issues: int = 0
     duration_seconds: float = 0.0
+    active_rules: list[Rule] = field(default_factory=list)
 
     @property
     def error_count(self) -> int:
@@ -127,7 +129,7 @@ def check_file(
     except UnicodeDecodeError:
         try:
             content = path.read_text(encoding="latin-1")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- any unreadable file becomes a SYS finding, not a crash
             return [
                 Finding(
                     rule_id="SYS",
@@ -269,7 +271,7 @@ def check(
     ignore: list[str] | None = None,
     include_python: bool = False,
     contract: Contract | None = None,
-    dbt_project: "DbtProject | None" = None,  # noqa: F821 -- imported below
+    dbt_project: DbtProject | None = None,
 ) -> CheckResult:
     """Run all rules against discovered SQL (and optionally Python) files.
 
@@ -294,6 +296,7 @@ def check(
 
     result = CheckResult()
     result.files_checked = len(discovered)
+    result.active_rules = rules
 
     for path in discovered:
         if path.suffix == ".py":

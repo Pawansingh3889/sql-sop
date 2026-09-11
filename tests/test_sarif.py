@@ -27,6 +27,18 @@ def test_sarif_envelope_shape():
     assert isinstance(runs[0]["tool"]["driver"]["rules"], list)
 
 
+def test_sarif_includes_active_opt_in_rule_descriptors():
+    from types import SimpleNamespace
+
+    result = _result(Finding(rule_id="DBT001", severity="warning", file="m.sql", line=1, message="m"))
+    result.active_rules = [SimpleNamespace(
+        id="DBT001", name="Model without test", description="A dbt model lacks tests", severity="warning"
+    )]
+    doc = sarif_reporter.build(result)
+    rules = doc["runs"][0]["tool"]["driver"]["rules"]
+    assert [rule["id"] for rule in rules] == ["DBT001"]
+
+
 def test_sarif_emits_each_finding():
     finding = Finding(
         rule_id="W001",

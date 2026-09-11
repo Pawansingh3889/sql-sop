@@ -19,12 +19,12 @@ def unsafe_concat(cursor, user_id: str) -> None:
 
 def unsafe_format(cursor, name: str) -> None:
     # P003 (format)
-    cursor.execute(f"SELECT * FROM users WHERE name = '{name}'")
+    cursor.execute("SELECT * FROM users WHERE name = '{}'".format(name))
 
 
 def unsafe_percent(cursor, name: str) -> None:
     # P003 (percent)
-    cursor.execute(f"SELECT * FROM users WHERE name = '{name}'")
+    cursor.execute("SELECT * FROM users WHERE name = '%s'" % name)
 
 
 def bare_variable(cursor, query: str) -> None:

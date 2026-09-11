@@ -6,7 +6,7 @@ from pathlib import Path
 
 from sql_guard.dbt import load_dbt_project
 from sql_guard.rules import build_dbt_rules, get_rules
-from sql_guard.rules.dbt import IncrementalWithoutUniqueKey, ModelWithoutTest
+from sql_guard.rules.dbt import DirectTableRef, IncrementalWithoutUniqueKey, ModelWithoutTest
 
 FIXTURE_PROJECT_YML = Path(__file__).parent / "fixtures" / "dbt_project" / "dbt_project.yml"
 FIXTURE_MODELS = FIXTURE_PROJECT_YML.parent / "models"
@@ -83,6 +83,121 @@ def test_dbt001_skips_file_outside_model_paths(tmp_path):
     project = load_dbt_project(tmp_path / "dbt_project.yml")
     rule = ModelWithoutTest(project)
     assert rule.check_file(str(macro)) == []
+
+
+# DBT002 direct-table-ref ----------------------------------------------------
+
+
+def _dbt002_project(tmp_path, model_sql: str, model_name: str = "fct_orders"):
+    """Build a tiny dbt project with one model under models/marts/."""
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    marts = tmp_path / "models" / "marts"
+    marts.mkdir(parents=True)
+    model_path = marts / f"{model_name}.sql"
+    model_path.write_text(model_sql)
+    project = load_dbt_project(tmp_path / "dbt_project.yml")
+    return DirectTableRef(project), model_path
+
+
+def test_dbt002_fires_on_raw_table_in_from(tmp_path):
+    rule, path = _dbt002_project(tmp_path, "SELECT * FROM raw_orders\n")
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert findings[0].rule_id == "DBT002"
+    assert findings[0].severity == "warning"
+    assert "raw_orders" in findings[0].message
+
+
+def test_dbt002_fires_on_raw_table_in_join(tmp_path):
+    sql = "SELECT * FROM {{ ref('stg_orders') }} o JOIN raw_customers c ON o.customer_id = c.id\n"
+    rule, path = _dbt002_project(tmp_path, sql)
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert "raw_customers" in findings[0].message
+
+
+def test_dbt002_fires_on_schema_qualified_raw_table(tmp_path):
+    rule, path = _dbt002_project(tmp_path, "SELECT * FROM raw_db.orders\n")
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert "raw_db.orders" in findings[0].message
+
+
+def test_dbt002_reports_the_source_line(tmp_path):
+    sql = "SELECT *\nFROM raw_orders\n"
+    rule, path = _dbt002_project(tmp_path, sql)
+    findings = rule.check_file(str(path))
+    assert findings[0].line == 2
+
+
+def test_dbt002_quiet_for_ref(tmp_path):
+    rule, path = _dbt002_project(tmp_path, "SELECT * FROM {{ ref('stg_orders') }}\n")
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt002_quiet_for_source(tmp_path):
+    sql = "SELECT * FROM {{ source('raw', 'orders') }}\n"
+    rule, path = _dbt002_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt002_quiet_for_dbt_internal_var(tmp_path):
+    # Any Jinja-templated target, not just ref()/source(), is out of scope.
+    sql = "SELECT * FROM {{ this }}\n"
+    rule, path = _dbt002_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt002_quiet_for_cte_reference(tmp_path):
+    sql = "WITH clean_orders AS (SELECT * FROM {{ ref('stg_orders') }})\nSELECT * FROM clean_orders\n"
+    rule, path = _dbt002_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt002_quiet_for_comma_cte_reference(tmp_path):
+    sql = (
+        "WITH a AS ({{ ref('stg_a') }}),\nb AS (SELECT * FROM a)\n"
+        "SELECT * FROM b\n"
+    )
+    rule, path = _dbt002_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt002_quiet_for_subquery(tmp_path):
+    sql = "SELECT * FROM (SELECT * FROM {{ ref('stg_orders') }}) x\n"
+    rule, path = _dbt002_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt002_quiet_for_information_schema(tmp_path):
+    sql = "SELECT * FROM information_schema.columns\n"
+    rule, path = _dbt002_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt002_quiet_for_schema_qualified_information_schema(tmp_path):
+    sql = "SELECT * FROM mydb.information_schema.tables\n"
+    rule, path = _dbt002_project(tmp_path, sql)
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt002_skips_file_outside_model_paths(tmp_path):
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    macros = tmp_path / "macros"
+    macros.mkdir()
+    macro = macros / "helper.sql"
+    macro.write_text("SELECT * FROM raw_orders\n")
+
+    project = load_dbt_project(tmp_path / "dbt_project.yml")
+    rule = DirectTableRef(project)
+    assert rule.check_file(str(macro)) == []
+
+
+def test_dbt002_skips_non_sql_file(tmp_path):
+    rule, path = _dbt002_project(tmp_path, "SELECT * FROM raw_orders\n")
+    py_path = path.with_suffix(".py")
+    py_path.write_text("SELECT * FROM raw_orders\n")
+    assert rule.check_file(str(py_path)) == []
 
 
 # DBT003 incremental-without-unique-key --------------------------------------
@@ -192,27 +307,38 @@ def test_dbt003_skips_file_outside_model_paths(tmp_path):
 # Registry wiring -----------------------------------------------------------
 
 
-def test_build_dbt_rules_returns_dbt001_and_dbt003():
+def test_build_dbt_rules_returns_dbt_pack():
     project = load_dbt_project(FIXTURE_PROJECT_YML)
     rules = build_dbt_rules(project)
     ids = {r.id for r in rules}
-    assert {"DBT001", "DBT003"} <= ids
+    assert {"DBT001", "DBT002", "DBT003"} <= ids
 
 
 def test_get_rules_omits_dbt_pack_by_default():
     rules = get_rules()
     ids = {r.id for r in rules}
-    assert not ids & {"DBT001", "DBT003"}
+    assert not ids & {"DBT001", "DBT002", "DBT003"}
 
 
 def test_get_rules_includes_dbt_pack_when_project_supplied():
     project = load_dbt_project(FIXTURE_PROJECT_YML)
     rules = get_rules(dbt_project=project)
     ids = {r.id for r in rules}
-    assert {"DBT001", "DBT003"} <= ids
+    assert {"DBT001", "DBT002", "DBT003"} <= ids
 
 
 # CLI integration -----------------------------------------------------------
+
+
+def test_dbt_check_result_exposes_active_rules(tmp_path):
+    from sql_guard.checker import check
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    (tmp_path / "models").mkdir()
+    model = tmp_path / "models" / "orders.sql"
+    model.write_text("select 1\n")
+    result = check([str(model)], dbt_project=load_dbt_project(tmp_path / "dbt_project.yml"))
+    assert "DBT001" in {rule.id for rule in result.active_rules}
 
 
 def test_cli_dbt_flag_activates_dbt001(tmp_path):
@@ -248,6 +374,23 @@ def test_cli_without_dbt_flag_does_not_fire_dbt001(tmp_path):
     runner = CliRunner()
     result = runner.invoke(app, ["check", str(untested)])
     assert "DBT001" not in result.stdout
+
+
+def test_cli_dbt_flag_activates_dbt002(tmp_path):
+    """End-to-end: --dbt flag discovers the project and fires DBT002."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    models = tmp_path / "models" / "marts"
+    models.mkdir(parents=True)
+    model = models / "fct_orders.sql"
+    model.write_text("SELECT * FROM raw_orders\n")
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["check", "--dbt", str(model)])
+    assert "DBT002" in result.stdout
 
 
 def test_cli_dbt_flag_activates_dbt003(tmp_path):
