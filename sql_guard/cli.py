@@ -47,7 +47,7 @@ def check_cmd(
         None,
         "--config",
         "-c",
-        help="Path to .sql-guard.yml (default: walk up from cwd).",
+        help="Path to .sql-sop.yml (default: walk up from cwd).",
     ),
     changed_only: bool = typer.Option(
         False,
