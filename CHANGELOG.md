@@ -8,6 +8,30 @@ sql-sop uses [Semantic Versioning](https://semver.org/).
 Rule removals and rule ID renames are **breaking changes** that require
 a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
+## [Unreleased]
+
+### Documentation
+
+* Correct the Key Numbers block: version 0.10.0 (was 0.9.0) and 419 tests
+  (was 303).
+* Document `E009 update-from-without-join` and `W021 having-without-group-by`,
+  both registered but missing from the Errors and Warnings tables.
+* Add a rule table for the dbt pack (`DBT001`-`DBT007`), covering `--dbt`
+  activation and `model-paths` scoping.
+* Correct the Python section's "four" rules to five, matching the table
+  beneath it.
+* Bump the pre-commit `rev` in the README and `.pre-commit-config.yaml` to
+  `v0.10.0`.
+
+### Bug Fixes
+
+* Correct the severity split in the `sql_guard/rules/dbt.py` module
+  docstring: `DBT007` is a warning, and `DBT003` is an error only when
+  `incremental_strategy` merges on a key.
+* Stop `test_permission_error` asserting on a successful read. It used a
+  non-empty findings list as its proxy for "chmod blocked the read", so it
+  failed whenever the suite ran as a user chmod does not restrict.
+
 ## [0.10.0](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.1...v0.10.0) (2026-09-11)
 
 

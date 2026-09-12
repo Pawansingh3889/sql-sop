@@ -41,7 +41,7 @@ repos:
   # running the linter against them is guaranteed to fail and was
   # turning pre-commit.ci red on every PR.
   - repo: https://github.com/Pawansingh3889/sql-guard
-    rev: v0.9.1
+    rev: v0.10.0
     hooks:
       - id: sql-sop
         args: [--severity, error]

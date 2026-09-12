@@ -114,7 +114,7 @@ Same engine in both, no AI, no API keys, nothing to host. Fast enough to sit in 
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/Pawansingh3889/sql-sop
-    rev: v0.9.0
+    rev: v0.10.0
     hooks:
       - id: sql-sop
         args: [--severity, error]  # only block on errors locally
