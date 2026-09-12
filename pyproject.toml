@@ -10,17 +10,29 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "Pawan Singh Kapkoti" }]
-keywords = ["sql", "linter", "pre-commit", "github-action", "devtools"]
+keywords = [
+    "sql",
+    "linter",
+    "static-analysis",
+    "pre-commit",
+    "github-action",
+    "sarif",
+    "dbt",
+    "sql-server",
+    "devtools",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
     "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
@@ -29,6 +41,16 @@ dependencies = [
     "sqlparse>=0.5.0",
     "pyyaml>=6.0",
 ]
+
+# Rendered by PyPI as the "Project links" sidebar. Without this block the
+# sidebar shows nothing, so the project page offers no route to the source,
+# the issue tracker or the changelog.
+[project.urls]
+Homepage = "https://github.com/Pawansingh3889/sql-sop"
+Source = "https://github.com/Pawansingh3889/sql-sop"
+Issues = "https://github.com/Pawansingh3889/sql-sop/issues"
+Changelog = "https://github.com/Pawansingh3889/sql-sop/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/Pawansingh3889/sql-sop#readme"
 
 [project.scripts]
 sql-sop = "sql_guard.cli:app"

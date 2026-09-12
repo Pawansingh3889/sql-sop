@@ -10,6 +10,13 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Packaging
+
+* Add a `[project.urls]` block so the PyPI project page shows a Project links
+  sidebar (Homepage, Source, Issues, Changelog, Documentation). It had none.
+* Add the `Topic :: Database` and `Operating System :: OS Independent`
+  classifiers, and keywords for static-analysis, SARIF, dbt and SQL Server.
+
 ### Documentation
 
 * Correct the Key Numbers block: version 0.10.0 (was 0.9.0) and 419 tests
