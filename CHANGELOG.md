@@ -10,6 +10,15 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Security
+
+* Pass the GitHub Action's inputs through `env:` and read them as quoted
+  shell variables. They were interpolated straight into `run:` blocks, so a
+  workflow feeding untrusted text into an input could run commands on the
+  runner (GHSA-79x3-hj3j-748x).
+* Reject a `--changed-base` value that begins with `-`. git read such a
+  value as an option rather than a revision (GHSA-q8c4-5g3x-692q).
+
 ### Documentation
 
 * Correct the Key Numbers block: version 0.10.0 (was 0.9.0) and 419 tests
