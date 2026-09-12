@@ -139,7 +139,11 @@ def check_cmd(
         discovered = discover_files(
             paths, ignore=effective_ignore, include_python=effective_include_python
         )
-        kept, used_git = filter_to_changed(discovered, base=changed_base)
+        try:
+            kept, used_git = filter_to_changed(discovered, base=changed_base)
+        except ValueError as exc:
+            err_console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(code=2) from exc
         if not used_git:
             err_console.print(
                 "[yellow]--changed-only: not in a git repo (or git unavailable); "
