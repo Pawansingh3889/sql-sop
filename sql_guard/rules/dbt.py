@@ -7,8 +7,10 @@ Silent unless ``--dbt`` is supplied; existing users see no behaviour
 change.
 
 Severity split, per the ADR:
-- ``warning``: DBT001, DBT002, DBT005, DBT006
-- ``error``:   DBT003, DBT004, DBT007
+- ``warning``: DBT001, DBT002, DBT005, DBT006, DBT007
+- ``error``:   DBT004, and DBT003 when the incremental strategy merges
+  on a key (``merge`` / ``delete+insert``); DBT003 degrades to
+  ``warning`` when the strategy is not set in the ``config()`` call.
 """
 
 from __future__ import annotations
