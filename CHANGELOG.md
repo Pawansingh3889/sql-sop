@@ -10,6 +10,8 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+_Nothing yet._
+
 ## [0.11.0] - 2026-09-12
 
 ### Security
