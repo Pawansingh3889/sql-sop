@@ -1,4 +1,4 @@
-"""Project-level configuration via ``.sql-guard.yml`` (or ``.sql-guard.yaml``).
+"""Project-level configuration via ``.sql-sop.yml`` (or legacy ``.sql-guard.yml``).
 
 Schema:
 
@@ -14,7 +14,7 @@ Schema:
     severity: warning
 
 CLI flags always win over the config file. The loader looks for a
-``.sql-guard.yml`` or ``.sql-guard.yaml`` walking up from the given
+``.sql-sop.yml`` (or legacy ``.sql-guard.yml``) walking up from the given
 start directory. If neither exists, the loader returns an empty
 ``Config`` so the rest of the codebase doesn't have to special-case
 "no config".
@@ -30,7 +30,12 @@ from pathlib import Path
 
 import yaml
 
-CONFIG_FILENAMES = (".sql-guard.yml", ".sql-guard.yaml")
+CONFIG_FILENAMES = (
+    ".sql-sop.yml",
+    ".sql-sop.yaml",
+    ".sql-guard.yml",
+    ".sql-guard.yaml",
+)
 
 
 @dataclass
@@ -70,10 +75,34 @@ def find_config(start: Path | None = None) -> Path | None:
     """Walk up from ``start`` (default: cwd) looking for a config file."""
     here = (start or Path.cwd()).resolve()
     for directory in (here, *here.parents):
-        for name in CONFIG_FILENAMES:
-            candidate = directory / name
-            if candidate.is_file():
-                return candidate
+        sop_candidate: Path | None = None
+        for name in (".sql-sop.yml", ".sql-sop.yaml"):
+            cand = directory / name
+            if cand.is_file():
+                sop_candidate = cand
+                break
+
+        guard_candidate: Path | None = None
+        for name in (".sql-guard.yml", ".sql-guard.yaml"):
+            cand = directory / name
+            if cand.is_file():
+                guard_candidate = cand
+                break
+
+        if sop_candidate is not None and guard_candidate is not None:
+            print(
+                f"Warning: Found both {sop_candidate.name} and {guard_candidate.name} in {directory}; "
+                f"using {sop_candidate.name} and ignoring {guard_candidate.name}."
+            )
+            return sop_candidate
+        if sop_candidate is not None:
+            return sop_candidate
+        if guard_candidate is not None:
+            print(
+                f"Notice: {guard_candidate.name} is deprecated and will stop working in 0.12.0. "
+                "Please use .sql-sop.yml instead."
+            )
+            return guard_candidate
     return None
 
 
