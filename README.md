@@ -1,7 +1,5 @@
 # sql-sop
 
-[![PyPI](https://img.shields.io/pypi/v/sql-sop)](https://pypi.org/project/sql-sop/) [![Downloads](https://static.pepy.tech/badge/sql-sop)](https://pepy.tech/projects/sql-sop)
-
 [![CI](https://github.com/Pawansingh3889/sql-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/Pawansingh3889/sql-guard/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/sql-sop)](https://pypi.org/project/sql-sop/)
 [![Python](https://img.shields.io/pypi/pyversions/sql-sop)](https://pypi.org/project/sql-sop/)
@@ -12,13 +10,7 @@
 [![Downloads](https://img.shields.io/pypi/dm/sql-sop?color=a07aff)](https://pypi.org/project/sql-sop/)
 [![codecov](https://codecov.io/gh/Pawansingh3889/sql-guard/branch/main/graph/badge.svg)](https://codecov.io/gh/Pawansingh3889/sql-guard)
 
-## Links
-- [GitHub](https://github.com/Pawansingh3889/sql-guard)
-- [PyPI](https://pypi.org/project/sql-sop/)
-- [Download Stats](https://pypistats.org/packages/sql-sop)
-- Install: `pip install sql-sop`
-- [Profile](https://github.com/Pawansingh3889)
-- **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`ROADMAP.md`](ROADMAP.md) · [`GOVERNANCE.md`](GOVERNANCE.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · [`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE)
+**Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`ROADMAP.md`](ROADMAP.md) · [`GOVERNANCE.md`](GOVERNANCE.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · [`SECURITY.md`](SECURITY.md) · [`NOTICE`](NOTICE)
 
 ## Related projects
 
@@ -54,11 +46,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 48 rules (43 SQL + 5 Python), with an optional Contracts pack (5 schema-aware rules) when you supply `--contract path.yml` and an optional dbt pack (7 rules) under `--dbt`. SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 2,000+ installs on PyPI.
-
-Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, contract drift, and 40+ more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
-
-Built to catch dangerous patterns like DELETE without WHERE before they ever reach a production database.
+48 rules, plus an optional Contracts pack (5 schema-aware rules) under `--contract path.yml` and a dbt pack (7 rules) under `--dbt`. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
 Want the same rules inside your AI assistant? [sql-sop-mcp](https://github.com/Pawansingh3889/sql-sop-mcp) exposes them over MCP, so the model is told a query is unsafe before it suggests it.
 
@@ -148,15 +136,7 @@ That's it. Every SQL change gets an instant, rule-based lint on the PR.
 
 ### Step 3 (optional): CLI for manual checks
 
-```bash
-pip install sql-sop
-
-sql-sop check .                          # scan current directory
-sql-sop check queries/ --severity error  # errors only
-sql-sop check . --fail-fast              # stop on first error
-sql-sop check . --disable E002 W008      # skip specific rules
-sql-sop list-rules                       # show every registered rule
-```
+`sql-sop list-rules` prints every registered rule. See [Configuration](#configuration) for the flags that change what is reported.
 
 ---
 
@@ -215,7 +195,7 @@ issues that single-line regex matching cannot reliably see.
 | ID | Name | What it catches |
 |---|---|---|
 | S001 | `implicit-cross-join` | `JOIN customers` with no `ON` / `USING` -- accidental Cartesian product |
-| S002 | `deeply-nested-subquery` | Subqueries beyond 3 levels deep -- typically a refactor opportunity |
+| S002 | `deeply-nested-subquery` | Subqueries more than 2 levels deep -- typically a refactor opportunity |
 | S003 | `unused-cte` | `WITH x AS (...)` defined but never referenced |
 
 ### T-SQL (v0.5.0+)
@@ -386,10 +366,10 @@ In a GitHub Actions workflow:
 
 ## Performance
 
-sql-guard is designed to be fast:
+sql-sop is designed to be fast:
 
 - **Compiled regex** -- patterns compiled once at startup, reused per file
-- **Two-pass scanning** -- single-line rules run first (8 of 20 SQL rules), multi-line parsing only when needed
+- **Two-pass scanning** -- single-line rules run first (16 of 43 SQL rules), multi-line parsing only when needed
 - **Line-by-line streaming** -- files read line by line, not loaded entirely into memory
 - **Early exit** -- `--fail-fast` stops on first error
 
@@ -419,7 +399,7 @@ In a regulated data environment, sql-sop runs as a pre-commit hook on all SQL th
 | GitHub Action | Yes | Community | No |
 | AI integration | MCP server (sql-sop-mcp) | No | No |
 
-sql-sop is not a replacement for sqlfluff. It's a fast first pass that catches 80% of real issues with zero setup. If you need dialect-specific formatting and 800 rules, use sqlfluff. If you want instant feedback on dangerous SQL, use sql-guard.
+sql-sop is not a replacement for sqlfluff. It's a fast first pass that catches 80% of real issues with zero setup. If you need dialect-specific formatting and 800 rules, use sqlfluff. If you want instant feedback on dangerous SQL, use sql-sop.
 
 ---
 
@@ -485,7 +465,7 @@ Thank you to the people who have shipped rules and code to sql-sop.
 
 See [the full contributors graph](https://github.com/Pawansingh3889/sql-guard/graphs/contributors) on GitHub.
 
-Want to add your name here? Pick a [`good first issue`](https://github.com/Pawansingh3889/sql-guard/labels/good%20first%20issue), follow [`CONTRIBUTING.md`](CONTRIBUTING.md), and check the [roadmap](ROADMAP.md) for the next batch of rules. v0.7 just shipped (contracts pack); v0.8 is shaping up around dialect-aware coverage.
+Want to add your name here? Pick a [`good first issue`](https://github.com/Pawansingh3889/sql-guard/labels/good%20first%20issue), follow [`CONTRIBUTING.md`](CONTRIBUTING.md), and check the [roadmap](ROADMAP.md) for the next batch of rules.
 
 ---
 
