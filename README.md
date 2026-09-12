@@ -29,10 +29,10 @@ One bad SQL query can delete production data, expose customer records, or bring 
 | | |
 |---|---|
 | Rules | 48 (9 errors, 25 warnings, 3 structural, 6 T-SQL, 5 Python-source); 53 with `--contract`, 55 with `--dbt` |
-| Tests | 419 |
+| Tests | 445 |
 | Scan speed | 0.08s across 200 files |
 | PyPI installs | 2,000+ (mirrors excluded) |
-| Version | 0.10.0 |
+| Version | 0.11.0 |
 
 ### Fluent API (v0.2.0)
 
@@ -96,7 +96,7 @@ Same engine in both, no AI, no API keys, nothing to host. Fast enough to sit in 
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/Pawansingh3889/sql-sop
-    rev: v0.10.0
+    rev: v0.11.0
     hooks:
       - id: sql-sop
         args: [--severity, error]  # only block on errors locally

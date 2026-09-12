@@ -10,78 +10,96 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.11.0] - 2026-09-12
+
 ### Security
 
 * Pass the GitHub Action's inputs through `env:` and read them as quoted
   shell variables. They were interpolated straight into `run:` blocks, so a
   workflow feeding untrusted text into an input could run commands on the
-  runner (GHSA-79x3-hj3j-748x).
+  runner (GHSA-79x3-hj3j-748x, [#115](https://github.com/Pawansingh3889/sql-sop/pull/115)).
 * Reject a `--changed-base` value that begins with `-`. git read such a
-  value as an option rather than a revision (GHSA-q8c4-5g3x-692q).
+  value as an option rather than a revision (GHSA-q8c4-5g3x-692q,
+  [#115](https://github.com/Pawansingh3889/sql-sop/pull/115)).
+
+### Changed
+
+- **cli:** `sql-sop version` now identifies the command as `sql-sop` instead of `sql-guard`. ([#102](https://github.com/Pawansingh3889/sql-sop/issues/102))
+- Update remaining `sql-guard` repository and playground URLs to `sql-sop` after the rename. The names users type are unchanged: the `-- sql-guard: disable=` directive, `.sql-guard.yml`, the `sql-guard` pre-commit hook id and the SARIF tool name all still work ([#94](https://github.com/Pawansingh3889/sql-sop/issues/94), [#97](https://github.com/Pawansingh3889/sql-sop/pull/97)).
+
+### Fixed
+
+* Send CLI warnings and errors (for example the `--dbt` "no dbt_project.yml
+  found" note) to stderr, so `check --format sarif` leaves stdout carrying
+  only parseable SARIF JSON. Thanks @LouisDeconinck
+  ([#111](https://github.com/Pawansingh3889/sql-sop/issues/111), [#114](https://github.com/Pawansingh3889/sql-sop/pull/114)).
+* Correct the severity split in the `sql_guard/rules/dbt.py` module
+  docstring: `DBT007` is a warning, and `DBT003` is an error only when
+  `incremental_strategy` merges on a key ([#109](https://github.com/Pawansingh3889/sql-sop/pull/109)).
+* Stop `test_permission_error` asserting on a successful read. It used a
+  non-empty findings list as its proxy for "chmod blocked the read", so it
+  failed whenever the suite ran as a user chmod does not restrict
+  ([#109](https://github.com/Pawansingh3889/sql-sop/pull/109)).
 
 ### Packaging
 
 * Add a `[project.urls]` block so the PyPI project page shows a Project links
-  sidebar (Homepage, Source, Issues, Changelog, Documentation). It had none.
+  sidebar (Homepage, Source, Issues, Changelog, Documentation). It had none
+  ([#113](https://github.com/Pawansingh3889/sql-sop/pull/113)).
 * Add the `Topic :: Database` and `Operating System :: OS Independent`
-  classifiers, and keywords for static-analysis, SARIF, dbt and SQL Server.
+  classifiers, and keywords for static-analysis, SARIF, dbt and SQL Server
+  ([#113](https://github.com/Pawansingh3889/sql-sop/pull/113)).
 
 ### Documentation
 
-* Correct the Key Numbers block: version 0.10.0 (was 0.9.0) and 419 tests
-  (was 303).
-* Document `E009 update-from-without-join` and `W021 having-without-group-by`,
-  both registered but missing from the Errors and Warnings tables.
-* Add a rule table for the dbt pack (`DBT001`-`DBT007`), covering `--dbt`
-  activation and `model-paths` scoping.
-* Correct the Python section's "four" rules to five, matching the table
-  beneath it.
-* Bump the pre-commit `rev` in the README and `.pre-commit-config.yaml` to
-  `v0.10.0`.
+* Correct the Key Numbers block and document `E009 update-from-without-join`
+  and `W021 having-without-group-by`, both registered but missing from the
+  tables. Add a rule table for the dbt pack (`DBT001`-`DBT007`) covering
+  `--dbt` activation and `model-paths` scoping
+  ([#109](https://github.com/Pawansingh3889/sql-sop/pull/109)).
+* Present sql-sop as a standalone project rather than part of a wider stack.
+  Thanks @biggdawg320 ([#93](https://github.com/Pawansingh3889/sql-sop/issues/93), [#110](https://github.com/Pawansingh3889/sql-sop/pull/110)).
+* Remove duplicated README copy, which stated the same pitch four times, and
+  correct stale figures: S002 fires above 2 levels of nesting, not 3, and the
+  two-pass note said 8 of 20 SQL rules when it is 16 of 43
+  ([#112](https://github.com/Pawansingh3889/sql-sop/pull/112)).
 
-### Bug Fixes
+### Tests
 
-* Correct the severity split in the `sql_guard/rules/dbt.py` module
-  docstring: `DBT007` is a warning, and `DBT003` is an error only when
-  `incremental_strategy` merges on a key.
-* Stop `test_permission_error` asserting on a successful read. It used a
-  non-empty findings list as its proxy for "chmod blocked the read", so it
-  failed whenever the suite ran as a user chmod does not restrict.
-* Send CLI warnings and errors (for example the `--dbt` "no
-  dbt_project.yml found" note) to stderr so `check --format sarif`
-  leaves stdout carrying only parseable SARIF JSON.
+* Cover the previously untested `schema-snapshot` and `validate-contract`
+  commands against a real SQLite schema. Thanks @biggdawg320
+  ([#37](https://github.com/Pawansingh3889/sql-sop/issues/37), [#106](https://github.com/Pawansingh3889/sql-sop/pull/106)).
 
-### Changed
-- Update remaining `sql-guard` repository and playground URLs to `sql-sop` after the rename ([#94](https://github.com/Pawansingh3889/sql-sop/issues/94)).
+### Repository
+
+* Remove Dependabot version updates, pre-commit.ci and release-please.
+  Releases are now cut by hand; `release.yml` still publishes to PyPI when
+  main carries a version PyPI does not have
+  ([#98](https://github.com/Pawansingh3889/sql-sop/pull/98)).
 
 ## [0.10.0](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.1...v0.10.0) (2026-09-11)
 
+### Added
+- **DBT002 `direct-table-ref`** - warns on a raw table name after `FROM`/`JOIN` in a dbt model (e.g. `FROM orders`, `JOIN raw_db.orders`) where `{{ ref(...) }}` or `{{ source(...) }}` should be used. Skips CTE names, subqueries, any `{{ ... }}` target, and system schemas such as `information_schema`. ([#75](https://github.com/Pawansingh3889/sql-sop/pull/75))
+- **DBT003 `incremental-without-unique-key`** - flags `materialized='incremental'` with no `unique_key` in the model's `{{ config(...) }}` call. Error when `incremental_strategy` is `merge` or `delete+insert` (duplicate rows), warning when no strategy is set (the adapter default varies), silent for `append` and `insert_overwrite`. ([#76](https://github.com/Pawansingh3889/sql-sop/pull/76))
+- **DBT004 `hook-with-ddl`** - flags `pre_hook`/`post_hook` statements in the `{{ config(...) }}` call, as a single string or a list. Error for `DROP`, `TRUNCATE`, and `DELETE`; warning for `ALTER`, which is often a sanctioned cluster-key or table-property change. Other statements such as `GRANT` are not flagged. ([#77](https://github.com/Pawansingh3889/sql-sop/pull/77))
+- **DBT005 `select-star-in-mart`** - warns on `SELECT *` in a model under a `marts` directory (case-insensitive) inside `model-paths`. When it fires, the plain W001 `select-star` finding on the same line is dropped so the line is not reported twice. The directory name is not configurable yet (#83). ([#80](https://github.com/Pawansingh3889/sql-sop/pull/80))
+- **DBT006 `model-without-description`** - warns when a model listed in `schema.yml` has no `description:`. Models missing from `schema.yml` entirely are left to DBT001, so the same gap is not reported twice. ([#78](https://github.com/Pawansingh3889/sql-sop/pull/78))
+- **DBT007 `unquoted-var-interpolation`** - warns when `{{ var(...) }}` is interpolated into SQL without single quotes on both sides. `var()` values are set by the project author at compile time, so this is about syntax errors and wrong literals, not injection. `var()` used inside `{% ... %}` or nested in another expression is not flagged. ([#79](https://github.com/Pawansingh3889/sql-sop/pull/79))
 
-### Features
+### Changed
+- **dbt:** share the `_config_call` regex between DBT003 and DBT004 at module level, and share the model-paths check across dbt rules. ([#89](https://github.com/Pawansingh3889/sql-sop/issues/89))
+- **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
+- **W025 `assertion-malformed`** - accepts quoted identifiers (`"col"`, `[col]`, `` `col` ``) in `unique()`, `not_null()` and comparison predicates, including doubled closing delimiters. Qualification is still limited to one dot outside quotes. Thanks @biggdawg320. ([#92](https://github.com/Pawansingh3889/sql-sop/pull/92))
 
-* **rules:** add DBT002 direct-table-ref ([#75](https://github.com/Pawansingh3889/sql-sop/issues/75)) ([043307e](https://github.com/Pawansingh3889/sql-sop/commit/043307ec2b7d4c9585b2c73bf1c54b8c45ef328e))
-* **rules:** add DBT003 incremental-without-unique-key ([#76](https://github.com/Pawansingh3889/sql-sop/issues/76)) ([24bfdd0](https://github.com/Pawansingh3889/sql-sop/commit/24bfdd042a212c8f0759bcf9e602251b9b565ee4))
-* **rules:** add DBT004 hook-with-ddl ([#77](https://github.com/Pawansingh3889/sql-sop/issues/77)) ([0384a71](https://github.com/Pawansingh3889/sql-sop/commit/0384a7117405b8de31798215ad3bc418fbf1be3c))
-* **rules:** add DBT005 select-star-in-mart ([#80](https://github.com/Pawansingh3889/sql-sop/issues/80)) ([d597577](https://github.com/Pawansingh3889/sql-sop/commit/d5975777a4ddb553f495e2de2ff91708eb62f958))
-* **rules:** add DBT006 model-without-description ([#78](https://github.com/Pawansingh3889/sql-sop/issues/78)) ([848b00e](https://github.com/Pawansingh3889/sql-sop/commit/848b00ef57c856d80c1343edab0e6fbd56e80ccf))
-* **rules:** add DBT007 unquoted-var-interpolation ([#79](https://github.com/Pawansingh3889/sql-sop/issues/79)) ([f62e7b3](https://github.com/Pawansingh3889/sql-sop/commit/f62e7b39fbf36b308dd5135930b22bac6e750362))
-* **w025:** support quoted assertion identifiers ([#92](https://github.com/Pawansingh3889/sql-sop/issues/92)) ([7168dcf](https://github.com/Pawansingh3889/sql-sop/commit/7168dcf36642b9ef835a7bc74d6e2b21efa4c576))
-
-
-### Bug Fixes
-
-* include dbt rules in SARIF descriptors ([#85](https://github.com/Pawansingh3889/sql-sop/issues/85)) ([608ef21](https://github.com/Pawansingh3889/sql-sop/commit/608ef217db1cd619a894631bea48ebac7a614ab9))
-
+### Fixed
+- **sarif:** the SARIF rule catalogue now includes the rules that were actually active for the run, so opt-in dbt rules (DBT001+) get a matching `runs[].tool.driver.rules` descriptor. Thanks @vjymisal0. ([#85](https://github.com/Pawansingh3889/sql-sop/pull/85))
 
 ### Documentation
 
-* remove the moved-to-monorepo banner from the README ([#95](https://github.com/Pawansingh3889/sql-sop/issues/95)) ([d1bd436](https://github.com/Pawansingh3889/sql-sop/commit/d1bd436d8fe28becd543ec300699d0e2578d7ca0))
-
-
-### Code Refactoring
-
-* **dbt:** share config() regex and model-paths check across rules ([#89](https://github.com/Pawansingh3889/sql-sop/issues/89)) ([#96](https://github.com/Pawansingh3889/sql-sop/issues/96)) ([64aaafe](https://github.com/Pawansingh3889/sql-sop/commit/64aaafe049b897cfa94db89da295b9d239e603c5))
-* modernize type hints and ruff config ([#81](https://github.com/Pawansingh3889/sql-sop/issues/81)) ([1f57c2b](https://github.com/Pawansingh3889/sql-sop/commit/1f57c2bef2f58dc34b53639b72d8a67ddf14aba9))
+* Remove the moved-to-monorepo banner from the README ([#95](https://github.com/Pawansingh3889/sql-sop/pull/95)).
 
 ## [0.9.1](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.0...v0.9.1) (2026-07-19)
 
@@ -102,25 +120,6 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 ### Documentation
 
 * **readme:** add Companion tools section linking OpsMind and the compliance dashboard ([#58](https://github.com/Pawansingh3889/sql-guard/issues/58)) ([d8f6c0f](https://github.com/Pawansingh3889/sql-guard/commit/d8f6c0f3b66bd8bfa149377df8f92fa35bd54ab2))
-
-## [Unreleased]
-
-### Added
-- **DBT002 `direct-table-ref`** - warns on a raw table name after `FROM`/`JOIN` in a dbt model (e.g. `FROM orders`, `JOIN raw_db.orders`) where `{{ ref(...) }}` or `{{ source(...) }}` should be used. Skips CTE names, subqueries, any `{{ ... }}` target, and system schemas such as `information_schema`. ([#75](https://github.com/Pawansingh3889/sql-sop/pull/75))
-- **DBT003 `incremental-without-unique-key`** - flags `materialized='incremental'` with no `unique_key` in the model's `{{ config(...) }}` call. Error when `incremental_strategy` is `merge` or `delete+insert` (duplicate rows), warning when no strategy is set (the adapter default varies), silent for `append` and `insert_overwrite`. ([#76](https://github.com/Pawansingh3889/sql-sop/pull/76))
-- **DBT004 `hook-with-ddl`** - flags `pre_hook`/`post_hook` statements in the `{{ config(...) }}` call, as a single string or a list. Error for `DROP`, `TRUNCATE`, and `DELETE`; warning for `ALTER`, which is often a sanctioned cluster-key or table-property change. Other statements such as `GRANT` are not flagged. ([#77](https://github.com/Pawansingh3889/sql-sop/pull/77))
-- **DBT005 `select-star-in-mart`** - warns on `SELECT *` in a model under a `marts` directory (case-insensitive) inside `model-paths`. When it fires, the plain W001 `select-star` finding on the same line is dropped so the line is not reported twice. The directory name is not configurable yet (#83). ([#80](https://github.com/Pawansingh3889/sql-sop/pull/80))
-- **DBT006 `model-without-description`** - warns when a model listed in `schema.yml` has no `description:`. Models missing from `schema.yml` entirely are left to DBT001, so the same gap is not reported twice. ([#78](https://github.com/Pawansingh3889/sql-sop/pull/78))
-- **DBT007 `unquoted-var-interpolation`** - warns when `{{ var(...) }}` is interpolated into SQL without single quotes on both sides. `var()` values are set by the project author at compile time, so this is about syntax errors and wrong literals, not injection. `var()` used inside `{% ... %}` or nested in another expression is not flagged. ([#79](https://github.com/Pawansingh3889/sql-sop/pull/79))
-
-### Changed
-- **cli:** `sql-sop version` now identifies the command as `sql-sop` instead of `sql-guard`. ([#102](https://github.com/Pawansingh3889/sql-sop/issues/102))
-- **dbt:** share the `_config_call` regex between DBT003 and DBT004 at module level, and share the model-paths check across dbt rules. ([#89](https://github.com/Pawansingh3889/sql-sop/issues/89))
-- **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
-- **W025 `assertion-malformed`** - accepts quoted identifiers (`"col"`, `[col]`, `` `col` ``) in `unique()`, `not_null()` and comparison predicates, including doubled closing delimiters. Qualification is still limited to one dot outside quotes. Thanks @biggdawg320. ([#92](https://github.com/Pawansingh3889/sql-sop/pull/92))
-
-### Fixed
-- **sarif:** the SARIF rule catalogue now includes the rules that were actually active for the run, so opt-in dbt rules (DBT001+) get a matching `runs[].tool.driver.rules` descriptor. Thanks @vjymisal0. ([#85](https://github.com/Pawansingh3889/sql-sop/pull/85))
 
 ## [0.8.0] - 2026-05-20
 
