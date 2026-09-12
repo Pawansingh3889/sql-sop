@@ -145,7 +145,19 @@ def check_cmd(
         else:
             paths = [str(p) for p in kept]
             if not paths:
+                # Human note on stderr via console; SARIF consumers still need a
+                # valid document with empty results (CI uploads empty = fail).
                 console.print("[green]OK[/green] no changed files to lint.")
+                if output_format == "sarif":
+                    from sql_guard.checker import CheckResult
+
+                    rendered = sarif_reporter.render(CheckResult())
+                    if output_path:
+                        output_path.write_text(rendered, encoding="utf-8")
+                        console.print(f"Wrote SARIF to {output_path}")
+                    else:
+                        sys.stdout.write(rendered)
+                        sys.stdout.write("\n")
                 return
 
     result = check(

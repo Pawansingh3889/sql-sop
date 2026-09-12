@@ -10,6 +10,11 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
+### Fixed
+
+- SARIF output emits a valid empty report when --changed-only finds no files
+
+
 ### Documentation
 
 * Correct the Key Numbers block: version 0.10.0 (was 0.9.0) and 419 tests
