@@ -42,11 +42,11 @@ One bad SQL query can delete production data, expose customer records, or bring 
 
 | | |
 |---|---|
-| Rules | 48 (9 errors, 25 warnings, 3 structural, 6 T-SQL, 5 Python-source); 53 with `--contract` |
-| Tests | 303 |
+| Rules | 48 (9 errors, 25 warnings, 3 structural, 6 T-SQL, 5 Python-source); 53 with `--contract`, 55 with `--dbt` |
+| Tests | 419 |
 | Scan speed | 0.08s across 200 files |
 | PyPI installs | 2,000+ (mirrors excluded) |
-| Version | 0.9.0 |
+| Version | 0.10.0 |
 
 ### Fluent API (v0.2.0)
 
@@ -60,7 +60,7 @@ print(result.summary()) # "1 error, 0 warnings in 1 statement"
 
 ---
 
-Fast, rule-based SQL linter. 48 rules (43 SQL + 5 Python), with an optional Contracts pack (5 schema-aware rules) when you supply `--contract path.yml`. SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 2,000+ installs on PyPI.
+Fast, rule-based SQL linter. 48 rules (43 SQL + 5 Python), with an optional Contracts pack (5 schema-aware rules) when you supply `--contract path.yml` and an optional dbt pack (7 rules) under `--dbt`. SQL Server-focused rules for T-SQL shops. Inline disable, project config, git-changed-only mode, and SARIF output for GitHub Code Scanning. 2,000+ installs on PyPI.
 
 Catches dangerous SQL before it reaches production -- DELETE without WHERE, UPDATE without WHERE, SQL injection patterns, SELECT *, contract drift, and 40+ more. Runs as a **CLI tool**, **pre-commit hook**, and **GitHub Action**.
 
@@ -180,6 +180,7 @@ sql-sop list-rules                       # show every registered rule
 | E006 | `update-without-where` | `UPDATE orders SET status = 'x';` -- overwrites every row |
 | E007 | `alter-add-not-null-no-default` | `ALTER TABLE t ADD c INT NOT NULL;` -- locks table for full rewrite |
 | E008 | `drop-column` | `ALTER TABLE t DROP COLUMN c;` -- irreversible, breaks subscribers |
+| E009 | `update-from-without-join` | `UPDATE a SET x = b.x FROM a, b` -- comma-separated FROM silently makes a Cartesian product |
 
 ### Warnings (advisory by default)
 
@@ -205,6 +206,7 @@ sql-sop list-rules                       # show every registered rule
 | W018 | `or-across-columns` | `WHERE a = 1 OR b = 2` -- defeats single-column indexes |
 | W019 | `count-distinct-unbounded` | `COUNT(DISTINCT col)` with no WHERE / GROUP BY / LIMIT -- full sort + distinct over the whole table |
 | W020 | `truncate-table` | `TRUNCATE TABLE staging;` -- bypasses triggers, resets identity |
+| W021 | `having-without-group-by` | `HAVING status = 'x'` with no GROUP BY -- legal, but usually a misplaced WHERE |
 | W022 | `cross-join-explicit` | `FROM products CROSS JOIN regions` -- Cartesian product, confirm intent |
 | W023 | `scalar-udf-in-where` | `WHERE dbo.fn_X(col) = 1` -- row-by-row predicate evaluation |
 | W024 | `select-distinct-suspicious` | `SELECT DISTINCT a, b FROM x JOIN y ON ...` -- DISTINCT often masks a missing join condition or GROUP BY |
@@ -271,7 +273,7 @@ sql-sop validate-contract --contract contract.yml
 Enable with `pip install "sql-sop[python]"` and `--include-python`. Uses
 libCST to walk Python source and extract SQL strings from `.execute()`,
 `.read_sql()`, `sqlalchemy.text(...)` calls and `sql =`/`query =` style
-assignments. Then applies every rule above, plus four that only make
+assignments. Then applies every rule above, plus five that only make
 sense at the Python level:
 
 | ID | Name | What it catches |
@@ -281,6 +283,29 @@ sense at the Python level:
 | P003 | `format-in-execute` | `.format()` or `%` interpolation into an execute call |
 | P004 | `bare-variable-in-execute` | `cursor.execute(query)` where `query` is an unchecked variable |
 | P005 | `sqlalchemy-text-fstring` | `sqlalchemy.text(f"... {var}")` -- SQL injection on the SQLAlchemy text() surface |
+
+### dbt (v0.10.0+, opt-in via `--dbt`)
+
+Pass `--dbt` to activate the dbt-aware rule pack. sql-sop walks up from
+the first checked path to find `dbt_project.yml` and reads `schema.yml`
+at lint time; with no project found the pack stays silent, so existing
+users see no behaviour change. Rules only fire on `.sql` files inside
+the project's `model-paths` -- macros, analyses, seeds and snapshots are
+skipped.
+
+| ID | Name | What it catches |
+|---|---|---|
+| DBT001 | `model-without-test` | Model absent from `schema.yml`, or declared with neither `tests:` nor `data_tests:` |
+| DBT002 | `direct-table-ref` | Raw table name in FROM/JOIN instead of `ref()` / `source()` -- breaks lineage |
+| DBT003 | `incremental-without-unique-key` | `materialized='incremental'` with no `unique_key`. Error on `merge` / `delete+insert` (silent duplicate rows), warning when the strategy is unset, silent on `append` / `insert_overwrite` |
+| DBT004 | `hook-with-ddl` | `pre_hook` / `post_hook` containing destructive or structural DDL |
+| DBT005 | `select-star-in-mart` | `SELECT *` in a mart model -- downstream contracts drift silently |
+| DBT006 | `model-without-description` | Model has no `description:` in `schema.yml` |
+| DBT007 | `unquoted-var-interpolation` | `{{ var(...) }}` interpolated into SQL without surrounding quotes -- breaks the day the var holds whitespace or a quote |
+
+```bash
+sql-sop check models/ --dbt
+```
 
 ---
 
