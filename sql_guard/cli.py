@@ -26,6 +26,9 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 console = Console()
+# Diagnostics (warnings, errors, status notes) go to stderr so stdout
+# carries only the requested output, e.g. `check --format sarif` JSON.
+err_console = Console(stderr=True)
 
 
 @app.command("check")
@@ -110,10 +113,10 @@ def check_cmd(
         try:
             contract = Contract.from_file(effective_contract_path)
         except FileNotFoundError:
-            console.print(f"[red]Contract file not found:[/red] {effective_contract_path}")
+            err_console.print(f"[red]Contract file not found:[/red] {effective_contract_path}")
             raise typer.Exit(code=2)
         except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
-            console.print(f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}")
+            err_console.print(f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}")
             raise typer.Exit(code=2)
 
     dbt_project: DbtProject | None = None
@@ -121,7 +124,7 @@ def check_cmd(
         start = Path(paths[0]) if paths else Path(".")
         project_yml = find_dbt_project(start)
         if project_yml is None:
-            console.print(
+            err_console.print(
                 "[yellow]--dbt: no dbt_project.yml found walking up from "
                 f"{start}; dbt-aware rules are silent.[/yellow]"
             )
@@ -129,7 +132,7 @@ def check_cmd(
             try:
                 dbt_project = load_dbt_project(project_yml)
             except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
-                console.print(f"[red]Failed to load dbt project {project_yml}:[/red] {exc}")
+                err_console.print(f"[red]Failed to load dbt project {project_yml}:[/red] {exc}")
                 raise typer.Exit(code=2)
 
     if changed_only:
@@ -139,17 +142,17 @@ def check_cmd(
         try:
             kept, used_git = filter_to_changed(discovered, base=changed_base)
         except ValueError as exc:
-            console.print(f"[red]{exc}[/red]")
+            err_console.print(f"[red]{exc}[/red]")
             raise typer.Exit(code=2) from exc
         if not used_git:
-            console.print(
+            err_console.print(
                 "[yellow]--changed-only: not in a git repo (or git unavailable); "
                 "scanning all discovered files.[/yellow]"
             )
         else:
             paths = [str(p) for p in kept]
             if not paths:
-                console.print("[green]OK[/green] no changed files to lint.")
+                err_console.print("[green]OK[/green] no changed files to lint.")
                 return
 
     result = check(
@@ -167,7 +170,7 @@ def check_cmd(
         rendered = sarif_reporter.render(result)
         if output_path:
             output_path.write_text(rendered, encoding="utf-8")
-            console.print(f"Wrote SARIF to {output_path}")
+            err_console.print(f"Wrote SARIF to {output_path}")
         else:
             sys.stdout.write(rendered)
             sys.stdout.write("\n")
@@ -213,17 +216,17 @@ def validate_contract_cmd(
     crash.
     """
     if not contract_path.is_file():
-        console.print(f"[red]Contract file not found:[/red] {contract_path}")
+        err_console.print(f"[red]Contract file not found:[/red] {contract_path}")
         raise typer.Exit(code=2)
     try:
         contract = Contract.from_file(contract_path)
     except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2 (yaml errors vary by version)
-        console.print(f"[red]Invalid contract:[/red] {exc}")
+        err_console.print(f"[red]Invalid contract:[/red] {exc}")
         raise typer.Exit(code=2)
 
     table_count = len(contract.tables)
     if table_count == 0:
-        console.print(
+        err_console.print(
             f"[yellow]Loaded {contract_path} but no tables were declared. "
             "The contract has no effect.[/yellow]"
         )
@@ -279,10 +282,10 @@ def schema_snapshot_cmd(
     try:
         data = snapshot_mod.introspect(dsn=dsn, schema=schema, include_tables=include_table)
     except snapshot_mod.SnapshotError as exc:
-        console.print(f"[red]{exc}[/red]")
+        err_console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=2)
     except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
-        console.print(f"[red]Snapshot failed:[/red] {exc}")
+        err_console.print(f"[red]Snapshot failed:[/red] {exc}")
         raise typer.Exit(code=2)
 
     snapshot_mod.write_snapshot(data, output_path)

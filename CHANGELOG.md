@@ -19,6 +19,13 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 * Reject a `--changed-base` value that begins with `-`. git read such a
   value as an option rather than a revision (GHSA-q8c4-5g3x-692q).
 
+### Packaging
+
+* Add a `[project.urls]` block so the PyPI project page shows a Project links
+  sidebar (Homepage, Source, Issues, Changelog, Documentation). It had none.
+* Add the `Topic :: Database` and `Operating System :: OS Independent`
+  classifiers, and keywords for static-analysis, SARIF, dbt and SQL Server.
+
 ### Documentation
 
 * Correct the Key Numbers block: version 0.10.0 (was 0.9.0) and 419 tests
@@ -40,6 +47,12 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 * Stop `test_permission_error` asserting on a successful read. It used a
   non-empty findings list as its proxy for "chmod blocked the read", so it
   failed whenever the suite ran as a user chmod does not restrict.
+* Send CLI warnings and errors (for example the `--dbt` "no
+  dbt_project.yml found" note) to stderr so `check --format sarif`
+  leaves stdout carrying only parseable SARIF JSON.
+
+### Changed
+- Update remaining `sql-guard` repository and playground URLs to `sql-sop` after the rename ([#94](https://github.com/Pawansingh3889/sql-sop/issues/94)).
 
 ## [0.10.0](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.1...v0.10.0) (2026-09-11)
 

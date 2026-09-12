@@ -40,7 +40,7 @@ repos:
   # (E001..E006, S001..S003, etc.) to drive the rule unit tests --
   # running the linter against them is guaranteed to fail and was
   # turning pre-commit.ci red on every PR.
-  - repo: https://github.com/Pawansingh3889/sql-guard
+  - repo: https://github.com/Pawansingh3889/sql-sop
     rev: v0.10.0
     hooks:
       - id: sql-sop

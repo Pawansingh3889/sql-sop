@@ -47,7 +47,7 @@ Also in scope:
 
 ### Contribution shape for v0.7
 
-Each new rule follows the same pattern. See `sql_guard/rules/warnings.py:CountDistinctUnbounded` (W019) for the canonical example, and [PR #29](https://github.com/Pawansingh3889/sql-guard/pull/29) for the full review cycle.
+Each new rule follows the same pattern. See `sql_guard/rules/warnings.py:CountDistinctUnbounded` (W019) for the canonical example, and [PR #29](https://github.com/Pawansingh3889/sql-sop/pull/29) for the full review cycle.
 
 PR checklist:
 
@@ -59,7 +59,7 @@ PR checklist:
 6. CHANGELOG entry under `## [Unreleased]` → `### Added`
 7. Conventional commit style (`feat(rules): add Wxxx ...`)
 
-The W019 mvanhorn PR ([#29](https://github.com/Pawansingh3889/sql-guard/pull/29)) and W013 Prabhu PR ([#21](https://github.com/Pawansingh3889/sql-guard/pull/21)) are good references for the full review cycle, including how rebases get handled when main moves.
+The W019 mvanhorn PR ([#29](https://github.com/Pawansingh3889/sql-sop/pull/29)) and W013 Prabhu PR ([#21](https://github.com/Pawansingh3889/sql-sop/pull/21)) are good references for the full review cycle, including how rebases get handled when main moves.
 
 ## v0.8 — Dialect-Aware Coverage (tentative)
 

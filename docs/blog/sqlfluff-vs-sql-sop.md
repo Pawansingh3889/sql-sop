@@ -121,7 +121,7 @@ A concrete setup I run in a production data pipeline:
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/Pawansingh3889/sql-guard
+  - repo: https://github.com/Pawansingh3889/sql-sop
     rev: v0.4.1
     hooks:
       - id: sql-guard
@@ -172,7 +172,7 @@ reasonable outcome.
 
 *The sql-sop repo and PyPI package are here:*
 
-- *Repo: <https://github.com/Pawansingh3889/sql-guard>*
+- *Repo: <https://github.com/Pawansingh3889/sql-sop>*
 - *PyPI: `pip install sql-sop`*
 
 *sqlfluff's home:*
