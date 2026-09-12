@@ -30,7 +30,7 @@ communication about the project on external platforms.
 
 Abuse routes through the same private channel as security:
 
-<https://github.com/Pawansingh3889/sql-guard/security/advisories/new>
+<https://github.com/Pawansingh3889/sql-sop/security/advisories/new>
 
 Subject line: "Code of conduct". Acknowledgement within 7 days.
 

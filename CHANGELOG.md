@@ -42,6 +42,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   dbt_project.yml found" note) to stderr so `check --format sarif`
   leaves stdout carrying only parseable SARIF JSON.
 
+### Changed
+- Update remaining `sql-guard` repository and playground URLs to `sql-sop` after the rename ([#94](https://github.com/Pawansingh3889/sql-sop/issues/94)).
+
 ## [0.10.0](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.1...v0.10.0) (2026-09-11)
 
 

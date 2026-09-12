@@ -1,7 +1,7 @@
 # Good first issues - 10 rule seeds
 
 Paste each section below as a new GitHub Issue at:
-<https://github.com/Pawansingh3889/sql-guard/issues/new?template=rule-request.yml>
+<https://github.com/Pawansingh3889/sql-sop/issues/new?template=rule-request.yml>
 
 or use the blank form if the template doesn't fit (structural rules).
 
