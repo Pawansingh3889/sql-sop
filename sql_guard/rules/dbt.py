@@ -7,8 +7,10 @@ Silent unless ``--dbt`` is supplied; existing users see no behaviour
 change.
 
 Severity split, per the ADR:
-- ``warning``: DBT001, DBT002, DBT005, DBT006
-- ``error``:   DBT003, DBT004, DBT007
+- ``warning``: DBT001, DBT002, DBT005, DBT006, DBT007
+- ``error``:   DBT004, and DBT003 when the incremental strategy merges
+  on a key (``merge`` / ``delete+insert``); DBT003 degrades to
+  ``warning`` when the strategy is not set in the ``config()`` call.
 """
 
 from __future__ import annotations
@@ -18,6 +20,10 @@ from pathlib import Path
 
 from sql_guard.dbt import DbtProject
 from sql_guard.rules.base import Finding, Rule, strip_strings_and_comments
+
+_CONFIG_CALL = re.compile(
+    r"\{\{\s*config\s*\((?P<args>.*?)\)\s*[-]?\}\}", re.IGNORECASE | re.DOTALL
+)
 
 
 class ModelWithoutTest(Rule):
@@ -50,14 +56,7 @@ class ModelWithoutTest(Rule):
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
-        if path.suffix != ".sql":
-            return []
-
-        resolved = path.resolve()
-        in_models = any(
-            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
-        )
-        if not in_models:
+        if not _is_model_file(path, self._project):
             return []
 
         model_name = path.stem
@@ -127,14 +126,7 @@ class DirectTableRef(Rule):
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
-        if path.suffix != ".sql":
-            return []
-
-        resolved = path.resolve()
-        in_models = any(
-            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
-        )
-        if not in_models:
+        if not _is_model_file(path, self._project):
             return []
 
         try:
@@ -215,7 +207,7 @@ class IncrementalWithoutUniqueKey(Rule):
     severity = "error"
     description = "materialized='incremental' with no unique_key"
 
-    _config_call = re.compile(r"\{\{\s*config\s*\((?P<args>.*?)\)\s*[-]?\}\}", re.IGNORECASE | re.DOTALL)
+    _config_call = _CONFIG_CALL
     _materialized_incremental = re.compile(r"materialized\s*=\s*['\"]incremental['\"]", re.IGNORECASE)
     _unique_key = re.compile(r"\bunique_key\s*=")
     _incremental_strategy = re.compile(
@@ -230,14 +222,7 @@ class IncrementalWithoutUniqueKey(Rule):
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
-        if path.suffix != ".sql":
-            return []
-
-        resolved = path.resolve()
-        in_models = any(
-            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
-        )
-        if not in_models:
+        if not _is_model_file(path, self._project):
             return []
 
         try:
@@ -305,9 +290,7 @@ class HookWithDdl(Rule):
     severity = "error"
     description = "pre_hook/post_hook contains destructive or structural DDL"
 
-    _config_call = re.compile(
-        r"\{\{\s*config\s*\((?P<args>.*?)\)\s*[-]?\}\}", re.IGNORECASE | re.DOTALL
-    )
+    _config_call = _CONFIG_CALL
     _hook_arg = re.compile(
         r"\b(pre_hook|post_hook)\s*=\s*(\[.*?\]|'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\")",
         re.IGNORECASE | re.DOTALL,
@@ -321,14 +304,7 @@ class HookWithDdl(Rule):
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
-        if path.suffix != ".sql":
-            return []
-
-        resolved = path.resolve()
-        in_models = any(
-            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
-        )
-        if not in_models:
+        if not _is_model_file(path, self._project):
             return []
 
         try:
@@ -427,7 +403,7 @@ class SelectStarInMart(Rule):
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
-        if path.suffix != ".sql":
+        if not _is_model_file(path, self._project):
             return []
 
         resolved = path.resolve()
@@ -480,14 +456,7 @@ class ModelWithoutDescription(Rule):
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
-        if path.suffix != ".sql":
-            return []
-
-        resolved = path.resolve()
-        in_models = any(
-            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
-        )
-        if not in_models:
+        if not _is_model_file(path, self._project):
             return []
 
         model_name = path.stem
@@ -547,14 +516,7 @@ class UnquotedVarInterpolation(Rule):
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
-        if path.suffix != ".sql":
-            return []
-
-        resolved = path.resolve()
-        in_models = any(
-            _is_relative_to(resolved, model_dir) for model_dir in self._project.model_paths
-        )
-        if not in_models:
+        if not _is_model_file(path, self._project):
             return []
 
         try:
@@ -598,3 +560,11 @@ def _is_relative_to(child: Path, parent: Path) -> bool:
     except ValueError:
         return False
     return True
+
+
+def _is_model_file(path: Path, project: DbtProject) -> bool:
+    """Return True if path is a .sql file inside the project's model-paths."""
+    if path.suffix != ".sql":
+        return False
+    resolved = path.resolve()
+    return any(_is_relative_to(resolved, model_dir) for model_dir in project.model_paths)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -51,9 +52,13 @@ class TestEncodingEdgeCases:
         # Make unreadable (Unix only — skip on Windows if it doesn't work)
         try:
             sql.chmod(0o000)
+            # chmod does not block root, and a readable "SELECT 1;" yields
+            # ordinary findings (W002 and friends) -- so a non-empty result is
+            # not evidence the read was denied. Gate on the actual access check.
+            if os.access(sql, os.R_OK):
+                pytest.skip("chmod did not block reads (running as root?)")
             findings = check_file(sql, get_rules())
-            if findings:  # only assert if chmod actually blocked access
-                assert any(f.rule_id == "SYS" for f in findings)
+            assert any(f.rule_id == "SYS" for f in findings)
         except (OSError, PermissionError):
             pass  # Windows doesn't support chmod the same way
         finally:

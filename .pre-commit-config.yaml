@@ -4,20 +4,17 @@
 # against the staged files and either auto-fix (ruff --fix, trailing
 # whitespace) or block the commit with a readable error.
 #
-# Hosted runs: pre-commit.ci runs these hooks on every PR and opens an
-# auto-update PR weekly to bump the rev pins below.
+# Hosted runs: pre-commit.ci is no longer used on this repo, and rev pins
+# below are bumped by hand. If the pre-commit.ci GitHub App still has
+# access, the ci: settings keep it quiet: no autofix commits pushed to
+# PRs, and update PRs at most quarterly.
 
 ci:
-  autofix_commit_msg: |
-    style: pre-commit auto-fixes
-
-    [pre-commit.ci] auto-applied fixes from configured hooks
-  autoupdate_commit_msg: |
-    chore(deps): pre-commit autoupdate
-  autoupdate_schedule: weekly
+  autofix_prs: false
+  autoupdate_schedule: quarterly
 
 repos:
-  # ── Standard hygiene ──────────────────────────────
+  # ── Standard hygiene ──────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -36,7 +33,7 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  # ── sql-sop dogfooding itself ─────────────────────────────
+  # ── sql-sop dogfooding itself ─────────────────────────────────────
   # Runs sql-sop on staged .sql files so a regression in a rule is
   # caught before it ships. Test fixtures under ``tests/fixtures/`` are
   # excluded because those files deliberately contain bad SQL
@@ -44,7 +41,7 @@ repos:
   # running the linter against them is guaranteed to fail and was
   # turning pre-commit.ci red on every PR.
   - repo: https://github.com/Pawansingh3889/sql-sop
-    rev: v0.9.1
+    rev: v0.10.0
     hooks:
       - id: sql-sop
         args: [--severity, error]

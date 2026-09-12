@@ -8,6 +8,72 @@ sql-sop uses [Semantic Versioning](https://semver.org/).
 Rule removals and rule ID renames are **breaking changes** that require
 a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
+## [Unreleased]
+
+### Packaging
+
+* Add a `[project.urls]` block so the PyPI project page shows a Project links
+  sidebar (Homepage, Source, Issues, Changelog, Documentation). It had none.
+* Add the `Topic :: Database` and `Operating System :: OS Independent`
+  classifiers, and keywords for static-analysis, SARIF, dbt and SQL Server.
+
+### Documentation
+
+* Correct the Key Numbers block: version 0.10.0 (was 0.9.0) and 419 tests
+  (was 303).
+* Document `E009 update-from-without-join` and `W021 having-without-group-by`,
+  both registered but missing from the Errors and Warnings tables.
+* Add a rule table for the dbt pack (`DBT001`-`DBT007`), covering `--dbt`
+  activation and `model-paths` scoping.
+* Correct the Python section's "four" rules to five, matching the table
+  beneath it.
+* Bump the pre-commit `rev` in the README and `.pre-commit-config.yaml` to
+  `v0.10.0`.
+
+### Bug Fixes
+
+* Correct the severity split in the `sql_guard/rules/dbt.py` module
+  docstring: `DBT007` is a warning, and `DBT003` is an error only when
+  `incremental_strategy` merges on a key.
+* Stop `test_permission_error` asserting on a successful read. It used a
+  non-empty findings list as its proxy for "chmod blocked the read", so it
+  failed whenever the suite ran as a user chmod does not restrict.
+* Send CLI warnings and errors (for example the `--dbt` "no
+  dbt_project.yml found" note) to stderr so `check --format sarif`
+  leaves stdout carrying only parseable SARIF JSON.
+
+### Changed
+- Update remaining `sql-guard` repository and playground URLs to `sql-sop` after the rename ([#94](https://github.com/Pawansingh3889/sql-sop/issues/94)).
+
+## [0.10.0](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.1...v0.10.0) (2026-09-11)
+
+
+### Features
+
+* **rules:** add DBT002 direct-table-ref ([#75](https://github.com/Pawansingh3889/sql-sop/issues/75)) ([043307e](https://github.com/Pawansingh3889/sql-sop/commit/043307ec2b7d4c9585b2c73bf1c54b8c45ef328e))
+* **rules:** add DBT003 incremental-without-unique-key ([#76](https://github.com/Pawansingh3889/sql-sop/issues/76)) ([24bfdd0](https://github.com/Pawansingh3889/sql-sop/commit/24bfdd042a212c8f0759bcf9e602251b9b565ee4))
+* **rules:** add DBT004 hook-with-ddl ([#77](https://github.com/Pawansingh3889/sql-sop/issues/77)) ([0384a71](https://github.com/Pawansingh3889/sql-sop/commit/0384a7117405b8de31798215ad3bc418fbf1be3c))
+* **rules:** add DBT005 select-star-in-mart ([#80](https://github.com/Pawansingh3889/sql-sop/issues/80)) ([d597577](https://github.com/Pawansingh3889/sql-sop/commit/d5975777a4ddb553f495e2de2ff91708eb62f958))
+* **rules:** add DBT006 model-without-description ([#78](https://github.com/Pawansingh3889/sql-sop/issues/78)) ([848b00e](https://github.com/Pawansingh3889/sql-sop/commit/848b00ef57c856d80c1343edab0e6fbd56e80ccf))
+* **rules:** add DBT007 unquoted-var-interpolation ([#79](https://github.com/Pawansingh3889/sql-sop/issues/79)) ([f62e7b3](https://github.com/Pawansingh3889/sql-sop/commit/f62e7b39fbf36b308dd5135930b22bac6e750362))
+* **w025:** support quoted assertion identifiers ([#92](https://github.com/Pawansingh3889/sql-sop/issues/92)) ([7168dcf](https://github.com/Pawansingh3889/sql-sop/commit/7168dcf36642b9ef835a7bc74d6e2b21efa4c576))
+
+
+### Bug Fixes
+
+* include dbt rules in SARIF descriptors ([#85](https://github.com/Pawansingh3889/sql-sop/issues/85)) ([608ef21](https://github.com/Pawansingh3889/sql-sop/commit/608ef217db1cd619a894631bea48ebac7a614ab9))
+
+
+### Documentation
+
+* remove the moved-to-monorepo banner from the README ([#95](https://github.com/Pawansingh3889/sql-sop/issues/95)) ([d1bd436](https://github.com/Pawansingh3889/sql-sop/commit/d1bd436d8fe28becd543ec300699d0e2578d7ca0))
+
+
+### Code Refactoring
+
+* **dbt:** share config() regex and model-paths check across rules ([#89](https://github.com/Pawansingh3889/sql-sop/issues/89)) ([#96](https://github.com/Pawansingh3889/sql-sop/issues/96)) ([64aaafe](https://github.com/Pawansingh3889/sql-sop/commit/64aaafe049b897cfa94db89da295b9d239e603c5))
+* modernize type hints and ruff config ([#81](https://github.com/Pawansingh3889/sql-sop/issues/81)) ([1f57c2b](https://github.com/Pawansingh3889/sql-sop/commit/1f57c2bef2f58dc34b53639b72d8a67ddf14aba9))
+
 ## [0.9.1](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.0...v0.9.1) (2026-07-19)
 
 
@@ -15,24 +81,20 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 * **ci:** use underscore input names for first-interaction@v3 ([#64](https://github.com/Pawansingh3889/sql-sop/issues/64)) ([fb69e41](https://github.com/Pawansingh3889/sql-sop/commit/fb69e410f2e4e31603a81465daa00de18e9887e9))
 
-## [0.9.0](https://github.com/Pawansingh3889/sql-sop/compare/v0.8.0...v0.9.0) (2026-05-31)
+## [0.9.0](https://github.com/Pawansingh3889/sql-guard/compare/v0.8.0...v0.9.0) (2026-05-31)
 
 
 ### Features
 
-* dbt-aware rule pack scaffolding + DBT001 model-without-test ([#57](https://github.com/Pawansingh3889/sql-sop/issues/57)) ([7ee1371](https://github.com/Pawansingh3889/sql-sop/commit/7ee1371ba7f18c2c49c12c7cc5d65c85d9769815))
-* **rules:** add W025 assertion-malformed ([#53](https://github.com/Pawansingh3889/sql-sop/issues/53)) ([98caa6d](https://github.com/Pawansingh3889/sql-sop/commit/98caa6dd61edc72a69929796c41efb678fc50509))
+* dbt-aware rule pack scaffolding + DBT001 model-without-test ([#57](https://github.com/Pawansingh3889/sql-guard/issues/57)) ([7ee1371](https://github.com/Pawansingh3889/sql-guard/commit/7ee1371ba7f18c2c49c12c7cc5d65c85d9769815))
+* **rules:** add W025 assertion-malformed ([#53](https://github.com/Pawansingh3889/sql-guard/issues/53)) ([98caa6d](https://github.com/Pawansingh3889/sql-guard/commit/98caa6dd61edc72a69929796c41efb678fc50509))
 
 
 ### Documentation
 
-* **readme:** add Companion tools section linking OpsMind and the compliance dashboard ([#58](https://github.com/Pawansingh3889/sql-sop/issues/58)) ([d8f6c0f](https://github.com/Pawansingh3889/sql-sop/commit/d8f6c0f3b66bd8bfa149377df8f92fa35bd54ab2))
+* **readme:** add Companion tools section linking OpsMind and the compliance dashboard ([#58](https://github.com/Pawansingh3889/sql-guard/issues/58)) ([d8f6c0f](https://github.com/Pawansingh3889/sql-guard/commit/d8f6c0f3b66bd8bfa149377df8f92fa35bd54ab2))
 
 ## [Unreleased]
-
-### Changed
-- Update remaining `sql-guard` repository and playground URLs to `sql-sop` after the rename ([#94](https://github.com/Pawansingh3889/sql-sop/issues/94)).
-
 
 ### Added
 - **DBT002 `direct-table-ref`** - warns on a raw table name after `FROM`/`JOIN` in a dbt model (e.g. `FROM orders`, `JOIN raw_db.orders`) where `{{ ref(...) }}` or `{{ source(...) }}` should be used. Skips CTE names, subqueries, any `{{ ... }}` target, and system schemas such as `information_schema`. ([#75](https://github.com/Pawansingh3889/sql-sop/pull/75))
@@ -43,6 +105,8 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 - **DBT007 `unquoted-var-interpolation`** - warns when `{{ var(...) }}` is interpolated into SQL without single quotes on both sides. `var()` values are set by the project author at compile time, so this is about syntax errors and wrong literals, not injection. `var()` used inside `{% ... %}` or nested in another expression is not flagged. ([#79](https://github.com/Pawansingh3889/sql-sop/pull/79))
 
 ### Changed
+- **cli:** `sql-sop version` now identifies the command as `sql-sop` instead of `sql-guard`. ([#102](https://github.com/Pawansingh3889/sql-sop/issues/102))
+- **dbt:** share the `_config_call` regex between DBT003 and DBT004 at module level, and share the model-paths check across dbt rules. ([#89](https://github.com/Pawansingh3889/sql-sop/issues/89))
 - **refactor:** drop quoted forward-reference annotations, switch `Optional[X]` to `X | None`, sort imports, and annotate `MixedCaseKeywords._keywords` as `ClassVar`. Ruff config now treats `typer.Option`/`typer.Argument` defaults as immutable and ignores `UP031`/`UP032` in `tests/fixtures/`, so `ruff --fix` cannot rewrite the deliberately unsafe fixtures. ([#81](https://github.com/Pawansingh3889/sql-sop/pull/81))
 - **W025 `assertion-malformed`** - accepts quoted identifiers (`"col"`, `[col]`, `` `col` ``) in `unique()`, `not_null()` and comparison predicates, including doubled closing delimiters. Qualification is still limited to one dot outside quotes. Thanks @biggdawg320. ([#92](https://github.com/Pawansingh3889/sql-sop/pull/92))
 
@@ -97,7 +161,7 @@ Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful cove
   in the outer query. Known limitation: nested grouped subqueries
   with their own `HAVING` (depth >0) can produce a false positive.
   Contributed by [@mvanhorn](https://github.com/mvanhorn)
-  ([#39](https://github.com/Pawansingh3889/sql-sop/pull/39)).
+  ([#39](https://github.com/Pawansingh3889/sql-guard/pull/39)).
   Resolves #3.
 - **E009 `update-from-without-join`** (error) - flags
   `UPDATE ... FROM a, b WHERE ...` and similar comma-separated FROM
@@ -153,7 +217,7 @@ Four new rules added since v0.7.0 (W021, E009, T006, W024) and a meaningful cove
 
 ### Documentation
 
-- README and `action.yml` refresh for v0.7.0 (contracts pack, new contributors, missing rules) ([#38](https://github.com/Pawansingh3889/sql-sop/pull/38)).
+- README and `action.yml` refresh for v0.7.0 (contracts pack, new contributors, missing rules) ([#38](https://github.com/Pawansingh3889/sql-guard/pull/38)).
 
 ## [0.7.0] - 2026-05-02
 
@@ -167,7 +231,7 @@ Headline release: schema-aware linting via the new **Contracts pack**, three com
   `ELSE` still fires even when an inner `CASE` does have one. Fires per
   unmatched block. Suggests adding `ELSE NULL` for explicitness.
   Contributed by [@hellozzm](https://github.com/hellozzm)
-  ([#32](https://github.com/Pawansingh3889/sql-sop/pull/32)).
+  ([#32](https://github.com/Pawansingh3889/sql-guard/pull/32)).
 - **W015 `join-function-on-column`** - warns when a function wraps a
   column inside a `JOIN ... ON` predicate, the JOIN-side companion to W003.
   `JOIN customers c ON UPPER(o.email) = UPPER(c.email)` defeats every
@@ -175,7 +239,7 @@ Headline release: schema-aware linting via the new **Contracts pack**, three com
   (`WHERE`, `GROUP BY`, `ORDER BY`, `HAVING`, the next `JOIN`, or `UNION`)
   so a clean JOIN with a dirty WHERE leaves W015 quiet and lets W003 own
   that case. Contributed by [@mvanhorn](https://github.com/mvanhorn)
-  ([#33](https://github.com/Pawansingh3889/sql-sop/pull/33)).
+  ([#33](https://github.com/Pawansingh3889/sql-guard/pull/33)).
 - **W022 `cross-join-explicit`** - warns on explicit `CROSS JOIN`. Cross
   joins multiply every row in the left table with every row in the right
   table (a Cartesian product). Almost always a mistake unless the author
@@ -184,7 +248,7 @@ Headline release: schema-aware linting via the new **Contracts pack**, three com
   in a trailing comment does not trip the rule. Suppress with
   `-- sql-guard: disable=W022` on the same line. Contributed by
   [@vibeyclaw](https://github.com/vibeyclaw)
-  ([#31](https://github.com/Pawansingh3889/sql-sop/pull/31)).
+  ([#31](https://github.com/Pawansingh3889/sql-guard/pull/31)).
 - **Contract Rules pack (C001-C005)** - new `--contract path.yml` flag
   loads a data contract describing the expected schema and lints SQL
   against it. Without a contract the rules are silent, so the addition
@@ -222,7 +286,7 @@ Headline release: schema-aware linting via the new **Contracts pack**, three com
 - W023 `scalar-udf-in-where`: warns on `<schema>.<name>(...)` calls in
   `WHERE`/`HAVING`/`ON` clauses, the canonical T-SQL scalar-UDF
   anti-pattern. Built-ins (no schema prefix) are unaffected.
-  ([#30](https://github.com/Pawansingh3889/sql-sop/issues/30))
+  ([#30](https://github.com/Pawansingh3889/sql-guard/issues/30))
 
 ## [0.6.2] - 2026-04-27
 
@@ -233,7 +297,7 @@ Headline release: schema-aware linting via the new **Contracts pack**, three com
   ordering and full-result-set scans. Dialect-aware messaging across
   Postgres and Redshift. Contributed by
   [@Prabhu-1409](https://github.com/Prabhu-1409)
-  ([#21](https://github.com/Pawansingh3889/sql-sop/pull/21)). Resolves #9.
+  ([#21](https://github.com/Pawansingh3889/sql-guard/pull/21)). Resolves #9.
 
 ### Repository
 
@@ -253,7 +317,7 @@ Headline release: schema-aware linting via the new **Contracts pack**, three com
   a full sort + distinct pass over the entire table, a frequent perf
   surprise on prod. Bypass list also recognises T-SQL `TOP` and
   `FETCH FIRST/NEXT`. Contributed by [@mvanhorn](https://github.com/mvanhorn)
-  ([#29](https://github.com/Pawansingh3889/sql-sop/pull/29)). Resolves #7.
+  ([#29](https://github.com/Pawansingh3889/sql-guard/pull/29)). Resolves #7.
 
 ## [0.6.0] - 2026-04-26
 
@@ -303,7 +367,7 @@ Headline release: schema-aware linting via the new **Contracts pack**, three com
   `sqlalchemy.text()` surface. P001 now skips `text()` call sites so P005
   handles them with a sqlalchemy-specific message and suggestion
   (mirrors the existing P004 `call_name != "text"` guard).
-  ([#10](https://github.com/Pawansingh3889/sql-sop/issues/10))
+  ([#10](https://github.com/Pawansingh3889/sql-guard/issues/10))
 - **W016 `not-in-with-subquery`** - warns on `WHERE col NOT IN (SELECT ...)`.
   When the subquery returns any `NULL`, the predicate evaluates to `UNKNOWN`
   for every outer row and the query silently returns zero results. Suggests
