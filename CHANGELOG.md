@@ -31,6 +31,9 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 * Stop `test_permission_error` asserting on a successful read. It used a
   non-empty findings list as its proxy for "chmod blocked the read", so it
   failed whenever the suite ran as a user chmod does not restrict.
+* Send CLI warnings and errors (for example the `--dbt` "no
+  dbt_project.yml found" note) to stderr so `check --format sarif`
+  leaves stdout carrying only parseable SARIF JSON.
 
 ## [0.10.0](https://github.com/Pawansingh3889/sql-sop/compare/v0.9.1...v0.10.0) (2026-09-11)
 
