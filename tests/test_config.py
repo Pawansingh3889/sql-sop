@@ -54,7 +54,9 @@ def test_load_handles_yaml_alias(tmp_path: Path):
     assert "W001" in cfg.disable
 
 
-def test_new_name_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture):
+def test_new_name_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
     monkeypatch.chdir(tmp_path)
     p = tmp_path / ".sql-sop.yml"
     _write(p, "disable:\n  - W001\n")
@@ -67,7 +69,9 @@ def test_new_name_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: 
     assert "W001" in cfg.disable
 
 
-def test_new_name_yaml_alias(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture):
+def test_new_name_yaml_alias(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
     monkeypatch.chdir(tmp_path)
     p = tmp_path / ".sql-sop.yaml"
     _write(p, "disable:\n  - W002\n")
