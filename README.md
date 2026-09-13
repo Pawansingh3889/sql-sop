@@ -205,14 +205,17 @@ and SSRS datasets. Fire on text patterns that do not appear in BigQuery
 or Postgres code, so they run unconditionally with near-zero false
 positives on non-T-SQL input.
 
-| ID | Name | What it catches |
-|---|---|---|
-| T001 | `with-nolock` | `SELECT * FROM t WITH (NOLOCK)` -- dirty reads |
-| T002 | `xp-cmdshell` | `EXEC xp_cmdshell ...` -- shell-exec surface |
-| T003 | `cursor-declaration` | `DECLARE c CURSOR FOR ...` -- row-by-row processing |
-| T004 | `deprecated-outer-join` | `WHERE a.x *= b.y` -- removed in SQL Server 2012+ |
-| T005 | `create-index-without-online` | `CREATE INDEX ix ON t (...)` -- locks table; add `WITH (ONLINE = ON)` |
-| T006 | `select-into-without-typed-fields` | `SELECT * INTO target FROM source` -- destination schema is inferred at runtime |
+T002 and T004 have default severity `error` (they block `--severity error`
+and the documented pre-commit hook). The other T-SQL rules are warnings.
+
+| ID | Name | Severity | What it catches |
+|---|---|---|---|
+| T001 | `with-nolock` | warning | `SELECT * FROM t WITH (NOLOCK)` -- dirty reads |
+| T002 | `xp-cmdshell` | error | `EXEC xp_cmdshell ...` -- shell-exec surface |
+| T003 | `cursor-declaration` | warning | `DECLARE c CURSOR FOR ...` -- row-by-row processing |
+| T004 | `deprecated-outer-join` | error | `WHERE a.x *= b.y` -- removed in SQL Server 2012+ |
+| T005 | `create-index-without-online` | warning | `CREATE INDEX ix ON t (...)` -- locks table; add `WITH (ONLINE = ON)` |
+| T006 | `select-into-without-typed-fields` | warning | `SELECT * INTO target FROM source` -- destination schema is inferred at runtime |
 
 ### Contracts (opt-in via `--contract`)
 
