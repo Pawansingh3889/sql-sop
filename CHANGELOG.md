@@ -10,7 +10,16 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **inline directives:** accept `sql-sop:` as the prefix for inline
+  disable comments (`-- sql-sop: disable=...`, `disable-next-line=...`,
+  bare `disable`, and `#` comments in Python files), alongside the
+  deprecated `sql-guard:` prefix. A run that used a `sql-guard:`
+  directive prints a single deprecation notice on stderr naming 0.12.0
+  as the removal version, so stdout stays parseable for
+  `check --format sarif`
+  ([#100](https://github.com/Pawansingh3889/sql-sop/issues/100)).
 
 ## [0.11.0] - 2026-09-12
 
