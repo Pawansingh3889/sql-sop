@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from sql_guard import python_scanner
+from sql_guard import inline_disable, python_scanner
 from sql_guard.contracts import Contract
 from sql_guard.dbt import DbtProject
 from sql_guard.inline_disable import DisableMap
@@ -26,6 +27,9 @@ class CheckResult:
     files_with_issues: int = 0
     duration_seconds: float = 0.0
     active_rules: list[Rule] = field(default_factory=list)
+    # True when any scanned file used a deprecated ``sql-guard:`` inline
+    # directive, so the CLI can print the deprecation notice once per run.
+    used_legacy_directive: bool = False
 
     @property
     def error_count(self) -> int:
@@ -284,6 +288,7 @@ def check(
     include_python: bool = False,
     contract: Contract | None = None,
     dbt_project: DbtProject | None = None,
+    dbt_mart_segments: Iterable[str] | None = None,
 ) -> CheckResult:
     """Run all rules against discovered SQL (and optionally Python) files.
 
@@ -298,12 +303,20 @@ def check(
             (C001-...) are activated and given this contract instance.
         dbt_project: Optional discovered dbt project. When provided,
             dbt-aware rules (DBT001-...) are activated and given this project.
+        dbt_mart_segments: Optional path segment(s) DBT005 treats as a
+            mart layer. ``None`` keeps the ``marts`` default.
 
     Returns:
         CheckResult with all findings.
     """
     t0 = time.perf_counter()
-    rules = get_rules(disabled_ids=disabled_rules, contract=contract, dbt_project=dbt_project)
+    inline_disable.reset_legacy_directive_seen()
+    rules = get_rules(
+        disabled_ids=disabled_rules,
+        contract=contract,
+        dbt_project=dbt_project,
+        dbt_mart_segments=dbt_mart_segments,
+    )
     discovered = discover_files(paths, ignore=ignore, include_python=include_python)
 
     result = CheckResult()
@@ -329,5 +342,6 @@ def check(
             if fail_fast and any(f.severity == "error" for f in file_findings):
                 break
 
+    result.used_legacy_directive = inline_disable.legacy_directive_seen()
     result.duration_seconds = round(time.perf_counter() - t0, 3)
     return result

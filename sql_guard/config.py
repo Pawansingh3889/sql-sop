@@ -12,6 +12,9 @@ Schema:
       - vendor/
     include_python: true
     severity: warning
+    dbt_mart_paths:
+      - marts
+      - gold
 
 CLI flags always win over the config file. The loader looks for a
 ``.sql-sop.yml`` (or legacy ``.sql-guard.yml``) walking up from the given
@@ -49,6 +52,9 @@ class Config:
     severity: str = "warning"
     contract: Path | None = None
     source: Path | None = None
+    # Path segments DBT005 treats as a mart layer. Empty means the
+    # rule's own default ("marts").
+    dbt_mart_paths: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict, source: Path | None = None) -> Config:
@@ -62,6 +68,11 @@ class Config:
             if not raw_path.is_absolute() and source is not None:
                 raw_path = source.parent / raw_path
             contract_path = raw_path
+        mart_paths_value = data.get("dbt_mart_paths") or []
+        if isinstance(mart_paths_value, str):
+            # A single scalar is a plausible authoring slip; treat it as
+            # a one-element list rather than iterating its characters.
+            mart_paths_value = [mart_paths_value]
         return cls(
             disable={s.upper() for s in (data.get("disable") or [])},
             ignore=list(data.get("ignore") or []),
@@ -69,6 +80,7 @@ class Config:
             severity=str(data.get("severity") or "warning"),
             contract=contract_path,
             source=source,
+            dbt_mart_paths=[str(s) for s in mart_paths_value],
         )
 
 

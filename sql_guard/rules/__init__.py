@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from sql_guard.rules.base import Rule
 from sql_guard.rules.contracts import (
     CONTRACT_RULE_CLASSES,
@@ -12,6 +14,7 @@ from sql_guard.rules.contracts import (
     UnmappedForeignKey,
     build_contract_rules,
 )
+from sql_guard.rules.dbt import DBT_RULE_CLASSES, DbtRule, SelectStarInMart
 from sql_guard.rules.errors import (
     AlterAddNotNullNoDefault,
     DeleteWithoutWhere,
@@ -67,7 +70,9 @@ from sql_guard.rules.warnings import (
 __all__ = [
     "ALL_RULES",
     "CONTRACT_RULE_CLASSES",
+    "DBT_RULE_CLASSES",
     "ColumnNotInContract",
+    "DbtRule",
     "NotNullViolation",
     "PrimaryKeyMissingOnInsert",
     "Rule",
@@ -128,31 +133,23 @@ ALL_RULES: list[Rule] = [
 ]
 
 
-def build_dbt_rules(project: DbtProject) -> list[Rule]:
+def build_dbt_rules(
+    project: DbtProject, mart_segments: Iterable[str] | None = None
+) -> list[DbtRule]:
     """Construct the dbt-aware rule pack with a discovered project.
 
     Each rule needs the project to look up schema.yml entries, model
     paths, etc. The pack is opt-in via the ``--dbt`` CLI flag, so this
     helper is only invoked when a project was actually discovered.
-    """
-    from sql_guard.rules.dbt import (
-        DirectTableRef,
-        HookWithDdl,
-        IncrementalWithoutUniqueKey,
-        ModelWithoutDescription,
-        ModelWithoutTest,
-        SelectStarInMart,
-        UnquotedVarInterpolation,
-    )
 
+    ``mart_segments`` overrides the path segment(s) DBT005 treats as a
+    mart layer; ``None`` keeps the ``marts`` default.
+    """
     return [
-        ModelWithoutTest(project),
-        DirectTableRef(project),
-        IncrementalWithoutUniqueKey(project),
-        HookWithDdl(project),
-        SelectStarInMart(project),
-        ModelWithoutDescription(project),
-        UnquotedVarInterpolation(project),
+        SelectStarInMart(project, mart_segments=mart_segments)
+        if rule_class is SelectStarInMart
+        else rule_class(project)
+        for rule_class in DBT_RULE_CLASSES
     ]
 
 
@@ -161,6 +158,7 @@ def get_rules(
     disabled_ids: set[str] | None = None,
     contract: Contract | None = None,
     dbt_project: DbtProject | None = None,
+    dbt_mart_segments: Iterable[str] | None = None,
 ) -> list[Rule]:
     """Return filtered list of rules based on config.
 
@@ -170,12 +168,14 @@ def get_rules(
 
     If ``dbt_project`` is provided, dbt-aware rules (DBT001-...) are
     instantiated with that project and appended. Same opt-in shape.
+    ``dbt_mart_segments`` is forwarded to DBT005; ``None`` keeps the
+    ``marts`` default.
     """
     rules = list(ALL_RULES)
     if contract is not None:
         rules = rules + list(build_contract_rules(contract))
     if dbt_project is not None:
-        rules = rules + list(build_dbt_rules(dbt_project))
+        rules = rules + list(build_dbt_rules(dbt_project, mart_segments=dbt_mart_segments))
     if enabled_ids:
         rules = [r for r in rules if r.id in enabled_ids]
     if disabled_ids:

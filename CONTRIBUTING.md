@@ -23,8 +23,8 @@ without a deprecation window.
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/sql-guard.git
-cd sql-guard
+git clone https://github.com/YOUR_USERNAME/sql-sop.git
+cd sql-sop
 pip install -e ".[python]"
 pytest -q            # 78 tests across SQL + Python scanning
 ruff check .

@@ -47,7 +47,7 @@ What a report should cover:
 
 Report privately via the GitHub security advisory form:
 
-<https://github.com/Pawansingh3889/sql-guard/security/advisories/new>
+<https://github.com/Pawansingh3889/sql-sop/security/advisories/new>
 
 Include:
 

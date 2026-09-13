@@ -33,7 +33,17 @@ def changed_files(base: str | None = None) -> set[Path] | None:
     ``base`` is any git ref. When None, returns files changed in the
     working tree (staged + unstaged + untracked). Returns ``None`` when
     git is unavailable or the cwd is not a git repo.
+
+    Raises ``ValueError`` when ``base`` begins with ``-``. git would read
+    such a value as an option rather than a revision, which lets a caller
+    that builds this value from untrusted input reach git flags that were
+    never intended (writing a file with ``--output=``, for example).
     """
+    if base is not None and base.startswith("-"):
+        raise ValueError(
+            f"--changed-base must be a git revision, not an option: {base!r}"
+        )
+
     if _run_git(["rev-parse", "--git-dir"]) is None:
         return None
 

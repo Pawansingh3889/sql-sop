@@ -114,3 +114,24 @@ def test_both_present_prefers_sql_sop_and_warns(
     assert "W001" in cfg.disable
     assert "W002" not in cfg.disable
 
+
+def test_loads_dbt_mart_paths(tmp_path: Path):
+    p = tmp_path / ".sql-guard.yml"
+    _write(p, "dbt_mart_paths:\n  - marts\n  - gold\n")
+    cfg = load(p)
+    assert cfg.dbt_mart_paths == ["marts", "gold"]
+
+
+def test_dbt_mart_paths_accepts_single_scalar(tmp_path: Path):
+    # A bare scalar is a plausible slip for a list-shaped key.
+    p = tmp_path / ".sql-guard.yml"
+    _write(p, "dbt_mart_paths: gold\n")
+    cfg = load(p)
+    assert cfg.dbt_mart_paths == ["gold"]
+
+
+def test_dbt_mart_paths_empty_when_unset(tmp_path: Path):
+    p = tmp_path / ".sql-guard.yml"
+    _write(p, "disable:\n  - W001\n")
+    cfg = load(p)
+    assert cfg.dbt_mart_paths == []

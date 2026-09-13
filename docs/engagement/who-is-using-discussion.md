@@ -3,7 +3,7 @@
 Paste the body below into a new GitHub Discussion under the **Show and
 tell** category, then pin it.
 
-URL: <https://github.com/Pawansingh3889/sql-guard/discussions/new?category=show-and-tell>
+URL: <https://github.com/Pawansingh3889/sql-sop/discussions/new?category=show-and-tell>
 
 ---
 
@@ -22,7 +22,7 @@ hook, a one-liner reply below genuinely helps:
 - **Which rule catches the most?** E001 `delete-without-where`, W001
   `select-star`, P004 `bare-variable-in-execute`, something else?
 - **Which rule would you love to have next?** link a
-  [rule-request issue](https://github.com/Pawansingh3889/sql-guard/issues/new?template=rule-request.yml)
+  [rule-request issue](https://github.com/Pawansingh3889/sql-sop/issues/new?template=rule-request.yml)
   or just describe.
 
 Anonymous or behind a pseudonym is fine. Named replies get featured in

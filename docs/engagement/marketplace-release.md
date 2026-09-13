@@ -58,14 +58,14 @@ pip install --upgrade sql-sop
 Or, for the GitHub Action:
 
 ```yaml
-- uses: Pawansingh3889/sql-guard@v0.4.1
+- uses: Pawansingh3889/sql-sop@v0.4.1
   with:
     paths: '.'
     severity: warning
     include-python: 'true'  # new
 ```
 
-Full changelog: https://github.com/Pawansingh3889/sql-guard/blob/main/CHANGELOG.md
+Full changelog: https://github.com/Pawansingh3889/sql-sop/blob/main/CHANGELOG.md
 ```
 
 ## Publishing steps
@@ -81,7 +81,7 @@ Full changelog: https://github.com/Pawansingh3889/sql-guard/blob/main/CHANGELOG.
 3. **Tag and push**:
 
    ```bash
-   cd sql-guard
+   cd sql-sop
    git tag -a v0.4.1 -m "v0.4.1 - Marketplace launch + engagement pack"
    git push origin v0.4.1
    ```

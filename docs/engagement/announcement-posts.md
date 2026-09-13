@@ -34,7 +34,7 @@ The project has open rule-request issues tagged "good-first-issue" if
 you want to ship your first OSS PR. Comparison with sqlfluff and a
 hosted playground coming next.
 
-Repo: https://github.com/Pawansingh3889/sql-guard
+Repo: https://github.com/Pawansingh3889/sql-sop
 Install: pip install sql-sop
 ```
 
@@ -56,7 +56,7 @@ f-string SQL-injection patterns. Pre-commit hook + GitHub Action, 0.08s
 across 200 files.
 
 pip install sql-sop
-github.com/Pawansingh3889/sql-guard
+github.com/Pawansingh3889/sql-sop
 ```
 
 **Thread version (use if the scan results are strong):**
@@ -77,7 +77,7 @@ config. Complements sqlfluff, doesn't compete.
 ~20 LOC, well-scoped, existing templates to mimic. Great first OSS PR
 if you've been looking for one.
 
-github.com/Pawansingh3889/sql-guard
+github.com/Pawansingh3889/sql-sop
 ```
 
 ---
@@ -102,7 +102,7 @@ Two things I'd genuinely like feedback on:
 DELETE-without-WHERE, <Y> implicit cross joins, <Z> f-string injection
 patterns. Am I missing obvious categories that sqlfluff covers but I
 don't? Honest comparison is here:
-https://github.com/Pawansingh3889/sql-guard/blob/main/docs/blog/sqlfluff-vs-sql-sop.md
+https://github.com/Pawansingh3889/sql-sop/blob/main/docs/blog/sqlfluff-vs-sql-sop.md
 
 2) I just opened 10 "good-first-issue" rule requests. If you've been
 wanting to ship a first OSS PR, each one is ~20 LOC with a template to
@@ -112,7 +112,7 @@ Not trying to replace sqlfluff. sql-sop is the fast pre-commit pass
 that catches 80% of real hazards with zero config. They complement each
 other.
 
-Repo: https://github.com/Pawansingh3889/sql-guard
+Repo: https://github.com/Pawansingh3889/sql-sop
 Install: pip install sql-sop
 
 Happy to answer anything.
@@ -143,11 +143,11 @@ Scanned SQL inside the top <N> PyPI packages for calibration. Flagged:
 corpus (sqlfluff is ~800 rules and does a lot more - different tool for
 different jobs).
 
-Repo: https://github.com/Pawansingh3889/sql-guard
+Repo: https://github.com/Pawansingh3889/sql-sop
 PyPI: pip install sql-sop
 
 Honest comparison with sqlfluff:
-https://github.com/Pawansingh3889/sql-guard/blob/main/docs/blog/sqlfluff-vs-sql-sop.md
+https://github.com/Pawansingh3889/sql-sop/blob/main/docs/blog/sqlfluff-vs-sql-sop.md
 
 Feedback welcome.
 ```
