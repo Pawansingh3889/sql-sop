@@ -11,13 +11,13 @@ from rich.table import Table
 
 from sql_guard import __version__
 from sql_guard import config as config_mod
-from sql_guard.checker import check, discover_files
+from sql_guard.checker import CheckResult, check, discover_files
 from sql_guard.contracts import Contract
 from sql_guard.dbt import DbtProject, find_dbt_project, load_dbt_project
 from sql_guard.git_filter import filter_to_changed
 from sql_guard.reporters import sarif as sarif_reporter
 from sql_guard.reporters.terminal import print_result
-from sql_guard.rules import ALL_RULES
+from sql_guard.rules import ALL_RULES, DBT_RULE_CLASSES
 from sql_guard.rules.python_rules import PYTHON_RULES
 
 app = typer.Typer(
@@ -26,6 +26,9 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 console = Console()
+# Diagnostics (warnings, errors, status notes) go to stderr so stdout
+# carries only the requested output, e.g. `check --format sarif` JSON.
+err_console = Console(stderr=True)
 
 
 @app.command("check")
@@ -47,7 +50,7 @@ def check_cmd(
         None,
         "--config",
         "-c",
-        help="Path to .sql-guard.yml (default: walk up from cwd).",
+        help="Path to .sql-sop.yml (default: walk up from cwd).",
     ),
     changed_only: bool = typer.Option(
         False,
@@ -88,6 +91,15 @@ def check_cmd(
             "if no project is found."
         ),
     ),
+    dbt_mart_path: list[str] | None = typer.Option(
+        None,
+        "--dbt-mart-path",
+        help=(
+            "Path segment DBT005 treats as a mart layer (repeatable, "
+            "case-insensitive). Overrides dbt_mart_paths in .sql-guard.yml. "
+            "Default: marts."
+        ),
+    ),
 ) -> None:
     """Check SQL files for common issues."""
     if not paths:
@@ -110,10 +122,10 @@ def check_cmd(
         try:
             contract = Contract.from_file(effective_contract_path)
         except FileNotFoundError:
-            console.print(f"[red]Contract file not found:[/red] {effective_contract_path}")
+            err_console.print(f"[red]Contract file not found:[/red] {effective_contract_path}")
             raise typer.Exit(code=2)
         except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
-            console.print(f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}")
+            err_console.print(f"[red]Failed to load contract {effective_contract_path}:[/red] {exc}")
             raise typer.Exit(code=2)
 
     dbt_project: DbtProject | None = None
@@ -121,7 +133,7 @@ def check_cmd(
         start = Path(paths[0]) if paths else Path(".")
         project_yml = find_dbt_project(start)
         if project_yml is None:
-            console.print(
+            err_console.print(
                 "[yellow]--dbt: no dbt_project.yml found walking up from "
                 f"{start}; dbt-aware rules are silent.[/yellow]"
             )
@@ -129,32 +141,34 @@ def check_cmd(
             try:
                 dbt_project = load_dbt_project(project_yml)
             except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
-                console.print(f"[red]Failed to load dbt project {project_yml}:[/red] {exc}")
+                err_console.print(f"[red]Failed to load dbt project {project_yml}:[/red] {exc}")
                 raise typer.Exit(code=2)
 
     if changed_only:
         discovered = discover_files(
             paths, ignore=effective_ignore, include_python=effective_include_python
         )
-        kept, used_git = filter_to_changed(discovered, base=changed_base)
+        try:
+            kept, used_git = filter_to_changed(discovered, base=changed_base)
+        except ValueError as exc:
+            err_console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(code=2) from exc
         if not used_git:
-            console.print(
+            err_console.print(
                 "[yellow]--changed-only: not in a git repo (or git unavailable); "
                 "scanning all discovered files.[/yellow]"
             )
         else:
             paths = [str(p) for p in kept]
             if not paths:
-                # Human note on stderr via console; SARIF consumers still need a
-                # valid document with empty results (CI uploads empty = fail).
-                console.print("[green]OK[/green] no changed files to lint.")
+                err_console.print("[green]OK[/green] no changed files to lint.")
+                # SARIF consumers still need a valid document with empty
+                # results: an empty stdout fails upload-sarif in CI.
                 if output_format == "sarif":
-                    from sql_guard.checker import CheckResult
-
                     rendered = sarif_reporter.render(CheckResult())
                     if output_path:
                         output_path.write_text(rendered, encoding="utf-8")
-                        console.print(f"Wrote SARIF to {output_path}")
+                        err_console.print(f"Wrote SARIF to {output_path}")
                     else:
                         sys.stdout.write(rendered)
                         sys.stdout.write("\n")
@@ -169,13 +183,23 @@ def check_cmd(
         include_python=effective_include_python,
         contract=contract,
         dbt_project=dbt_project,
+        # CLI flags win over the config file, per config.py's contract.
+        dbt_mart_segments=dbt_mart_path or cfg.dbt_mart_paths or None,
     )
+
+    # One notice per run, on stderr so stdout keeps carrying only the
+    # requested output (e.g. `--format sarif` JSON).
+    if result.used_legacy_directive:
+        err_console.print(
+            "[yellow]Notice: 'sql-guard:' inline directives are deprecated and will "
+            "stop working in 0.12.0. Please use 'sql-sop:' instead.[/yellow]"
+        )
 
     if output_format == "sarif":
         rendered = sarif_reporter.render(result)
         if output_path:
             output_path.write_text(rendered, encoding="utf-8")
-            console.print(f"Wrote SARIF to {output_path}")
+            err_console.print(f"Wrote SARIF to {output_path}")
         else:
             sys.stdout.write(rendered)
             sys.stdout.write("\n")
@@ -184,6 +208,11 @@ def check_cmd(
 
     if result.error_count > 0:
         raise typer.Exit(code=1)
+
+
+def _severity_cell(severity: str) -> str:
+    """Colour-coded severity cell for the ``list-rules`` table."""
+    return "[red]error[/red]" if severity == "error" else "[yellow]warning[/yellow]"
 
 
 @app.command("list-rules")
@@ -196,12 +225,25 @@ def list_rules() -> None:
     table.add_column("Description", style="dim")
 
     for rule in ALL_RULES:
-        sev = "[red]error[/red]" if rule.severity == "error" else "[yellow]warning[/yellow]"
-        table.add_row(rule.id, sev, rule.name, rule.description)
+        table.add_row(rule.id, _severity_cell(rule.severity), rule.name, rule.description)
 
     for rule in PYTHON_RULES:
-        sev = "[red]error[/red]" if rule.severity == "error" else "[yellow]warning[/yellow]"
-        table.add_row(rule.id, sev, rule.name, rule.description)
+        table.add_row(rule.id, _severity_cell(rule.severity), rule.name, rule.description)
+
+    # The dbt-aware pack ships in the package but only runs under
+    # `check --dbt`, so it gets its own section. The rules are built per
+    # discovered project by build_dbt_rules(); their id / name /
+    # severity / description are class attributes, so listing them
+    # needs no dbt project.
+    table.add_row("", "", "", "")
+    table.add_row("[bold]dbt[/bold]", "", "", "[dim]only run with --dbt[/dim]")
+    for rule_class in DBT_RULE_CLASSES:
+        table.add_row(
+            rule_class.id,
+            _severity_cell(rule_class.severity),
+            rule_class.name,
+            rule_class.description,
+        )
 
     console.print(table)
 
@@ -221,17 +263,17 @@ def validate_contract_cmd(
     crash.
     """
     if not contract_path.is_file():
-        console.print(f"[red]Contract file not found:[/red] {contract_path}")
+        err_console.print(f"[red]Contract file not found:[/red] {contract_path}")
         raise typer.Exit(code=2)
     try:
         contract = Contract.from_file(contract_path)
     except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2 (yaml errors vary by version)
-        console.print(f"[red]Invalid contract:[/red] {exc}")
+        err_console.print(f"[red]Invalid contract:[/red] {exc}")
         raise typer.Exit(code=2)
 
     table_count = len(contract.tables)
     if table_count == 0:
-        console.print(
+        err_console.print(
             f"[yellow]Loaded {contract_path} but no tables were declared. "
             "The contract has no effect.[/yellow]"
         )
@@ -287,10 +329,10 @@ def schema_snapshot_cmd(
     try:
         data = snapshot_mod.introspect(dsn=dsn, schema=schema, include_tables=include_table)
     except snapshot_mod.SnapshotError as exc:
-        console.print(f"[red]{exc}[/red]")
+        err_console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=2)
     except Exception as exc:  # noqa: BLE001 -- CLI boundary: report and exit 2
-        console.print(f"[red]Snapshot failed:[/red] {exc}")
+        err_console.print(f"[red]Snapshot failed:[/red] {exc}")
         raise typer.Exit(code=2)
 
     snapshot_mod.write_snapshot(data, output_path)

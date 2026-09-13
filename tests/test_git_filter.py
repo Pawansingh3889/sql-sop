@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from sql_guard.git_filter import filter_to_changed
+from sql_guard.git_filter import changed_files, filter_to_changed
 
 
 def _git(*args: str, cwd: Path) -> None:
@@ -60,3 +60,37 @@ def test_picks_up_untracked(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     kept, used_git = filter_to_changed(discovered)
     assert used_git is True
     assert [p.name for p in kept] == ["new.sql"]
+
+
+# --changed-base must name a revision, never a git option -------------------
+
+
+@pytest.mark.parametrize(
+    "base",
+    ["--output=/tmp/sql-sop-should-not-exist", "-o/tmp/x", "--exit-code", "--help"],
+)
+def test_changed_base_rejects_option_like_values(base: str, tmp_path: Path, monkeypatch):
+    """git reads a leading `-` as an option, so those values never reach it."""
+    repo = _git_repo(tmp_path)
+    monkeypatch.chdir(repo)
+    with pytest.raises(ValueError, match="must be a git revision"):
+        changed_files(base=base)
+
+
+def test_option_like_base_does_not_reach_git(tmp_path: Path, monkeypatch):
+    """The rejected value must not have been acted on before validation."""
+    repo = _git_repo(tmp_path)
+    monkeypatch.chdir(repo)
+    target = tmp_path / "written-by-git"
+    with pytest.raises(ValueError):
+        changed_files(base=f"--output={target}")
+    assert not target.exists()
+
+
+def test_ordinary_ref_still_accepted(tmp_path: Path, monkeypatch):
+    repo = _git_repo(tmp_path)
+    (repo / "a.sql").write_text("SELECT 1;\n")
+    _git("add", "a.sql", cwd=repo)
+    _git("commit", "-q", "-m", "init", cwd=repo)
+    monkeypatch.chdir(repo)
+    assert changed_files(base="HEAD") is not None

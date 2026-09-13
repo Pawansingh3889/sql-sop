@@ -45,7 +45,7 @@ In the repo on github.com:
 4. Save.
 
 GitHub takes ~60 seconds, then the playground is live at
-`https://pawansingh3889.github.io/sql-guard/`.
+`https://pawansingh3889.github.io/sql-sop/`.
 
 If you prefer a custom domain (e.g. `play.sqlsop.dev`), add a `CNAME`
 file inside `playground/` with one line (your domain), then configure

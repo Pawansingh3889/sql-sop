@@ -15,7 +15,7 @@ from sql_guard.checker import CheckResult
 from sql_guard.rules import ALL_RULES
 from sql_guard.rules.python_rules import PYTHON_RULES
 
-INFO_URI = "https://github.com/Pawansingh3889/sql-guard"
+INFO_URI = "https://github.com/Pawansingh3889/sql-sop"
 SARIF_SCHEMA = (
     "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json"
 )

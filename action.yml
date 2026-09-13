@@ -28,18 +28,37 @@ runs:
       uses: actions/setup-python@v7
       with:
         python-version: '3.12'
+    # Inputs are passed through `env:` and read as quoted shell variables.
+    # Interpolating `${{ inputs.* }}` directly into a `run:` block would
+    # splice caller-supplied text into the script before bash sees it, so a
+    # workflow feeding untrusted data (a pull request title, say) into an
+    # input could run arbitrary commands on the runner.
     - name: Install sql-sop
       shell: bash
+      env:
+        INCLUDE_PYTHON: ${{ inputs.include-python }}
       run: |
-        if [ "${{ inputs.include-python }}" = "true" ]; then
+        if [ "$INCLUDE_PYTHON" = "true" ]; then
           pip install "sql-sop[python]"
         else
           pip install sql-sop
         fi
     - name: Run sql-sop
       shell: bash
+      env:
+        PATHS: ${{ inputs.paths }}
+        SEVERITY: ${{ inputs.severity }}
+        FAIL_FAST: ${{ inputs.fail-fast }}
+        INCLUDE_PYTHON: ${{ inputs.include-python }}
       run: |
-        sql-sop check ${{ inputs.paths }} \
-          --severity ${{ inputs.severity }} \
-          ${{ inputs.fail-fast == 'true' && '--fail-fast' || '' }} \
-          ${{ inputs.include-python == 'true' && '--include-python' || '' }}
+        # `paths` accepts several space-separated entries, so it is split on
+        # whitespace only, never re-parsed as shell syntax.
+        read -r -a path_args <<< "$PATHS"
+        args=(check "${path_args[@]}" --severity "$SEVERITY")
+        if [ "$FAIL_FAST" = "true" ]; then
+          args+=(--fail-fast)
+        fi
+        if [ "$INCLUDE_PYTHON" = "true" ]; then
+          args+=(--include-python)
+        fi
+        sql-sop "${args[@]}"
