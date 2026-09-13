@@ -12,6 +12,19 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Added
 
+- **inline directives:** accept `sql-sop:` as the prefix for inline
+  disable comments (`-- sql-sop: disable=...`, `disable-next-line=...`,
+  bare `disable`, and `#` comments in Python files), alongside the
+  deprecated `sql-guard:` prefix. A run that used a `sql-guard:`
+  directive prints a single deprecation notice on stderr naming 0.12.0
+  as the removal version, so stdout stays parseable for
+  `check --format sarif`
+  ([#100](https://github.com/Pawansingh3889/sql-sop/issues/100)).
+- `sql-sop list-rules` now lists the dbt-aware pack (DBT001-DBT007) in
+  its own section, noting the rules only run with `--dbt`. The rule
+  classes are collected in `DBT_RULE_CLASSES` so the listing and
+  `build_dbt_rules()` stay in sync
+  ([#87](https://github.com/Pawansingh3889/sql-sop/issues/87)).
 - **DBT005 `select-star-in-mart`**: the mart path segment is now
   configurable. Pass a repeatable `--dbt-mart-path` CLI flag or list
   `dbt_mart_paths` in `.sql-guard.yml` for projects that name the layer

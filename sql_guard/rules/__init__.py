@@ -14,6 +14,7 @@ from sql_guard.rules.contracts import (
     UnmappedForeignKey,
     build_contract_rules,
 )
+from sql_guard.rules.dbt import DBT_RULE_CLASSES, DbtRule, SelectStarInMart
 from sql_guard.rules.errors import (
     AlterAddNotNullNoDefault,
     DeleteWithoutWhere,
@@ -69,7 +70,9 @@ from sql_guard.rules.warnings import (
 __all__ = [
     "ALL_RULES",
     "CONTRACT_RULE_CLASSES",
+    "DBT_RULE_CLASSES",
     "ColumnNotInContract",
+    "DbtRule",
     "NotNullViolation",
     "PrimaryKeyMissingOnInsert",
     "Rule",
@@ -130,7 +133,7 @@ ALL_RULES: list[Rule] = [
 ]
 
 
-def build_dbt_rules(project: DbtProject, mart_segments: Iterable[str] | None = None) -> list[Rule]:
+def build_dbt_rules(project: DbtProject, mart_segments: Iterable[str] | None = None) -> list[DbtRule]:
     """Construct the dbt-aware rule pack with a discovered project.
 
     Each rule needs the project to look up schema.yml entries, model
@@ -140,24 +143,11 @@ def build_dbt_rules(project: DbtProject, mart_segments: Iterable[str] | None = N
     ``mart_segments`` overrides the path segment(s) DBT005 treats as a
     mart layer; ``None`` keeps the ``marts`` default.
     """
-    from sql_guard.rules.dbt import (
-        DirectTableRef,
-        HookWithDdl,
-        IncrementalWithoutUniqueKey,
-        ModelWithoutDescription,
-        ModelWithoutTest,
-        SelectStarInMart,
-        UnquotedVarInterpolation,
-    )
-
     return [
-        ModelWithoutTest(project),
-        DirectTableRef(project),
-        IncrementalWithoutUniqueKey(project),
-        HookWithDdl(project),
-        SelectStarInMart(project, mart_segments=mart_segments),
-        ModelWithoutDescription(project),
-        UnquotedVarInterpolation(project),
+        SelectStarInMart(project, mart_segments=mart_segments)
+        if rule_class is SelectStarInMart
+        else rule_class(project)
+        for rule_class in DBT_RULE_CLASSES
     ]
 
 

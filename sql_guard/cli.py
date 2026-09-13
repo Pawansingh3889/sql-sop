@@ -17,7 +17,7 @@ from sql_guard.dbt import DbtProject, find_dbt_project, load_dbt_project
 from sql_guard.git_filter import filter_to_changed
 from sql_guard.reporters import sarif as sarif_reporter
 from sql_guard.reporters.terminal import print_result
-from sql_guard.rules import ALL_RULES
+from sql_guard.rules import ALL_RULES, DBT_RULE_CLASSES
 from sql_guard.rules.python_rules import PYTHON_RULES
 
 app = typer.Typer(
@@ -177,6 +177,14 @@ def check_cmd(
         dbt_mart_segments=dbt_mart_path or cfg.dbt_mart_paths or None,
     )
 
+    # One notice per run, on stderr so stdout keeps carrying only the
+    # requested output (e.g. `--format sarif` JSON).
+    if result.used_legacy_directive:
+        err_console.print(
+            "[yellow]Notice: 'sql-guard:' inline directives are deprecated and will "
+            "stop working in 0.12.0. Please use 'sql-sop:' instead.[/yellow]"
+        )
+
     if output_format == "sarif":
         rendered = sarif_reporter.render(result)
         if output_path:
@@ -192,6 +200,11 @@ def check_cmd(
         raise typer.Exit(code=1)
 
 
+def _severity_cell(severity: str) -> str:
+    """Colour-coded severity cell for the ``list-rules`` table."""
+    return "[red]error[/red]" if severity == "error" else "[yellow]warning[/yellow]"
+
+
 @app.command("list-rules")
 def list_rules() -> None:
     """List all available lint rules."""
@@ -202,12 +215,25 @@ def list_rules() -> None:
     table.add_column("Description", style="dim")
 
     for rule in ALL_RULES:
-        sev = "[red]error[/red]" if rule.severity == "error" else "[yellow]warning[/yellow]"
-        table.add_row(rule.id, sev, rule.name, rule.description)
+        table.add_row(rule.id, _severity_cell(rule.severity), rule.name, rule.description)
 
     for rule in PYTHON_RULES:
-        sev = "[red]error[/red]" if rule.severity == "error" else "[yellow]warning[/yellow]"
-        table.add_row(rule.id, sev, rule.name, rule.description)
+        table.add_row(rule.id, _severity_cell(rule.severity), rule.name, rule.description)
+
+    # The dbt-aware pack ships in the package but only runs under
+    # `check --dbt`, so it gets its own section. The rules are built per
+    # discovered project by build_dbt_rules(); their id / name /
+    # severity / description are class attributes, so listing them
+    # needs no dbt project.
+    table.add_row("", "", "", "")
+    table.add_row("[bold]dbt[/bold]", "", "", "[dim]only run with --dbt[/dim]")
+    for rule_class in DBT_RULE_CLASSES:
+        table.add_row(
+            rule_class.id,
+            _severity_cell(rule_class.severity),
+            rule_class.name,
+            rule_class.description,
+        )
 
     console.print(table)
 

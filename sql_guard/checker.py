@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from sql_guard import python_scanner
+from sql_guard import inline_disable, python_scanner
 from sql_guard.contracts import Contract
 from sql_guard.dbt import DbtProject
 from sql_guard.inline_disable import DisableMap
@@ -27,6 +27,9 @@ class CheckResult:
     files_with_issues: int = 0
     duration_seconds: float = 0.0
     active_rules: list[Rule] = field(default_factory=list)
+    # True when any scanned file used a deprecated ``sql-guard:`` inline
+    # directive, so the CLI can print the deprecation notice once per run.
+    used_legacy_directive: bool = False
 
     @property
     def error_count(self) -> int:
@@ -307,6 +310,7 @@ def check(
         CheckResult with all findings.
     """
     t0 = time.perf_counter()
+    inline_disable.reset_legacy_directive_seen()
     rules = get_rules(
         disabled_ids=disabled_rules,
         contract=contract,
@@ -338,5 +342,6 @@ def check(
             if fail_fast and any(f.severity == "error" for f in file_findings):
                 break
 
+    result.used_legacy_directive = inline_disable.legacy_directive_seen()
     result.duration_seconds = round(time.perf_counter() - t0, 3)
     return result
