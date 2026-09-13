@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -284,6 +285,7 @@ def check(
     include_python: bool = False,
     contract: Contract | None = None,
     dbt_project: DbtProject | None = None,
+    dbt_mart_segments: Iterable[str] | None = None,
 ) -> CheckResult:
     """Run all rules against discovered SQL (and optionally Python) files.
 
@@ -298,12 +300,19 @@ def check(
             (C001-...) are activated and given this contract instance.
         dbt_project: Optional discovered dbt project. When provided,
             dbt-aware rules (DBT001-...) are activated and given this project.
+        dbt_mart_segments: Optional path segment(s) DBT005 treats as a
+            mart layer. ``None`` keeps the ``marts`` default.
 
     Returns:
         CheckResult with all findings.
     """
     t0 = time.perf_counter()
-    rules = get_rules(disabled_ids=disabled_rules, contract=contract, dbt_project=dbt_project)
+    rules = get_rules(
+        disabled_ids=disabled_rules,
+        contract=contract,
+        dbt_project=dbt_project,
+        dbt_mart_segments=dbt_mart_segments,
+    )
     discovered = discover_files(paths, ignore=ignore, include_python=include_python)
 
     result = CheckResult()

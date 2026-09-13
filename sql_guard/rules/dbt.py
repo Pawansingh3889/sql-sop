@@ -16,6 +16,7 @@ Severity split, per the ADR:
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from pathlib import Path
 
 from sql_guard.dbt import DbtProject
@@ -368,11 +369,12 @@ class SelectStarInMart(Rule):
     someone who isn't looking at this file when the source table
     changes shape.
 
-    "Mart" is a naming convention, not a dbt concept, so this checks a
-    path segment named ``marts`` (case-insensitive) inside the
-    project's configured ``model-paths``. v1 hardcodes that default;
-    a configurable glob is future work, not plumbed through the CLI
-    yet.
+    "Mart" is a naming convention, not a dbt concept, so this checks
+    path segments (case-insensitive) inside the project's configured
+    ``model-paths``. The default segment is ``marts``; pass
+    ``mart_segments`` (the ``--dbt-mart-path`` CLI flag or the
+    ``dbt_mart_paths`` config key) for projects that name the layer
+    ``gold``, ``core``, ``reporting``, etc.
 
     ``checker.check_file`` drops a W001 finding on the same
     ``file:line`` as a DBT005 finding so the two rules don't double-
@@ -389,15 +391,20 @@ class SelectStarInMart(Rule):
     _select_star = re.compile(r"\bSELECT\s+\*\s+FROM\b", re.IGNORECASE)
     _MART_SEGMENT = "marts"
 
-    def __init__(self, project: DbtProject) -> None:
+    def __init__(self, project: DbtProject, mart_segments: Iterable[str] | None = None) -> None:
         self._project = project
+        if not mart_segments:
+            mart_segments = (self._MART_SEGMENT,)
+        # Segments are matched case-insensitively, so normalise once here
+        # and keep ``part.lower() in self._mart_segments`` in the check.
+        self._mart_segments = frozenset(segment.lower() for segment in mart_segments)
 
     def _mart_dir_for(self, resolved: Path) -> bool:
         for model_dir in self._project.model_paths:
             if not _is_relative_to(resolved, model_dir):
                 continue
             parts = resolved.relative_to(model_dir).parts
-            if any(part.lower() == self._MART_SEGMENT for part in parts):
+            if any(part.lower() in self._mart_segments for part in parts):
                 return True
         return False
 

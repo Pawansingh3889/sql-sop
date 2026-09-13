@@ -406,14 +406,14 @@ def test_dbt004_skips_file_outside_model_paths(tmp_path):
 # DBT005 select-star-in-mart --------------------------------------------------
 
 
-def _dbt005_project(tmp_path, model_sql: str, subdir: str = "marts"):
+def _dbt005_project(tmp_path, model_sql: str, subdir: str = "marts", mart_segments=None):
     (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
     model_dir = tmp_path / "models" / subdir
     model_dir.mkdir(parents=True)
     model_path = model_dir / "fct_orders.sql"
     model_path.write_text(model_sql)
     project = load_dbt_project(tmp_path / "dbt_project.yml")
-    return SelectStarInMart(project), model_path
+    return SelectStarInMart(project, mart_segments=mart_segments), model_path
 
 
 def test_dbt005_fires_on_select_star_in_marts_dir(tmp_path):
@@ -438,6 +438,54 @@ def test_dbt005_fires_once_per_line(tmp_path):
 
 def test_dbt005_matches_marts_case_insensitively(tmp_path):
     rule, path = _dbt005_project(tmp_path, "SELECT * FROM a\n", subdir="Marts")
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+
+
+def test_dbt005_fires_on_custom_mart_segment(tmp_path):
+    """mart_segments=['gold'] makes a models/gold/ directory a mart."""
+    rule, path = _dbt005_project(
+        tmp_path, "SELECT * FROM a\n", subdir="gold", mart_segments=["gold"]
+    )
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+    assert findings[0].rule_id == "DBT005"
+
+
+def test_dbt005_custom_segment_replaces_default(tmp_path):
+    """With mart_segments=['gold'], the marts/ directory is no longer a mart."""
+    rule, path = _dbt005_project(
+        tmp_path, "SELECT * FROM a\n", subdir="marts", mart_segments=["gold"]
+    )
+    assert rule.check_file(str(path)) == []
+
+
+def test_dbt005_accepts_multiple_mart_segments(tmp_path):
+    """Projects can name more than one directory as a mart layer."""
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    for subdir in ("marts", "gold"):
+        model_dir = tmp_path / "models" / subdir
+        model_dir.mkdir(parents=True)
+        (model_dir / "fct_orders.sql").write_text("SELECT * FROM a\n")
+
+    project = load_dbt_project(tmp_path / "dbt_project.yml")
+    rule = SelectStarInMart(project, mart_segments=["marts", "gold"])
+    for subdir in ("marts", "gold"):
+        findings = rule.check_file(str(tmp_path / "models" / subdir / "fct_orders.sql"))
+        assert len(findings) == 1, subdir
+
+
+def test_dbt005_matches_custom_segment_case_insensitively(tmp_path):
+    rule, path = _dbt005_project(
+        tmp_path, "SELECT * FROM a\n", subdir="Gold", mart_segments=["GOLD"]
+    )
+    findings = rule.check_file(str(path))
+    assert len(findings) == 1
+
+
+def test_dbt005_empty_mart_segments_falls_back_to_default(tmp_path):
+    """An explicitly empty list means the default, not 'no mart dirs'."""
+    rule, path = _dbt005_project(tmp_path, "SELECT * FROM a\n", mart_segments=[])
     findings = rule.check_file(str(path))
     assert len(findings) == 1
 
@@ -622,6 +670,20 @@ def test_build_dbt_rules_returns_dbt_pack():
     assert {"DBT001", "DBT002", "DBT003", "DBT004", "DBT005", "DBT006", "DBT007"} <= ids
 
 
+def test_build_dbt_rules_forwards_mart_segments():
+    project = load_dbt_project(FIXTURE_PROJECT_YML)
+    rules = build_dbt_rules(project, mart_segments=["gold"])
+    rule = next(r for r in rules if r.id == "DBT005")
+    assert rule._mart_segments == {"gold"}
+
+
+def test_build_dbt_rules_mart_segments_default():
+    project = load_dbt_project(FIXTURE_PROJECT_YML)
+    rules = build_dbt_rules(project)
+    rule = next(r for r in rules if r.id == "DBT005")
+    assert rule._mart_segments == {"marts"}
+
+
 def test_get_rules_omits_dbt_pack_by_default():
     rules = get_rules()
     ids = {r.id for r in rules}
@@ -753,6 +815,121 @@ def test_cli_dbt_flag_activates_dbt005(tmp_path):
     result = runner.invoke(app, ["check", "--dbt", str(model)])
     assert "DBT005" in result.stdout
     assert "W001" not in result.stdout
+
+
+def test_cli_dbt_mart_path_flag(tmp_path):
+    """--dbt-mart-path gold makes models/gold/ a mart layer for DBT005."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    gold = tmp_path / "models" / "gold"
+    gold.mkdir(parents=True)
+    model = gold / "fct_orders.sql"
+    model.write_text("SELECT * FROM {{ ref('stg_orders') }}\n")
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["check", "--dbt", "--dbt-mart-path", "gold", str(model)])
+    assert "DBT005" in result.stdout
+
+
+def test_cli_dbt_mart_path_flag_is_repeatable(tmp_path):
+    """Repeated --dbt-mart-path flags union: both dirs are mart layers."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    for subdir in ("gold", "reporting"):
+        model_dir = tmp_path / "models" / subdir
+        model_dir.mkdir(parents=True)
+        (model_dir / "fct_orders.sql").write_text("SELECT * FROM a\n")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "check",
+            "--dbt",
+            "--dbt-mart-path",
+            "gold",
+            "--dbt-mart-path",
+            "reporting",
+            str(tmp_path / "models"),
+        ],
+    )
+    assert result.stdout.count("DBT005") == 2
+
+
+def test_cli_dbt_mart_path_from_config_file(tmp_path):
+    """dbt_mart_paths in .sql-guard.yml configures DBT005 with no flag."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    gold = tmp_path / "models" / "gold"
+    gold.mkdir(parents=True)
+    model = gold / "fct_orders.sql"
+    model.write_text("SELECT * FROM {{ ref('stg_orders') }}\n")
+    config = tmp_path / ".sql-guard.yml"
+    config.write_text("dbt_mart_paths:\n  - gold\n")
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["check", "--dbt", "--config", str(config), str(model)])
+    assert "DBT005" in result.stdout
+
+
+def test_cli_dbt_mart_path_flag_overrides_config(tmp_path):
+    """CLI flags win over the config file: config says gold, flag says
+    marts, so a model under marts/ is still flagged."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    marts = tmp_path / "models" / "marts"
+    marts.mkdir(parents=True)
+    model = marts / "fct_orders.sql"
+    model.write_text("SELECT * FROM {{ ref('stg_orders') }}\n")
+    config = tmp_path / ".sql-guard.yml"
+    config.write_text("dbt_mart_paths:\n  - gold\n")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "check",
+            "--dbt",
+            "--config",
+            str(config),
+            "--dbt-mart-path",
+            "marts",
+            str(model),
+        ],
+    )
+    assert "DBT005" in result.stdout
+
+
+def test_cli_dbt_mart_path_config_means_marts_is_not_a_mart(tmp_path):
+    """Config listing only gold/ leaves marts/ models to plain W001."""
+    from typer.testing import CliRunner
+
+    from sql_guard.cli import app
+
+    (tmp_path / "dbt_project.yml").write_text('name: x\nmodel-paths: ["models"]\n')
+    marts = tmp_path / "models" / "marts"
+    marts.mkdir(parents=True)
+    model = marts / "fct_orders.sql"
+    model.write_text("SELECT * FROM {{ ref('stg_orders') }}\n")
+    config = tmp_path / ".sql-guard.yml"
+    config.write_text("dbt_mart_paths:\n  - gold\n")
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["check", "--dbt", "--config", str(config), str(model)])
+    assert "DBT005" not in result.stdout
+    assert "W001" in result.stdout
 
 
 def test_cli_dbt_flag_activates_dbt006(tmp_path):
