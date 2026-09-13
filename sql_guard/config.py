@@ -25,6 +25,7 @@ file the user wrote.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -92,7 +93,8 @@ def find_config(start: Path | None = None) -> Path | None:
         if sop_candidate is not None and guard_candidate is not None:
             print(
                 f"Warning: Found both {sop_candidate.name} and {guard_candidate.name} in {directory}; "
-                f"using {sop_candidate.name} and ignoring {guard_candidate.name}."
+                f"using {sop_candidate.name} and ignoring {guard_candidate.name}.",
+                file=sys.stderr,
             )
             return sop_candidate
         if sop_candidate is not None:
@@ -100,7 +102,8 @@ def find_config(start: Path | None = None) -> Path | None:
         if guard_candidate is not None:
             print(
                 f"Notice: {guard_candidate.name} is deprecated and will stop working in 0.12.0. "
-                "Please use .sql-sop.yml instead."
+                "Please use .sql-sop.yml instead.",
+                file=sys.stderr,
             )
             return guard_candidate
     return None
