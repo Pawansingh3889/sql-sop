@@ -91,6 +91,15 @@ def check_cmd(
             "if no project is found."
         ),
     ),
+    dbt_mart_path: list[str] | None = typer.Option(
+        None,
+        "--dbt-mart-path",
+        help=(
+            "Path segment DBT005 treats as a mart layer (repeatable, "
+            "case-insensitive). Overrides dbt_mart_paths in .sql-guard.yml. "
+            "Default: marts."
+        ),
+    ),
 ) -> None:
     """Check SQL files for common issues."""
     if not paths:
@@ -164,6 +173,8 @@ def check_cmd(
         include_python=effective_include_python,
         contract=contract,
         dbt_project=dbt_project,
+        # CLI flags win over the config file, per config.py's contract.
+        dbt_mart_segments=dbt_mart_path or cfg.dbt_mart_paths or None,
     )
 
     # One notice per run, on stderr so stdout keeps carrying only the

@@ -284,6 +284,14 @@ skipped.
 sql-sop check models/ --dbt
 ```
 
+DBT005 treats a path segment named `marts` (case-insensitive) as the mart
+layer. Projects that name it `gold`, `core`, `reporting`, etc. can override
+the segment with a repeatable flag or the `dbt_mart_paths` config key:
+
+```bash
+sql-sop check models/ --dbt --dbt-mart-path gold --dbt-mart-path reporting
+```
+
 ---
 
 ## Configuration
@@ -307,6 +315,9 @@ ignore:
   - vendor/
 include_python: true
 severity: warning
+dbt_mart_paths:   # path segments DBT005 treats as mart layers (default: [marts])
+  - marts
+  - gold
 ```
 
 ### Inline disable comments

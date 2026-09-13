@@ -25,6 +25,13 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   classes are collected in `DBT_RULE_CLASSES` so the listing and
   `build_dbt_rules()` stay in sync
   ([#87](https://github.com/Pawansingh3889/sql-sop/issues/87)).
+- **DBT005 `select-star-in-mart`**: the mart path segment is now
+  configurable. Pass a repeatable `--dbt-mart-path` CLI flag or list
+  `dbt_mart_paths` in `.sql-guard.yml` for projects that name the layer
+  `gold`, `core`, `reporting`, etc.; matching stays case-insensitive and
+  the flag wins over the config file. Defaults to `marts`, so existing
+  users see no behaviour change
+  ([#83](https://github.com/Pawansingh3889/sql-sop/issues/83)).
 
 ## [0.11.0] - 2026-09-12
 
