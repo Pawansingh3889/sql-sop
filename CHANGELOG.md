@@ -10,7 +10,13 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+* `sql-sop list-rules` now lists the dbt-aware pack (DBT001-DBT007) in
+  its own section, noting the rules only run with `--dbt`. The rule
+  classes are collected in `DBT_RULE_CLASSES` so the listing and
+  `build_dbt_rules()` stay in sync
+  ([#87](https://github.com/Pawansingh3889/sql-sop/issues/87)).
 
 ## [0.11.0] - 2026-09-12
 

@@ -26,7 +26,21 @@ _CONFIG_CALL = re.compile(
 )
 
 
-class ModelWithoutTest(Rule):
+class DbtRule(Rule):
+    """Base class for dbt-aware rules.
+
+    Subclasses receive the discovered :class:`DbtProject` at
+    construction time and read schema.yml entries and model paths from
+    it. ``id``, ``name``, ``severity`` and ``description`` stay class
+    attributes so ``list-rules`` can catalogue the pack without
+    discovering a project.
+    """
+
+    def __init__(self, project: DbtProject) -> None:
+        self._project = project
+
+
+class ModelWithoutTest(DbtRule):
     """DBT001: dbt model has no ``tests:`` entry in ``schema.yml``.
 
     A model is reported untested when either:
@@ -50,9 +64,6 @@ class ModelWithoutTest(Rule):
     name = "model-without-test"
     severity = "warning"
     description = "dbt model has no tests: entry in schema.yml"
-
-    def __init__(self, project: DbtProject) -> None:
-        self._project = project
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
@@ -83,7 +94,7 @@ class ModelWithoutTest(Rule):
         ]
 
 
-class DirectTableRef(Rule):
+class DirectTableRef(DbtRule):
     """DBT002: raw table name in FROM/JOIN instead of ref()/source().
 
     Flags ``FROM orders`` / ``JOIN raw_db.orders`` where a dbt model
@@ -120,9 +131,6 @@ class DirectTableRef(Rule):
     _allowlisted_schemas = frozenset(
         {"information_schema", "pg_catalog", "pg_temp", "sys", "mysql", "performance_schema"}
     )
-
-    def __init__(self, project: DbtProject) -> None:
-        self._project = project
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
@@ -177,7 +185,7 @@ class DirectTableRef(Rule):
         return findings
 
 
-class IncrementalWithoutUniqueKey(Rule):
+class IncrementalWithoutUniqueKey(DbtRule):
     """DBT003: ``materialized='incremental'`` with no ``unique_key``.
 
     Reads the ``{{ config(...) }}`` call at the top of a model file
@@ -216,9 +224,6 @@ class IncrementalWithoutUniqueKey(Rule):
 
     _KEY_REQUIRED_STRATEGIES = frozenset({"merge", "delete+insert"})
     _KEY_NOT_NEEDED_STRATEGIES = frozenset({"append", "insert_overwrite"})
-
-    def __init__(self, project: DbtProject) -> None:
-        self._project = project
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
@@ -268,7 +273,7 @@ class IncrementalWithoutUniqueKey(Rule):
         ]
 
 
-class HookWithDdl(Rule):
+class HookWithDdl(DbtRule):
     """DBT004: destructive or structural DDL in pre_hook / post_hook.
 
     Reads the ``pre_hook`` / ``post_hook`` argument(s) of the
@@ -298,9 +303,6 @@ class HookWithDdl(Rule):
     _quoted_string = re.compile(r"'((?:[^'\\]|\\.)*)'|\"((?:[^\"\\]|\\.)*)\"")
     _destructive = re.compile(r"\b(?:DROP|TRUNCATE|DELETE)\b", re.IGNORECASE)
     _structural = re.compile(r"\bALTER\b", re.IGNORECASE)
-
-    def __init__(self, project: DbtProject) -> None:
-        self._project = project
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
@@ -358,7 +360,7 @@ class HookWithDdl(Rule):
         return findings
 
 
-class SelectStarInMart(Rule):
+class SelectStarInMart(DbtRule):
     """DBT005: ``SELECT *`` in a model under a mart directory.
 
     Refines W001 (``select-star``) with dbt context: a ``SELECT *``
@@ -388,9 +390,6 @@ class SelectStarInMart(Rule):
 
     _select_star = re.compile(r"\bSELECT\s+\*\s+FROM\b", re.IGNORECASE)
     _MART_SEGMENT = "marts"
-
-    def __init__(self, project: DbtProject) -> None:
-        self._project = project
 
     def _mart_dir_for(self, resolved: Path) -> bool:
         for model_dir in self._project.model_paths:
@@ -435,7 +434,7 @@ class SelectStarInMart(Rule):
         return findings
 
 
-class ModelWithoutDescription(Rule):
+class ModelWithoutDescription(DbtRule):
     """DBT006: dbt model listed in schema.yml has no ``description:``.
 
     Catches metadata drift after a refactor: a model gets renamed or
@@ -450,9 +449,6 @@ class ModelWithoutDescription(Rule):
     name = "model-without-description"
     severity = "warning"
     description = "dbt model has no description: in schema.yml"
-
-    def __init__(self, project: DbtProject) -> None:
-        self._project = project
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
@@ -482,7 +478,7 @@ class ModelWithoutDescription(Rule):
         ]
 
 
-class UnquotedVarInterpolation(Rule):
+class UnquotedVarInterpolation(DbtRule):
     """DBT007: ``{{ var(...) }}`` interpolated into SQL with no quotes.
 
     Named and scored deliberately conservative (see the ADR decision
@@ -510,9 +506,6 @@ class UnquotedVarInterpolation(Rule):
     description = "{{ var(...) }} interpolated into SQL without quotes"
 
     _var_call = re.compile(r"\{\{\s*var\s*\(.*?\)\s*\}\}", re.IGNORECASE | re.DOTALL)
-
-    def __init__(self, project: DbtProject) -> None:
-        self._project = project
 
     def check_file(self, file: str) -> list[Finding]:
         path = Path(file)
@@ -546,6 +539,17 @@ class UnquotedVarInterpolation(Rule):
                 )
             )
         return findings
+
+
+DBT_RULE_CLASSES: list[type[DbtRule]] = [
+    ModelWithoutTest,
+    DirectTableRef,
+    IncrementalWithoutUniqueKey,
+    HookWithDdl,
+    SelectStarInMart,
+    ModelWithoutDescription,
+    UnquotedVarInterpolation,
+]
 
 
 def _is_relative_to(child: Path, parent: Path) -> bool:
