@@ -133,7 +133,9 @@ ALL_RULES: list[Rule] = [
 ]
 
 
-def build_dbt_rules(project: DbtProject, mart_segments: Iterable[str] | None = None) -> list[DbtRule]:
+def build_dbt_rules(
+    project: DbtProject, mart_segments: Iterable[str] | None = None
+) -> list[DbtRule]:
     """Construct the dbt-aware rule pack with a discovered project.
 
     Each rule needs the project to look up schema.yml entries, model
