@@ -32,6 +32,13 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   the flag wins over the config file. Defaults to `marts`, so existing
   users see no behaviour change
   ([#83](https://github.com/Pawansingh3889/sql-sop/issues/83)).
+- **config:** accept `.sql-sop.yml` and `.sql-sop.yaml` as project config
+  filenames alongside the deprecated `.sql-guard.yml` and `.sql-guard.yaml`.
+  If both are found in the same folder, `.sql-sop` is used and a warning
+  names the ignored file. If only `.sql-guard` is found, a deprecation
+  notice names 0.12.0 as the removal version. Both messages go to stderr,
+  so `check --format sarif` output stays parseable
+  ([#101](https://github.com/Pawansingh3889/sql-sop/issues/101)).
 
 ## [0.11.0] - 2026-09-12
 
