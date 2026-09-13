@@ -138,6 +138,8 @@ That's it. Every SQL change gets an instant, rule-based lint on the PR.
 
 `sql-sop list-rules` prints every registered rule. See [Configuration](#configuration) for the flags that change what is reported.
 
+If the `sql-sop` script is not on `PATH` (some CI images and Windows setups), `python -m sql_guard` runs the same CLI under a chosen interpreter: `python -m sql_guard check .`
+
 ---
 
 ## Rules

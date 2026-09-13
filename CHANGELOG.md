@@ -12,6 +12,12 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Added
 
+- **`python -m sql_guard`**: the package now ships a `__main__.py`, so
+  the linter can run under a chosen interpreter when the scripts
+  directory is not on `PATH` (some CI images and Windows setups). It
+  runs the same Typer app as the `sql-sop` console script and the help
+  banner still names the program `sql-sop`
+  ([#131](https://github.com/Pawansingh3889/sql-sop/issues/131)).
 - **inline directives:** accept `sql-sop:` as the prefix for inline
   disable comments (`-- sql-sop: disable=...`, `disable-next-line=...`,
   bare `disable`, and `#` comments in Python files), alongside the
