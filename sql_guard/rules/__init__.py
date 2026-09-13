@@ -12,6 +12,7 @@ from sql_guard.rules.contracts import (
     UnmappedForeignKey,
     build_contract_rules,
 )
+from sql_guard.rules.dbt import DBT_RULE_CLASSES, DbtRule
 from sql_guard.rules.errors import (
     AlterAddNotNullNoDefault,
     DeleteWithoutWhere,
@@ -67,7 +68,9 @@ from sql_guard.rules.warnings import (
 __all__ = [
     "ALL_RULES",
     "CONTRACT_RULE_CLASSES",
+    "DBT_RULE_CLASSES",
     "ColumnNotInContract",
+    "DbtRule",
     "NotNullViolation",
     "PrimaryKeyMissingOnInsert",
     "Rule",
@@ -128,32 +131,14 @@ ALL_RULES: list[Rule] = [
 ]
 
 
-def build_dbt_rules(project: DbtProject) -> list[Rule]:
+def build_dbt_rules(project: DbtProject) -> list[DbtRule]:
     """Construct the dbt-aware rule pack with a discovered project.
 
     Each rule needs the project to look up schema.yml entries, model
     paths, etc. The pack is opt-in via the ``--dbt`` CLI flag, so this
     helper is only invoked when a project was actually discovered.
     """
-    from sql_guard.rules.dbt import (
-        DirectTableRef,
-        HookWithDdl,
-        IncrementalWithoutUniqueKey,
-        ModelWithoutDescription,
-        ModelWithoutTest,
-        SelectStarInMart,
-        UnquotedVarInterpolation,
-    )
-
-    return [
-        ModelWithoutTest(project),
-        DirectTableRef(project),
-        IncrementalWithoutUniqueKey(project),
-        HookWithDdl(project),
-        SelectStarInMart(project),
-        ModelWithoutDescription(project),
-        UnquotedVarInterpolation(project),
-    ]
+    return [rule_class(project) for rule_class in DBT_RULE_CLASSES]
 
 
 def get_rules(

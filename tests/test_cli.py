@@ -16,6 +16,18 @@ def test_version_uses_sql_sop_name() -> None:
     assert result.stdout.strip() == f"sql-sop {__version__}"
 
 
+def test_list_rules_shows_dbt_pack() -> None:
+    # The dbt rules are built per project (--dbt), but their metadata are
+    # class attributes, so list-rules can catalogue them without a
+    # discovered dbt project.
+    result = CliRunner().invoke(app, ["list-rules"])
+
+    assert result.exit_code == 0
+    for rule_id in ("DBT001", "DBT002", "DBT003", "DBT004", "DBT005", "DBT006", "DBT007"):
+        assert rule_id in result.stdout
+    assert "--dbt" in result.stdout
+
+
 def test_sarif_stdout_is_valid_json_when_dbt_warns(tmp_path: Path) -> None:
     # --dbt without a dbt_project.yml prints an advisory warning. It must
     # land on stderr so stdout stays parseable SARIF JSON.
