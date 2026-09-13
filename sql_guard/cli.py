@@ -166,6 +166,14 @@ def check_cmd(
         dbt_project=dbt_project,
     )
 
+    # One notice per run, on stderr so stdout keeps carrying only the
+    # requested output (e.g. `--format sarif` JSON).
+    if result.used_legacy_directive:
+        err_console.print(
+            "[yellow]Notice: 'sql-guard:' inline directives are deprecated and will "
+            "stop working in 0.12.0. Please use 'sql-sop:' instead.[/yellow]"
+        )
+
     if output_format == "sarif":
         rendered = sarif_reporter.render(result)
         if output_path:
