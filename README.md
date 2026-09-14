@@ -127,7 +127,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Pawansingh3889/sql-sop@v1
+      - uses: Pawansingh3889/sql-sop@v0.11.0
         with:
           severity: warning
 ```
