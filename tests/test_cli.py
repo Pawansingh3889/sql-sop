@@ -1,6 +1,7 @@
 """End-to-end tests for the sql-sop command-line interface."""
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -64,12 +65,14 @@ def test_module_invocation_version() -> None:
 
 def test_module_invocation_prog_name() -> None:
     # __main__.py pins prog_name so the usage line says sql-sop, not
-    # "python -m sql_guard".
+    # "python -m sql_guard". TERM=dumb stops rich styling the help text:
+    # on GitHub runners it adds ANSI codes between "Usage:" and "sql-sop".
     proc = subprocess.run(
         [sys.executable, "-m", "sql_guard", "--help"],
         capture_output=True,
         text=True,
         check=False,
+        env={**os.environ, "TERM": "dumb"},
     )
 
     assert proc.returncode == 0
