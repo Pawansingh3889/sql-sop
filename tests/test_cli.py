@@ -1,6 +1,9 @@
 """End-to-end tests for the sql-sop command-line interface."""
 
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -45,6 +48,51 @@ def test_sarif_stdout_is_valid_json_when_dbt_warns(tmp_path: Path) -> None:
     doc = json.loads(result.stdout)
     assert doc["version"] == "2.1.0"
     assert doc["runs"][0]["tool"]["driver"]["name"] == "sql-guard"
+
+
+def test_module_invocation_version() -> None:
+    # `python -m sql_guard` is the entry point for environments where the
+    # scripts dir is not on PATH; it must run the same CLI as `sql-sop`.
+    proc = subprocess.run(
+        [sys.executable, "-m", "sql_guard", "version"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0
+    assert proc.stdout.startswith("sql-sop")
+
+
+def test_module_invocation_prog_name() -> None:
+    # __main__.py pins prog_name so the usage line says sql-sop, not
+    # "python -m sql_guard". TERM=dumb stops rich styling the help text:
+    # on GitHub runners it adds ANSI codes between "Usage:" and "sql-sop".
+    proc = subprocess.run(
+        [sys.executable, "-m", "sql_guard", "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "TERM": "dumb"},
+    )
+
+    assert proc.returncode == 0
+    assert "Usage: sql-sop" in proc.stdout
+
+
+def test_module_invocation_check(tmp_path: Path) -> None:
+    sql_file = tmp_path / "ok.sql"
+    sql_file.write_text("SELECT id FROM t LIMIT 10;\n", encoding="utf-8")
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "sql_guard", "check", str(sql_file)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0
+    assert "no issues found" in proc.stdout
 
 
 def test_check_missing_contract_exits_2(tmp_path: Path) -> None:
