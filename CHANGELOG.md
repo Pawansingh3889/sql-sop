@@ -46,6 +46,14 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   so `check --format sarif` output stays parseable
   ([#101](https://github.com/Pawansingh3889/sql-sop/issues/101)).
 
+### Fixed
+
+- **sarif:** `check --changed-only --format sarif` now emits a valid SARIF
+  document with an empty `results` array when git reports no changed
+  files, instead of printing nothing. The "no changed files to lint" note
+  and the "Wrote SARIF" line stay on stderr, so stdout carries only the
+  JSON ([#118](https://github.com/Pawansingh3889/sql-sop/issues/118)).
+
 ## [0.11.0] - 2026-09-12
 
 ### Security

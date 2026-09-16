@@ -11,7 +11,7 @@ from rich.table import Table
 
 from sql_guard import __version__
 from sql_guard import config as config_mod
-from sql_guard.checker import check, discover_files
+from sql_guard.checker import CheckResult, check, discover_files
 from sql_guard.contracts import Contract
 from sql_guard.dbt import DbtProject, find_dbt_project, load_dbt_project
 from sql_guard.git_filter import filter_to_changed
@@ -162,6 +162,16 @@ def check_cmd(
             paths = [str(p) for p in kept]
             if not paths:
                 err_console.print("[green]OK[/green] no changed files to lint.")
+                # SARIF consumers still need a valid document with empty
+                # results: an empty stdout fails upload-sarif in CI.
+                if output_format == "sarif":
+                    rendered = sarif_reporter.render(CheckResult())
+                    if output_path:
+                        output_path.write_text(rendered, encoding="utf-8")
+                        err_console.print(f"Wrote SARIF to {output_path}")
+                    else:
+                        sys.stdout.write(rendered)
+                        sys.stdout.write("\n")
                 return
 
     result = check(
