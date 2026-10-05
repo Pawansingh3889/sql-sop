@@ -134,6 +134,8 @@ jobs:
 
 That's it. Every SQL change gets an instant, rule-based lint on the PR.
 
+The Action installs sql-sop from its own checkout, not from PyPI, so pinning a tag (`@v0.11.0`) pins the rules too. `@main` installs the code on `main`, which can be ahead of the last release.
+
 ### Step 3 (optional): CLI for manual checks
 
 `sql-sop list-rules` prints every registered rule. See [Configuration](#configuration) for the flags that change what is reported.

@@ -33,15 +33,19 @@ runs:
     # splice caller-supplied text into the script before bash sees it, so a
     # workflow feeding untrusted data (a pull request title, say) into an
     # input could run arbitrary commands on the runner.
+    # Install from the Action's own checkout rather than from PyPI, so
+    # `uses: Pawansingh3889/sql-sop@<tag>` runs exactly the code at that tag
+    # and action.yml and the CLI it installs cannot disagree.
     - name: Install sql-sop
       shell: bash
       env:
+        ACTION_PATH: ${{ github.action_path }}
         INCLUDE_PYTHON: ${{ inputs.include-python }}
       run: |
         if [ "$INCLUDE_PYTHON" = "true" ]; then
-          pip install "sql-sop[python]"
+          pip install "${ACTION_PATH}[python]"
         else
-          pip install sql-sop
+          pip install "$ACTION_PATH"
         fi
     - name: Run sql-sop
       shell: bash
