@@ -48,6 +48,11 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
 
 ### Fixed
 
+- **action:** the GitHub Action now installs sql-sop from its own checkout
+  (`github.action_path`) instead of the newest release on PyPI, so
+  `uses: Pawansingh3889/sql-sop@<tag>` pins the rules as well as
+  `action.yml`. `@main` installs the code on `main`
+  ([#133](https://github.com/Pawansingh3889/sql-sop/issues/133)).
 - **sarif:** `check --changed-only --format sarif` now emits a valid SARIF
   document with an empty `results` array when git reports no changed
   files, instead of printing nothing. The "no changed files to lint" note
