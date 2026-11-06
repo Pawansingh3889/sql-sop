@@ -59,6 +59,14 @@ a deprecation window (see `GOVERNANCE.md` § Scope discipline).
   and the "Wrote SARIF" line stay on stderr, so stdout carries only the
   JSON ([#118](https://github.com/Pawansingh3889/sql-sop/issues/118)).
 
+### Documentation
+
+- Switch the README examples, rule docstrings and the W022 suggestion text to
+  the `-- sql-sop: disable=...` and `.sql-sop.yml` names (the `sql-guard`
+  forms still work until 0.12.0), and fix the pre-commit hook id in the
+  sqlfluff comparison post to `sql-sop`
+  ([#103](https://github.com/Pawansingh3889/sql-sop/issues/103)).
+
 ## [0.11.0] - 2026-09-12
 
 ### Security

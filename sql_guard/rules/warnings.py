@@ -770,7 +770,7 @@ class CrossJoinExplicit(Rule):
     generation pattern. Warn so the author confirms intent.
 
     Suppress with an inline ``-- noqa: W022`` comment on the same line, or
-    use the project-wide ``-- sql-guard: disable=W022`` directive.
+    use the project-wide ``-- sql-sop: disable=W022`` directive.
     """
 
     id = "W022"
@@ -795,7 +795,7 @@ class CrossJoinExplicit(Rule):
                 file=file,
                 line=line_number,
                 message="Explicit CROSS JOIN -- Cartesian product, confirm this is intentional",
-                suggestion="If intentional, suppress with '-- sql-guard: disable=W022' on the same line",
+                suggestion="If intentional, suppress with '-- sql-sop: disable=W022' on the same line",
             )
         return None
 

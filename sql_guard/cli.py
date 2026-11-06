@@ -96,7 +96,7 @@ def check_cmd(
         "--dbt-mart-path",
         help=(
             "Path segment DBT005 treats as a mart layer (repeatable, "
-            "case-insensitive). Overrides dbt_mart_paths in .sql-guard.yml. "
+            "case-insensitive). Overrides dbt_mart_paths in .sql-sop.yml. "
             "Default: marts."
         ),
     ),

@@ -189,7 +189,7 @@ class SelectStarInto(Rule):
     caught (if a column type drifts) by the contracts pack at C001/C003.
 
     Suppress with an inline ``-- noqa: T006`` comment on the same line,
-    or use the project-wide ``-- sql-guard: disable=T006`` directive.
+    or use the project-wide ``-- sql-sop: disable=T006`` directive.
     """
 
     id = "T006"

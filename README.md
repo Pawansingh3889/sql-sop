@@ -224,7 +224,7 @@ and the documented pre-commit hook). The other T-SQL rules are warnings.
 ### Contracts (opt-in via `--contract`)
 
 Pass `--contract path/to/contract.yml` (or set `contract:` in
-`.sql-guard.yml`) to lint queries against the expected schema. Without a
+`.sql-sop.yml`) to lint queries against the expected schema. Without a
 contract these rules are silent. Format is a thin subset of the open
 data-contract space; see `tests/fixtures/contract_sample.yml` for a
 working example.
@@ -306,9 +306,9 @@ sql-sop check models/ --dbt --dbt-mart-path gold --dbt-mart-path reporting
 sql-sop check . --disable E002 W008 W010
 ```
 
-### Project config file (`.sql-guard.yml`)
+### Project config file (`.sql-sop.yml`)
 
-Drop a `.sql-guard.yml` (or `.sql-guard.yaml`) at the repo root. The loader walks up from the current directory; CLI flags merge with and override these settings.
+Drop a `.sql-sop.yml` (or `.sql-sop.yaml`) at the repo root. The loader walks up from the current directory; CLI flags merge with and override these settings. The legacy `.sql-guard.yml` / `.sql-guard.yaml` names still work until 0.12.0.
 
 ```yaml
 disable:
@@ -329,15 +329,15 @@ dbt_mart_paths:   # path segments DBT005 treats as mart layers (default: [marts]
 Silence a known false positive on a single line, no project-wide override needed:
 
 ```sql
-SELECT * FROM lookups; -- sql-guard: disable=W001
-SELECT * FROM users  -- sql-guard: disable=W001,W002
+SELECT * FROM lookups; -- sql-sop: disable=W001
+SELECT * FROM users  -- sql-sop: disable=W001,W002
 WHERE name LIKE '%smith';
 
--- sql-guard: disable-next-line=W017
+-- sql-sop: disable-next-line=W017
 SELECT * FROM events WHERE name LIKE '%checkout';
 ```
 
-A bare `-- sql-guard: disable` (no equals sign) silences every rule on the line. The same directives work in Python with `#` instead of `--`.
+A bare `-- sql-sop: disable` (no equals sign) silences every rule on the line. The same directives work in Python with `#` instead of `--`. The `sql-guard:` prefix still works until 0.12.0.
 
 ### Lint only changed files
 

@@ -124,7 +124,7 @@ repos:
   - repo: https://github.com/Pawansingh3889/sql-sop
     rev: v0.4.1
     hooks:
-      - id: sql-guard
+      - id: sql-sop
         args: [--severity, error]  # fast, block on real dangers
 ```
 
