@@ -39,7 +39,7 @@ class ImplicitCrossJoin(Rule):
     join and not flagged.
 
     Suppress with an inline ``-- noqa: S001`` comment on the same line, or
-    use the project-wide ``-- sql-guard: disable=S001`` directive.
+    use the project-wide ``-- sql-sop: disable=S001`` directive.
     """
 
     id = "S001"

@@ -1,7 +1,7 @@
 """Contract rules (C001-...) -- require a loaded data contract to fire.
 
 These rules are only added to the active rule list when ``--contract`` is
-passed (or ``contract:`` is set in ``.sql-guard.yml``). Without a contract
+passed (or ``contract:`` is set in ``.sql-sop.yml``). Without a contract
 they are silent. The contract structure is defined in ``sql_guard.contracts``.
 """
 

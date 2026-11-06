@@ -249,7 +249,7 @@ class UpdateFromImplicitJoin(Rule):
     Snowflake/Postgres lateral join and not flagged.
 
     Suppress with an inline ``-- noqa: E009`` comment on the same line, or
-    use the project-wide ``-- sql-guard: disable=E009`` directive.
+    use the project-wide ``-- sql-sop: disable=E009`` directive.
     """
 
     id = "E009"
